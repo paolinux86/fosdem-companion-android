@@ -1,36 +1,54 @@
-# FOSDEM Companion
+# LinuxDay Cagliari Android
 
-Advanced native Android schedule browser application for the [FOSDEM](http://fosdem.org/) conference in Brussels, Belgium.
+App Android per visualizzare il programma e restare informati sul [Linux Day](http://www.linuxday.it/) di Cagliari
+organizzato dal [GULCh](http://www.gulch.it/) (**G**ruppo **U**tenti **L**inux **C**agliari **h**...?).
 
-This is a new implementation of the [legacy FOSDEM app](https://github.com/rkallensee/fosdem-android/). The code has been rewritten from scratch and the features have been extended. It uses loaders and fragments extensively and is backward compatible up to Android 2.1 thanks to the support library.
+Questa app è basata sull'applicazione [FOSDEM Companion for Android](https://github.com/cbeyls/fosdem-companion-android) di [Christophe Beyls](https://github.com/cbeyls).
 
-To get more information and install the app, look at the [Google Play Store](https://play.google.com/store/apps/details?id=be.digitalia.fosdem) page.
+L'applicazione sarà disponibile a breve nel Google Play Store.
 
-The name FOSDEM and the gear logo are registered trademarks of FOSDEM VZW. Used with permission.
+## Come compilare
 
-## How to build
+Tutte le dipendenze sono gestite tramite [Gradle](http://www.gradle.org/).
 
-The project depends on the Android Support Library, including the compatibility ActionBar. All other dependencies are included.
+### Android Studio
 
-### Eclipse
-Import the *android-support-v7-appcompat* project from your local SDK folder to your Eclipse workspace and add it as a dependency to this project. 
+In [Android Studio](http://developer.android.com/sdk/installing/studio.html), selezionare "Import project" e aprire il file **build.gradle** presente nella cartella principale del progetto.
+
+Nella schermata successiva mantenere "Use gradle wrapper" selezionato e cliccare sul pulsante "OK".
+
+Se invece si preferisce usare il gradle installato nel sistema, deselezionare la voce ed eventualmente inserire il percorso della Gradle home.
 
 ### Gradle
+
+Il progetto contiene il Gradle Wrapper, per cui non è necessario installare Gradle preventivamente.
+
+#### Linux, Mac
+
 ```
-gradle build
+chmod +x gradlew
+gradlew assemble
 ```
 
-## License
+#### Windows
 
-[Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
+```
+gradlew assemble
+```
+
+## Licenza
+
+Il progetto è rilasciato sotto licenza [Apache License, Versione 2.0](http://www.apache.org/licenses/LICENSE-2.0)
 
 ## Used libraries
 
-* [Android Support Library](http://developer.android.com/tools/support-library/) by The Android Open Source Project
-* [PagerSlidingTabStrip](https://github.com/astuetz/PagerSlidingTabStrip) by Andreas Stuetz
-* [ViewPagerIndicator](http://viewpagerindicator.com/) by Jake Wharton
-* [PhotoView](https://github.com/chrisbanes/PhotoView) by Chris Banes
+* [Android Support Library](http://developer.android.com/tools/support-library/) di **The Android Open Source Project**
+* [PagerSlidingTabStrip](https://github.com/astuetz/PagerSlidingTabStrip) di **Andreas Stuetz**
+* [ViewPagerIndicator](http://viewpagerindicator.com/) di **Jake Wharton**
+* [PhotoView](https://github.com/chrisbanes/PhotoView) by **Chris Banes**
+* [PreferenceFragment Support](https://gist.github.com/cbeyls/7475726) di Christophe Beyls
 
 ## Contributors
 
-* Christophe Beyls
+* Paolo Cortis
+* Christophe Beyls (Progetto originale)
