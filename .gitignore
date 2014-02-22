@@ -1,3 +1,10 @@
 /bin
 /gen
 /proguard
+.gradle
+.idea
+/build
+local.properties
+*.iml
+.project
+.classpath

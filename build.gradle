@@ -1,5 +1,6 @@
 buildscript {
     repositories {
+        mavenLocal()
         mavenCentral()
     }
 
@@ -11,7 +12,16 @@ buildscript {
 apply plugin: 'android'
 
 repositories {
+    mavenLocal()
     mavenCentral()
+}
+
+dependencies {
+    compile "com.android.support:appcompat-v7:19.0.+"
+
+    compile 'com.astuetz:pagerslidingtabstrip:1.0.1'
+
+    compile files('libs/photoview-1.2.2.jar')
 }
 
 android {
@@ -39,9 +49,4 @@ android {
 
     compileSdkVersion 19
     buildToolsVersion "19.0.1"
-}
-
-dependencies {
-    compile "com.android.support:appcompat-v7:19.0.+"
-    compile files('libs/photoview-1.2.2.jar')
 }
