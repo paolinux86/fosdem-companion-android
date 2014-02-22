@@ -46,7 +46,7 @@ Il progetto è rilasciato sotto licenza [Apache License, Versione 2.0](http://ww
 * [PagerSlidingTabStrip](https://github.com/astuetz/PagerSlidingTabStrip) di **Andreas Stuetz**
 * [ViewPagerIndicator](http://viewpagerindicator.com/) di **Jake Wharton**
 * [PhotoView](https://github.com/chrisbanes/PhotoView) by **Chris Banes**
-* [PreferenceFragment Support](https://gist.github.com/cbeyls/7475726) di Christophe Beyls
+* [PreferenceFragment Support](https://gist.github.com/cbeyls/7475726) di **Christophe Beyls**
 
 ## Contributors
 
