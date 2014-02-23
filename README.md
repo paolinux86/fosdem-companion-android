@@ -27,7 +27,7 @@ Il progetto contiene il Gradle Wrapper, per cui non è necessario installare Gra
 
 ```
 chmod +x gradlew
-gradlew assemble
+./gradlew assemble
 ```
 
 #### Windows
