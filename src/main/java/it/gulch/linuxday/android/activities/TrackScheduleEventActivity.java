@@ -17,6 +17,7 @@ package it.gulch.linuxday.android.activities;
 
 import android.database.Cursor;
 import android.os.Bundle;
+import android.provider.BaseColumns;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
@@ -36,13 +37,15 @@ import it.gulch.linuxday.android.fragments.EventDetailsFragment;
 import it.gulch.linuxday.android.loaders.TrackScheduleLoader;
 import it.gulch.linuxday.android.model.Day;
 import it.gulch.linuxday.android.model.Track;
+import it.gulch.linuxday.android.utils.NfcUtils;
 
 /**
  * Event view of the track schedule; allows to slide between events of the same track using a ViewPager.
  *
  * @author Christophe Beyls
  */
-public class TrackScheduleEventActivity extends ActionBarActivity implements LoaderCallbacks<Cursor>
+public class TrackScheduleEventActivity extends ActionBarActivity
+	implements LoaderCallbacks<Cursor>, NfcUtils.CreateNfcAppDataCallback
 {
 	public static final String EXTRA_DAY = "day";
 
@@ -93,6 +96,9 @@ public class TrackScheduleEventActivity extends ActionBarActivity implements Loa
 		bar.setTitle(R.string.event_details);
 		bar.setSubtitle(track.getName());
 
+		// Enable Android Beam
+		NfcUtils.setAppDataPushMessageCallbackIfAvailable(this, this);
+
 		setCustomProgressVisibility(true);
 		getSupportLoaderManager().initLoader(EVENTS_LOADER_ID, null, this);
 	}
@@ -100,6 +106,21 @@ public class TrackScheduleEventActivity extends ActionBarActivity implements Loa
 	private void setCustomProgressVisibility(boolean isVisible)
 	{
 		progress.setVisibility(isVisible ? View.VISIBLE : View.GONE);
+	}
+
+	@Override
+	public byte[] createNfcAppData()
+	{
+		if(adapter.getCount() == 0) {
+			return null;
+		}
+
+		long eventId = adapter.getItemId(pager.getCurrentItem());
+		if(eventId == -1L) {
+			return null;
+		}
+
+		return String.valueOf(eventId).getBytes();
 	}
 
 	@Override
@@ -149,7 +170,6 @@ public class TrackScheduleEventActivity extends ActionBarActivity implements Loa
 
 	public static class TrackScheduleEventAdapter extends FragmentStatePagerAdapter
 	{
-
 		private Cursor cursor;
 
 		public TrackScheduleEventAdapter(FragmentManager fm)
@@ -179,6 +199,15 @@ public class TrackScheduleEventActivity extends ActionBarActivity implements Loa
 		{
 			cursor.moveToPosition(position);
 			return EventDetailsFragment.newInstance(DatabaseManager.toEvent(cursor));
+		}
+
+		public long getItemId(int position)
+		{
+			if(!cursor.moveToPosition(position)) {
+				return -1L;
+			}
+
+			return cursor.getLong(cursor.getColumnIndexOrThrow(BaseColumns._ID));
 		}
 	}
 }

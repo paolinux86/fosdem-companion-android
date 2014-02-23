@@ -32,13 +32,15 @@ import it.gulch.linuxday.android.fragments.TrackScheduleListFragment;
 import it.gulch.linuxday.android.model.Day;
 import it.gulch.linuxday.android.model.Event;
 import it.gulch.linuxday.android.model.Track;
+import it.gulch.linuxday.android.utils.NfcUtils;
 
 /**
  * Track Schedule container, works in both single pane and dual pane modes.
  *
  * @author Christophe Beyls
  */
-public class TrackScheduleActivity extends ActionBarActivity implements TrackScheduleListFragment.Callbacks
+public class TrackScheduleActivity extends ActionBarActivity
+	implements TrackScheduleListFragment.Callbacks, NfcUtils.CreateNfcAppDataCallback
 {
 	public static final String EXTRA_DAY = "day";
 
@@ -52,6 +54,8 @@ public class TrackScheduleActivity extends ActionBarActivity implements TrackSch
 	private Track track;
 
 	private boolean isTabletLandscape;
+
+	private Event lastSelectedEvent;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -93,6 +97,21 @@ public class TrackScheduleActivity extends ActionBarActivity implements TrackSch
 			}
 		}
 		trackScheduleListFragment.setSelectionEnabled(isTabletLandscape);
+
+		if(isTabletLandscape) {
+			// Enable Android Beam
+			NfcUtils.setAppDataPushMessageCallbackIfAvailable(this, this);
+		}
+	}
+
+	@Override
+	public byte[] createNfcAppData()
+	{
+		if(lastSelectedEvent == null) {
+			return null;
+		}
+
+		return String.valueOf(lastSelectedEvent.getId()).getBytes();
 	}
 
 	@Override
@@ -110,6 +129,8 @@ public class TrackScheduleActivity extends ActionBarActivity implements TrackSch
 	public void onEventSelected(int position, Event event)
 	{
 		if(isTabletLandscape) {
+			lastSelectedEvent = event;
+
 			// Tablet mode: Show event details in the right pane fragment
 			FragmentManager fm = getSupportFragmentManager();
 			EventDetailsFragment currentFragment = (EventDetailsFragment) fm.findFragmentById(R.id.event);

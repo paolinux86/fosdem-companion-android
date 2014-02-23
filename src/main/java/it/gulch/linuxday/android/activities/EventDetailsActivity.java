@@ -26,19 +26,22 @@ import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.Loader;
 import android.support.v7.app.ActionBarActivity;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.db.DatabaseManager;
 import it.gulch.linuxday.android.fragments.EventDetailsFragment;
 import it.gulch.linuxday.android.loaders.LocalCacheLoader;
 import it.gulch.linuxday.android.model.Event;
+import it.gulch.linuxday.android.utils.NfcUtils;
 
 /**
  * Displays a single event passed either as a complete Parcelable object in extras or as an id in data.
  *
  * @author Christophe Beyls
  */
-public class EventDetailsActivity extends ActionBarActivity implements LoaderCallbacks<Event>
+public class EventDetailsActivity extends ActionBarActivity
+	implements LoaderCallbacks<Event>, NfcUtils.CreateNfcAppDataCallback
 {
 	public static final String EXTRA_EVENT = "event";
 
@@ -54,11 +57,10 @@ public class EventDetailsActivity extends ActionBarActivity implements LoaderCal
 
 		getSupportActionBar().setTitle(R.string.event_details);
 
-		event = getIntent().getParcelableExtra(EXTRA_EVENT);
-
+		Event event = getIntent().getParcelableExtra(EXTRA_EVENT);
 		if(event != null) {
 			// The event has been passed as parameter, it can be displayed immediately
-			initActionBar();
+			initEvent(event);
 			if(savedInstanceState == null) {
 				Fragment f = EventDetailsFragment.newInstance(event);
 				getSupportFragmentManager().beginTransaction().add(R.id.content, f).commit();
@@ -70,12 +72,16 @@ public class EventDetailsActivity extends ActionBarActivity implements LoaderCal
 	}
 
 	/**
-	 * Initialize event-related ActionBar configuration after the event has been loaded.
+	 * Initialize event-related configuration after the event has been loaded.
 	 */
-	private void initActionBar()
+	private void initEvent(Event event)
 	{
+		this.event = event;
 		// Enable up navigation only after getting the event details
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+		// Enable Android Beam
+		NfcUtils.setAppDataPushMessageCallbackIfAvailable(this, this);
 	}
 
 	@Override
@@ -102,9 +108,14 @@ public class EventDetailsActivity extends ActionBarActivity implements LoaderCal
 		return false;
 	}
 
+	@Override
+	public byte[] createNfcAppData()
+	{
+		return String.valueOf(event.getId()).getBytes();
+	}
+
 	private static class EventLoader extends LocalCacheLoader<Event>
 	{
-
 		private final long eventId;
 
 		public EventLoader(Context context, long eventId)
@@ -123,7 +134,17 @@ public class EventDetailsActivity extends ActionBarActivity implements LoaderCal
 	@Override
 	public Loader<Event> onCreateLoader(int id, Bundle args)
 	{
-		return new EventLoader(this, Long.parseLong(getIntent().getDataString()));
+		Intent intent = getIntent();
+		String eventIdString;
+		if(NfcUtils.hasAppData(intent)) {
+			// NFC intent
+			eventIdString = new String(NfcUtils.extractAppData(intent));
+		} else {
+			// Normal in-app intent
+			eventIdString = intent.getDataString();
+		}
+
+		return new EventLoader(this, Long.parseLong(eventIdString));
 	}
 
 	@Override
@@ -131,16 +152,17 @@ public class EventDetailsActivity extends ActionBarActivity implements LoaderCal
 	{
 		if(data == null) {
 			// Event not found, quit
+			Toast.makeText(this, getString(R.string.event_not_found_error), Toast.LENGTH_LONG).show();
 			finish();
 			return;
 		}
 
 		event = data;
-		initActionBar();
+		initEvent(data);
 
 		FragmentManager fm = getSupportFragmentManager();
 		if(fm.findFragmentById(R.id.content) == null) {
-			Fragment f = EventDetailsFragment.newInstance(event);
+			Fragment f = EventDetailsFragment.newInstance(data);
 			fm.beginTransaction().add(R.id.content, f).commitAllowingStateLoss();
 		}
 	}
