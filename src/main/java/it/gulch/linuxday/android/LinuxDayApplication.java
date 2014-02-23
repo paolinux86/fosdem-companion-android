@@ -13,18 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package it.gulch.linuxday.android.utils;
+package it.gulch.linuxday.android;
 
-public class ArrayUtils
+import android.app.Application;
+import android.preference.PreferenceManager;
+
+import it.gulch.linuxday.android.alarms.FosdemAlarmManager;
+import it.gulch.linuxday.android.db.DatabaseManager;
+
+public class LinuxDayApplication extends Application
 {
-	public static int indexOf(long[] array, long value)
+	@Override
+	public void onCreate()
 	{
-		for(int i = 0; i < array.length; ++i) {
-			if(array[i] == value) {
-				return i;
-			}
-		}
+		super.onCreate();
 
-		return -1;
+		DatabaseManager.init(this);
+		// Initialize settings
+		PreferenceManager.setDefaultValues(this, R.xml.settings, false);
+		// Alarms (requires settings)
+		FosdemAlarmManager.init(this);
 	}
 }

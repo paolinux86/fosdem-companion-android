@@ -16,7 +16,7 @@
 		android:required="false" />
 
 	<application
-		android:name=".FosdemApplication"
+		android:name=".LinuxDayApplication"
 		android:allowBackup="true"
 		android:hardwareAccelerated="true"
 		android:icon="@drawable/ic_launcher"

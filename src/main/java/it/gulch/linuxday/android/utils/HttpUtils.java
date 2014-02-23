@@ -1,4 +1,24 @@
+/*
+ * Copyright 2014 Christophe Beyls
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package it.gulch.linuxday.android.utils;
+
+import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
+import android.support.v4.content.LocalBroadcastManager;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -15,69 +35,75 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-import android.content.Context;
-import android.content.Intent;
-import android.os.Build;
-import android.support.v4.content.LocalBroadcastManager;
-
 /**
  * Utility class to perform HTTP requests.
- * 
+ *
  * @author Christophe Beyls
  */
-public class HttpUtils {
-
+public class HttpUtils
+{
 	private static final int DEFAULT_TIMEOUT = 10000;
 
 	static {
 		// HTTP connection reuse was buggy pre-froyo
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.FROYO) {
+		if(Build.VERSION.SDK_INT < Build.VERSION_CODES.FROYO) {
 			System.setProperty("http.keepAlive", "false");
 		}
 
 		// Bypass hostname verification
-		HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
-			public boolean verify(String hostname, SSLSession session) {
+		HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier()
+		{
+			public boolean verify(String hostname, SSLSession session)
+			{
 				return true;
 			}
 		});
 
 		// Trust all HTTPS certificates
-		TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
-			public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-				return new java.security.cert.X509Certificate[] {};
+		TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager()
+		{
+			public java.security.cert.X509Certificate[] getAcceptedIssuers()
+			{
+				return new java.security.cert.X509Certificate[] { };
 			}
 
-			public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+			public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException
+			{
 			}
 
-			public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+			public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException
+			{
 			}
 		} };
 		try {
 			SSLContext sc = SSLContext.getInstance("TLS");
 			sc.init(null, trustAllCerts, new java.security.SecureRandom());
 			HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-		} catch (Exception e) {
+		} catch(Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	public static InputStream get(Context context, String path) throws IOException {
+	public static InputStream get(Context context, String path) throws IOException
+	{
 		return get(context, new URL(path), null, null);
 	}
 
-	public static InputStream get(Context context, String path, String progressAction, String progressExtra) throws IOException {
+	public static InputStream get(Context context, String path, String progressAction, String progressExtra) throws
+		IOException
+	{
 		return get(context, new URL(path), progressAction, progressExtra);
 	}
 
-	public static InputStream get(final Context context, URL url, final String progressAction, final String progressExtra) throws IOException {
+	public static InputStream get(final Context context, URL url, final String progressAction,
+		final String progressExtra) throws IOException
+	{
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 		connection.setReadTimeout(DEFAULT_TIMEOUT);
 		connection.setConnectTimeout(DEFAULT_TIMEOUT);
 		connection.connect();
 
-		if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+		if(connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
 			connection.disconnect();
 
 			throw new IOException("Server returned response code: " + connection.getResponseCode());
@@ -85,18 +111,20 @@ public class HttpUtils {
 
 		final int length = connection.getContentLength();
 		InputStream is = new BufferedInputStream(connection.getInputStream());
-		if ((progressAction == null) || (length == -1)) {
+		if((progressAction == null) || (length == -1)) {
 			// No progress support
 			return is;
 		}
 
 		// Broadcast the progression in percents, with a precision of 1/10 of the total file size
-		return new ByteCountInputStream(is, new ByteCountInputStream.ByteCountListener() {
+		return new ByteCountInputStream(is, new ByteCountInputStream.ByteCountListener()
+		{
 
 			private LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(context);
 
 			@Override
-			public void onNewCount(int byteCount) {
+			public void onNewCount(int byteCount)
+			{
 				// Cap percent to 100
 				int percent = (byteCount >= length) ? 100 : byteCount * 100 / length;
 				lbm.sendBroadcast(new Intent(progressAction).putExtra(progressExtra, percent));

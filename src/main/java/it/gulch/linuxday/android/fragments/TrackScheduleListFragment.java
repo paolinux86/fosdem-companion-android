@@ -1,6 +1,19 @@
+/*
+ * Copyright 2014 Christophe Beyls
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package it.gulch.linuxday.android.fragments;
-
-import java.text.DateFormat;
 
 import android.app.Activity;
 import android.content.Context;
@@ -21,6 +34,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import java.text.DateFormat;
+
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.db.DatabaseManager;
 import it.gulch.linuxday.android.loaders.TrackScheduleLoader;
@@ -29,24 +45,30 @@ import it.gulch.linuxday.android.model.Event;
 import it.gulch.linuxday.android.model.Track;
 import it.gulch.linuxday.android.utils.DateUtils;
 
-public class TrackScheduleListFragment extends ListFragment implements LoaderCallbacks<Cursor> {
-
+public class TrackScheduleListFragment extends ListFragment implements LoaderCallbacks<Cursor>
+{
 	/**
 	 * Interface implemented by container activities
 	 */
-	public interface Callbacks {
+	public interface Callbacks
+	{
 		void onEventSelected(int position, Event event);
 	}
 
 	private static final int EVENTS_LOADER_ID = 1;
+
 	private static final String ARG_DAY = "day";
+
 	private static final String ARG_TRACK = "track";
 
 	private TrackScheduleAdapter adapter;
+
 	private Callbacks listener;
+
 	private boolean selectionEnabled = false;
 
-	public static TrackScheduleListFragment newInstance(Day day, Track track) {
+	public static TrackScheduleListFragment newInstance(Day day, Track track)
+	{
 		TrackScheduleListFragment f = new TrackScheduleListFragment();
 		Bundle args = new Bundle();
 		args.putParcelable(ARG_DAY, day);
@@ -56,7 +78,8 @@ public class TrackScheduleListFragment extends ListFragment implements LoaderCal
 	}
 
 	@Override
-	public void onCreate(Bundle savedInstanceState) {
+	public void onCreate(Bundle savedInstanceState)
+	{
 		super.onCreate(savedInstanceState);
 
 		adapter = new TrackScheduleAdapter(getActivity());
@@ -64,31 +87,36 @@ public class TrackScheduleListFragment extends ListFragment implements LoaderCal
 	}
 
 	@Override
-	public void onAttach(Activity activity) {
+	public void onAttach(Activity activity)
+	{
 		super.onAttach(activity);
-		if (activity instanceof Callbacks) {
+		if(activity instanceof Callbacks) {
 			listener = (Callbacks) activity;
 		}
 	}
 
 	@Override
-	public void onDetach() {
+	public void onDetach()
+	{
 		super.onDetach();
 		listener = null;
 	}
 
-	private void notifyEventSelected(int position) {
-		if (listener != null) {
+	private void notifyEventSelected(int position)
+	{
+		if(listener != null) {
 			listener.onEventSelected(position, (position == -1) ? null : adapter.getItem(position));
 		}
 	}
 
-	public void setSelectionEnabled(boolean selectionEnabled) {
+	public void setSelectionEnabled(boolean selectionEnabled)
+	{
 		this.selectionEnabled = selectionEnabled;
 	}
 
 	@Override
-	public void onActivityCreated(Bundle savedInstanceState) {
+	public void onActivityCreated(Bundle savedInstanceState)
+	{
 		super.onActivityCreated(savedInstanceState);
 
 		getListView().setChoiceMode(selectionEnabled ? ListView.CHOICE_MODE_SINGLE : ListView.CHOICE_MODE_NONE);
@@ -99,22 +127,24 @@ public class TrackScheduleListFragment extends ListFragment implements LoaderCal
 	}
 
 	@Override
-	public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+	public Loader<Cursor> onCreateLoader(int id, Bundle args)
+	{
 		Day day = getArguments().getParcelable(ARG_DAY);
 		Track track = getArguments().getParcelable(ARG_TRACK);
 		return new TrackScheduleLoader(getActivity(), day, track);
 	}
 
 	@Override
-	public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-		if (data != null) {
+	public void onLoadFinished(Loader<Cursor> loader, Cursor data)
+	{
+		if(data != null) {
 			adapter.swapCursor(data);
 
-			if (selectionEnabled) {
+			if(selectionEnabled) {
 				final int count = adapter.getCount();
 				int checkedPosition = getListView().getCheckedItemPosition();
-				if ((checkedPosition == ListView.INVALID_POSITION) || (checkedPosition >= count)) {
-					if (count > 0) {
+				if((checkedPosition == ListView.INVALID_POSITION) || (checkedPosition >= count)) {
+					if(count > 0) {
 						// Select the first item if any
 						getListView().setItemChecked(0, true);
 						checkedPosition = 0;
@@ -125,7 +155,7 @@ public class TrackScheduleListFragment extends ListFragment implements LoaderCal
 				}
 
 				// Ensure the current selection is visible
-				if (checkedPosition != -1) {
+				if(checkedPosition != -1) {
 					setSelection(checkedPosition);
 				}
 				// Notify the parent of the current selection to synchronize its state
@@ -134,7 +164,7 @@ public class TrackScheduleListFragment extends ListFragment implements LoaderCal
 		}
 
 		// The list should now be shown.
-		if (isResumed()) {
+		if(isResumed()) {
 			setListShown(true);
 		} else {
 			setListShownNoAnimation(true);
@@ -142,35 +172,42 @@ public class TrackScheduleListFragment extends ListFragment implements LoaderCal
 	}
 
 	@Override
-	public void onLoaderReset(Loader<Cursor> loader) {
+	public void onLoaderReset(Loader<Cursor> loader)
+	{
 		adapter.swapCursor(null);
 	}
 
 	@Override
-	public void onListItemClick(ListView l, View v, int position, long id) {
+	public void onListItemClick(ListView l, View v, int position, long id)
+	{
 		notifyEventSelected(position);
 	}
 
-	private static class TrackScheduleAdapter extends CursorAdapter {
+	private static class TrackScheduleAdapter extends CursorAdapter
+	{
 
 		private static final DateFormat TIME_DATE_FORMAT = DateUtils.getTimeDateFormat();
 
 		private final LayoutInflater inflater;
+
 		private final int titleTextSize;
 
-		public TrackScheduleAdapter(Context context) {
+		public TrackScheduleAdapter(Context context)
+		{
 			super(context, null, 0);
 			inflater = LayoutInflater.from(context);
 			titleTextSize = context.getResources().getDimensionPixelSize(R.dimen.list_item_title_text_size);
 		}
 
 		@Override
-		public Event getItem(int position) {
+		public Event getItem(int position)
+		{
 			return DatabaseManager.toEvent((Cursor) super.getItem(position));
 		}
 
 		@Override
-		public View newView(Context context, Cursor cursor, ViewGroup parent) {
+		public View newView(Context context, Cursor cursor, ViewGroup parent)
+		{
 			View view = inflater.inflate(R.layout.item_schedule_event, parent, false);
 
 			ViewHolder holder = new ViewHolder();
@@ -184,7 +221,8 @@ public class TrackScheduleListFragment extends ListFragment implements LoaderCal
 		}
 
 		@Override
-		public void bindView(View view, Context context, Cursor cursor) {
+		public void bindView(View view, Context context, Cursor cursor)
+		{
 			ViewHolder holder = (ViewHolder) view.getTag();
 			Event event = DatabaseManager.toEvent(cursor, holder.event);
 			holder.event = event;
@@ -193,24 +231,31 @@ public class TrackScheduleListFragment extends ListFragment implements LoaderCal
 			SpannableString spannableString;
 			String eventTitle = event.getTitle();
 			String personsSummary = event.getPersonsSummary();
-			if (TextUtils.isEmpty(personsSummary)) {
+			if(TextUtils.isEmpty(personsSummary)) {
 				spannableString = new SpannableString(String.format("%1$s\n%2$s", eventTitle, event.getRoomName()));
 			} else {
-				spannableString = new SpannableString(String.format("%1$s\n%2$s\n%3$s", eventTitle, personsSummary, event.getRoomName()));
+				spannableString = new SpannableString(
+					String.format("%1$s\n%2$s\n%3$s", eventTitle, personsSummary, event.getRoomName()));
 			}
 			spannableString.setSpan(holder.titleSizeSpan, 0, eventTitle.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-			spannableString.setSpan(holder.boldStyleSpan, 0, eventTitle.length() + personsSummary.length() + 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			spannableString.setSpan(holder.boldStyleSpan, 0, eventTitle.length() + personsSummary.length() + 1,
+									Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
 			holder.text.setText(spannableString);
 			int bookmarkDrawable = DatabaseManager.toBookmarkStatus(cursor) ? R.drawable.ic_small_starred : 0;
 			holder.text.setCompoundDrawablesWithIntrinsicBounds(0, 0, bookmarkDrawable, 0);
 		}
 
-		private static class ViewHolder {
+		private static class ViewHolder
+		{
 			TextView time;
+
 			TextView text;
+
 			AbsoluteSizeSpan titleSizeSpan;
+
 			StyleSpan boldStyleSpan;
+
 			Event event;
 		}
 	}

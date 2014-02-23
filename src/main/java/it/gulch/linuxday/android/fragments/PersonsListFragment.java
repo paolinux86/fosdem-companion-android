@@ -1,3 +1,18 @@
+/*
+ * Copyright 2014 Christophe Beyls
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package it.gulch.linuxday.android.fragments;
 
 import android.content.Context;
@@ -15,27 +30,30 @@ import android.widget.AlphabetIndexer;
 import android.widget.ListView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
+
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.activities.PersonInfoActivity;
 import it.gulch.linuxday.android.db.DatabaseManager;
 import it.gulch.linuxday.android.loaders.SimpleCursorLoader;
 import it.gulch.linuxday.android.model.Person;
 
-public class PersonsListFragment extends ListFragment implements LoaderCallbacks<Cursor> {
-
+public class PersonsListFragment extends ListFragment implements LoaderCallbacks<Cursor>
+{
 	private static final int PERSONS_LOADER_ID = 1;
 
 	private PersonsAdapter adapter;
 
 	@Override
-	public void onCreate(Bundle savedInstanceState) {
+	public void onCreate(Bundle savedInstanceState)
+	{
 		super.onCreate(savedInstanceState);
 		adapter = new PersonsAdapter(getActivity());
 		setListAdapter(adapter);
 	}
 
 	@Override
-	public void onActivityCreated(Bundle savedInstanceState) {
+	public void onActivityCreated(Bundle savedInstanceState)
+	{
 		super.onActivityCreated(savedInstanceState);
 
 		getListView().setFastScrollEnabled(true);
@@ -45,31 +63,35 @@ public class PersonsListFragment extends ListFragment implements LoaderCallbacks
 		getLoaderManager().initLoader(PERSONS_LOADER_ID, null, this);
 	}
 
-	private static class PersonsLoader extends SimpleCursorLoader {
-
-		public PersonsLoader(Context context) {
+	private static class PersonsLoader extends SimpleCursorLoader
+	{
+		public PersonsLoader(Context context)
+		{
 			super(context);
 		}
 
 		@Override
-		protected Cursor getCursor() {
+		protected Cursor getCursor()
+		{
 			return DatabaseManager.getInstance().getPersons();
 		}
 	}
 
 	@Override
-	public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+	public Loader<Cursor> onCreateLoader(int id, Bundle args)
+	{
 		return new PersonsLoader(getActivity());
 	}
 
 	@Override
-	public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-		if (data != null) {
+	public void onLoadFinished(Loader<Cursor> loader, Cursor data)
+	{
+		if(data != null) {
 			adapter.swapCursor(data);
 		}
 
 		// The list should now be shown.
-		if (isResumed()) {
+		if(isResumed()) {
 			setListShown(true);
 		} else {
 			setListShownNoAnimation(true);
@@ -77,37 +99,45 @@ public class PersonsListFragment extends ListFragment implements LoaderCallbacks
 	}
 
 	@Override
-	public void onLoaderReset(Loader<Cursor> loader) {
+	public void onLoaderReset(Loader<Cursor> loader)
+	{
 		adapter.swapCursor(null);
 	}
 
 	@Override
-	public void onListItemClick(ListView l, View v, int position, long id) {
+	public void onListItemClick(ListView l, View v, int position, long id)
+	{
 		Person person = adapter.getItem(position);
-		Intent intent = new Intent(getActivity(), PersonInfoActivity.class).putExtra(PersonInfoActivity.EXTRA_PERSON, person);
+		Intent intent =
+			new Intent(getActivity(), PersonInfoActivity.class).putExtra(PersonInfoActivity.EXTRA_PERSON, person);
 		startActivity(intent);
 	}
 
-	private static class PersonsAdapter extends CursorAdapter implements SectionIndexer {
+	private static class PersonsAdapter extends CursorAdapter implements SectionIndexer
+	{
 
 		private static final String ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 		private final LayoutInflater inflater;
+
 		private final AlphabetIndexer indexer;
 
-		public PersonsAdapter(Context context) {
+		public PersonsAdapter(Context context)
+		{
 			super(context, null, 0);
 			inflater = LayoutInflater.from(context);
 			indexer = new AlphabetIndexer(null, DatabaseManager.PERSON_NAME_COLUMN_INDEX, ALPHABET);
 		}
 
 		@Override
-		public Person getItem(int position) {
+		public Person getItem(int position)
+		{
 			return DatabaseManager.toPerson((Cursor) super.getItem(position));
 		}
 
 		@Override
-		public View newView(Context context, Cursor cursor, ViewGroup parent) {
+		public View newView(Context context, Cursor cursor, ViewGroup parent)
+		{
 			View view = inflater.inflate(android.R.layout.simple_list_item_1, parent, false);
 
 			ViewHolder holder = new ViewHolder();
@@ -118,35 +148,42 @@ public class PersonsListFragment extends ListFragment implements LoaderCallbacks
 		}
 
 		@Override
-		public void bindView(View view, Context context, Cursor cursor) {
+		public void bindView(View view, Context context, Cursor cursor)
+		{
 			ViewHolder holder = (ViewHolder) view.getTag();
 			holder.person = DatabaseManager.toPerson(cursor, holder.person);
 			holder.textView.setText(holder.person.getName());
 		}
 
 		@Override
-		public Cursor swapCursor(Cursor newCursor) {
+		public Cursor swapCursor(Cursor newCursor)
+		{
 			indexer.setCursor(newCursor);
 			return super.swapCursor(newCursor);
 		}
 
 		@Override
-		public int getPositionForSection(int sectionIndex) {
+		public int getPositionForSection(int sectionIndex)
+		{
 			return indexer.getPositionForSection(sectionIndex);
 		}
 
 		@Override
-		public int getSectionForPosition(int position) {
+		public int getSectionForPosition(int position)
+		{
 			return indexer.getSectionForPosition(position);
 		}
 
 		@Override
-		public Object[] getSections() {
+		public Object[] getSections()
+		{
 			return indexer.getSections();
 		}
 
-		private static class ViewHolder {
+		private static class ViewHolder
+		{
 			public TextView textView;
+
 			public Person person;
 		}
 	}

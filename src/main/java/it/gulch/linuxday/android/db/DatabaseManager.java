@@ -1,14 +1,19 @@
+/*
+ * Copyright 2014 Christophe Beyls
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package it.gulch.linuxday.android.db;
-
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
 
 import android.app.SearchManager;
 import android.content.ContentValues;
@@ -23,6 +28,17 @@ import android.net.Uri;
 import android.provider.BaseColumns;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.TextUtils;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
 import it.gulch.linuxday.android.model.Day;
 import it.gulch.linuxday.android.model.Event;
 import it.gulch.linuxday.android.model.Link;
@@ -32,51 +48,63 @@ import it.gulch.linuxday.android.utils.DateUtils;
 
 /**
  * Here comes the badass SQL.
- * 
+ *
  * @author Christophe Beyls
- * 
  */
-public class DatabaseManager {
-
+public class DatabaseManager
+{
 	public static final String ACTION_SCHEDULE_REFRESHED = "it.gulch.linuxday.android.action.SCHEDULE_REFRESHED";
+
 	public static final String ACTION_ADD_BOOKMARK = "it.gulch.linuxday.android.action.ADD_BOOKMARK";
+
 	public static final String EXTRA_EVENT_ID = "event_id";
+
 	public static final String EXTRA_EVENT_START_TIME = "event_start";
+
 	public static final String ACTION_REMOVE_BOOKMARKS = "it.gulch.linuxday.android.action.REMOVE_BOOKMARKS";
+
 	public static final String EXTRA_EVENT_IDS = "event_ids";
 
 	private static final Uri URI_TRACKS = Uri.parse("sqlite://it.gulch.linuxday.android/tracks");
+
 	private static final Uri URI_EVENTS = Uri.parse("sqlite://it.gulch.linuxday.android/events");
 
 	private static final String DB_PREFS_FILE = "database";
+
 	private static final String LAST_UPDATE_TIME_PREF = "last_update_time";
 
 	private static DatabaseManager instance;
 
 	private Context context;
+
 	private DatabaseHelper helper;
 
 	private List<Day> cachedDays;
+
 	private int year = -1;
 
-	public static void init(Context context) {
-		if (instance == null) {
+	public static void init(Context context)
+	{
+		if(instance == null) {
 			instance = new DatabaseManager(context);
 		}
 	}
 
-	public static DatabaseManager getInstance() {
+	public static DatabaseManager getInstance()
+	{
 		return instance;
 	}
 
-	private DatabaseManager(Context context) {
+	private DatabaseManager(Context context)
+	{
 		this.context = context;
 		helper = new DatabaseHelper(context);
 	}
 
 	private static final String[] COUNT_PROJECTION = new String[] { "count(*)" };
 
-	private static long queryNumEntries(SQLiteDatabase db, String table, String selection, String[] selectionArgs) {
+	private static long queryNumEntries(SQLiteDatabase db, String table, String selection, String[] selectionArgs)
+	{
 		Cursor cursor = db.query(table, COUNT_PROJECTION, selection, selectionArgs, null, null, null);
 		try {
 			cursor.moveToFirst();
@@ -86,44 +114,55 @@ public class DatabaseManager {
 		}
 	}
 
-	private static final String TRACK_INSERT_STATEMENT = "INSERT INTO " + DatabaseHelper.TRACKS_TABLE_NAME + " (id, name, type) VALUES (?, ?, ?);";
-	private static final String EVENT_INSERT_STATEMENT = "INSERT INTO " + DatabaseHelper.EVENTS_TABLE_NAME
-			+ " (id, day_index, start_time, end_time, room_name, slug, track_id, abstract, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
-	private static final String EVENT_TITLES_INSERT_STATEMENT = "INSERT INTO " + DatabaseHelper.EVENTS_TITLES_TABLE_NAME
-			+ " (rowid, title, subtitle) VALUES (?, ?, ?);";
-	private static final String EVENT_PERSON_INSERT_STATEMENT = "INSERT INTO " + DatabaseHelper.EVENTS_PERSONS_TABLE_NAME
-			+ " (event_id, person_id) VALUES (?, ?);";
-	// Ignore conflicts in case of existing person
-	private static final String PERSON_INSERT_STATEMENT = "INSERT OR IGNORE INTO " + DatabaseHelper.PERSONS_TABLE_NAME + " (rowid, name) VALUES (?, ?);";
-	private static final String LINK_INSERT_STATEMENT = "INSERT INTO " + DatabaseHelper.LINKS_TABLE_NAME + " (event_id, url, description) VALUES (?, ?, ?);";
+	private static final String TRACK_INSERT_STATEMENT =
+		"INSERT INTO " + DatabaseHelper.TRACKS_TABLE_NAME + " (id, name, type) VALUES (?, ?, ?);";
 
-	private static void bindString(SQLiteStatement statement, int index, String value) {
-		if (value == null) {
+	private static final String EVENT_INSERT_STATEMENT = "INSERT INTO " + DatabaseHelper.EVENTS_TABLE_NAME +
+		" (id, day_index, start_time, end_time, room_name, slug, track_id, abstract, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);";
+
+	private static final String EVENT_TITLES_INSERT_STATEMENT =
+		"INSERT INTO " + DatabaseHelper.EVENTS_TITLES_TABLE_NAME + " (rowid, title, subtitle) VALUES (?, ?, ?);";
+
+	private static final String EVENT_PERSON_INSERT_STATEMENT =
+		"INSERT INTO " + DatabaseHelper.EVENTS_PERSONS_TABLE_NAME + " (event_id, person_id) VALUES (?, ?);";
+
+	// Ignore conflicts in case of existing person
+	private static final String PERSON_INSERT_STATEMENT =
+		"INSERT OR IGNORE INTO " + DatabaseHelper.PERSONS_TABLE_NAME + " (rowid, name) VALUES (?, ?);";
+
+	private static final String LINK_INSERT_STATEMENT =
+		"INSERT INTO " + DatabaseHelper.LINKS_TABLE_NAME + " (event_id, url, description) VALUES (?, ?, ?);";
+
+	private static void bindString(SQLiteStatement statement, int index, String value)
+	{
+		if(value == null) {
 			statement.bindNull(index);
 		} else {
 			statement.bindString(index, value);
 		}
 	}
 
-	private SharedPreferences getSharedPreferences() {
+	private SharedPreferences getSharedPreferences()
+	{
 		return context.getSharedPreferences(DB_PREFS_FILE, Context.MODE_PRIVATE);
 	}
 
 	/**
-	 * 
 	 * @return The last update time in milliseconds since EPOCH, or -1 if not available.
 	 */
-	public long getLastUpdateTime() {
+	public long getLastUpdateTime()
+	{
 		return getSharedPreferences().getLong(LAST_UPDATE_TIME_PREF, -1L);
 	}
 
 	/**
 	 * Stores the schedule to the database.
-	 * 
+	 *
 	 * @param events
 	 * @return The number of events processed.
 	 */
-	public int storeSchedule(Iterable<Event> events) {
+	public int storeSchedule(Iterable<Event> events)
+	{
 		boolean isComplete = false;
 
 		SQLiteDatabase db = helper.getWritableDatabase();
@@ -146,11 +185,11 @@ public class DatabaseManager {
 			long nextTrackId = 0L;
 			Set<Day> days = new HashSet<Day>(2);
 
-			for (Event event : events) {
+			for(Event event : events) {
 				// 2a: Retrieve or insert Track
 				Track track = event.getTrack();
 				Long trackId = tracks.get(track);
-				if (trackId == null) {
+				if(trackId == null) {
 					// New track
 					nextTrackId++;
 					trackId = nextTrackId;
@@ -158,7 +197,7 @@ public class DatabaseManager {
 					trackInsertStatement.bindLong(1, nextTrackId);
 					bindString(trackInsertStatement, 2, track.getName());
 					bindString(trackInsertStatement, 3, track.getType().name());
-					if (trackInsertStatement.executeInsert() != -1L) {
+					if(trackInsertStatement.executeInsert() != -1L) {
 						tracks.put(track, trackId);
 					}
 				}
@@ -171,13 +210,13 @@ public class DatabaseManager {
 				days.add(day);
 				eventInsertStatement.bindLong(2, day.getIndex());
 				Date time = event.getStartTime();
-				if (time == null) {
+				if(time == null) {
 					eventInsertStatement.bindNull(3);
 				} else {
 					eventInsertStatement.bindLong(3, time.getTime());
 				}
 				time = event.getEndTime();
-				if (time == null) {
+				if(time == null) {
 					eventInsertStatement.bindNull(4);
 				} else {
 					eventInsertStatement.bindLong(4, time.getTime());
@@ -188,7 +227,7 @@ public class DatabaseManager {
 				bindString(eventInsertStatement, 8, event.getAbstractText());
 				bindString(eventInsertStatement, 9, event.getDescription());
 
-				if (eventInsertStatement.executeInsert() != -1L) {
+				if(eventInsertStatement.executeInsert() != -1L) {
 					// 2c: Insert fulltext fields
 					eventTitlesInsertStatement.clearBindings();
 					eventTitlesInsertStatement.bindLong(1, eventId);
@@ -197,7 +236,7 @@ public class DatabaseManager {
 					eventTitlesInsertStatement.executeInsert();
 
 					// 2d: Insert persons
-					for (Person person : event.getPersons()) {
+					for(Person person : event.getPersons()) {
 						eventPersonInsertStatement.clearBindings();
 						eventPersonInsertStatement.bindLong(1, eventId);
 						long personId = person.getId();
@@ -209,13 +248,13 @@ public class DatabaseManager {
 						bindString(personInsertStatement, 2, person.getName());
 						try {
 							personInsertStatement.executeInsert();
-						} catch (SQLiteConstraintException e) {
+						} catch(SQLiteConstraintException e) {
 							// Older Android versions may not ignore an existing person
 						}
 					}
 
 					// 2e: Insert links
-					for (Link link : event.getLinks()) {
+					for(Link link : event.getLinks()) {
 						linkInsertStatement.clearBindings();
 						linkInsertStatement.bindLong(1, eventId);
 						bindString(linkInsertStatement, 2, link.getUrl());
@@ -229,7 +268,7 @@ public class DatabaseManager {
 
 			// 3: Insert collected days
 			ContentValues values = new ContentValues();
-			for (Day day : days) {
+			for(Day day : days) {
 				values.clear();
 				values.put("_index", day.getIndex());
 				Date date = day.getDate();
@@ -246,7 +285,7 @@ public class DatabaseManager {
 		} finally {
 			db.endTransaction();
 
-			if (isComplete) {
+			if(isComplete) {
 				// Clear cache
 				cachedDays = null;
 				year = -1;
@@ -260,7 +299,8 @@ public class DatabaseManager {
 		}
 	}
 
-	public void clearSchedule() {
+	public void clearSchedule()
+	{
 		SQLiteDatabase db = helper.getWritableDatabase();
 		db.beginTransaction();
 		try {
@@ -280,7 +320,8 @@ public class DatabaseManager {
 		}
 	}
 
-	private static void clearSchedule(SQLiteDatabase db) {
+	private static void clearSchedule(SQLiteDatabase db)
+	{
 		db.delete(DatabaseHelper.EVENTS_TABLE_NAME, null, null);
 		db.delete(DatabaseHelper.EVENTS_TITLES_TABLE_NAME, null, null);
 		db.delete(DatabaseHelper.PERSONS_TABLE_NAME, null, null);
@@ -292,23 +333,25 @@ public class DatabaseManager {
 
 	/**
 	 * Returns the cached days list or null. Can be safely called on the main thread without blocking it.
-	 * 
+	 *
 	 * @return
 	 */
-	public List<Day> getCachedDays() {
+	public List<Day> getCachedDays()
+	{
 		return cachedDays;
 	}
 
 	/**
-	 * 
 	 * @return The Days the events span to.
 	 */
-	public List<Day> getDays() {
-		Cursor cursor = helper.getReadableDatabase().query(DatabaseHelper.DAYS_TABLE_NAME, new String[] { "_index", "date" }, null, null, null, null,
-				"_index ASC");
+	public List<Day> getDays()
+	{
+		Cursor cursor = helper.getReadableDatabase()
+			.query(DatabaseHelper.DAYS_TABLE_NAME, new String[] { "_index", "date" }, null, null, null, null,
+				   "_index ASC");
 		try {
 			List<Day> result = new ArrayList<Day>(cursor.getCount());
-			while (cursor.moveToNext()) {
+			while(cursor.moveToNext()) {
 				Day day = new Day();
 				day.setIndex(cursor.getInt(0));
 				day.setDate(new Date(cursor.getLong(1)));
@@ -321,25 +364,27 @@ public class DatabaseManager {
 		}
 	}
 
-	public int getYear() {
+	public int getYear()
+	{
 		// Try to get the cached value first
-		if (year != -1) {
+		if(year != -1) {
 			return year;
 		}
 
 		Calendar cal = Calendar.getInstance(DateUtils.getBelgiumTimeZone(), Locale.US);
 
 		// Compute from cachedDays if available
-		if (cachedDays != null) {
-			if (cachedDays.size() > 0) {
+		if(cachedDays != null) {
+			if(cachedDays.size() > 0) {
 				cal.setTime(cachedDays.get(0).getDate());
 			}
 		} else {
 			// Perform a quick DB query to retrieve the time of the first day
-			Cursor cursor = helper.getReadableDatabase().query(DatabaseHelper.DAYS_TABLE_NAME, new String[] { "date" }, null, null, null, null,
-					"_index ASC LIMIT 1");
+			Cursor cursor = helper.getReadableDatabase()
+				.query(DatabaseHelper.DAYS_TABLE_NAME, new String[] { "date" }, null, null, null, null,
+					   "_index ASC LIMIT 1");
 			try {
-				if (cursor.moveToFirst()) {
+				if(cursor.moveToFirst()) {
 					cal.setTimeInMillis(cursor.getLong(0));
 				}
 			} finally {
@@ -352,17 +397,20 @@ public class DatabaseManager {
 		return year;
 	}
 
-	public Cursor getTracks(Day day) {
+	public Cursor getTracks(Day day)
+	{
 		String[] selectionArgs = new String[] { String.valueOf(day.getIndex()) };
 		Cursor cursor = helper.getReadableDatabase().rawQuery(
-				"SELECT t.id AS _id, t.name, t.type" + " FROM " + DatabaseHelper.TRACKS_TABLE_NAME + " t" + " JOIN " + DatabaseHelper.EVENTS_TABLE_NAME
-						+ " e ON t.id = e.track_id" + " WHERE e.day_index = ?" + " GROUP BY t.id" + " ORDER BY t.name ASC", selectionArgs);
+			"SELECT t.id AS _id, t.name, t.type" + " FROM " + DatabaseHelper.TRACKS_TABLE_NAME + " t" + " JOIN " +
+				DatabaseHelper.EVENTS_TABLE_NAME + " e ON t.id = e.track_id" + " WHERE e.day_index = ?" +
+				" GROUP BY t.id" + " ORDER BY t.name ASC", selectionArgs);
 		cursor.setNotificationUri(context.getContentResolver(), URI_EVENTS);
 		return cursor;
 	}
 
-	public static Track toTrack(Cursor cursor, Track track) {
-		if (track == null) {
+	public static Track toTrack(Cursor cursor, Track track)
+	{
+		if(track == null) {
 			track = new Track();
 		}
 		track.setName(cursor.getString(1));
@@ -371,44 +419,33 @@ public class DatabaseManager {
 		return track;
 	}
 
-	public static Track toTrack(Cursor cursor) {
+	public static Track toTrack(Cursor cursor)
+	{
 		return toTrack(cursor, null);
 	}
 
-	public long getEventsCount() {
+	public long getEventsCount()
+	{
 		return queryNumEntries(helper.getReadableDatabase(), DatabaseHelper.EVENTS_TABLE_NAME, null, null);
 	}
 
 	/**
 	 * Returns the event with the specified id.
 	 */
-	public Event getEvent(long id) {
+	public Event getEvent(long id)
+	{
 		String[] selectionArgs = new String[] { String.valueOf(id) };
-		Cursor cursor = helper
-				.getReadableDatabase()
-				.rawQuery(
-						"SELECT e.id AS _id, e.start_time, e.end_time, e.room_name, e.slug, et.title, et.subtitle, e.abstract, e.description, GROUP_CONCAT(p.name, ', '), e.day_index, d.date, t.name, t.type"
-								+ " FROM "
-								+ DatabaseHelper.EVENTS_TABLE_NAME
-								+ " e"
-								+ " JOIN "
-								+ DatabaseHelper.EVENTS_TITLES_TABLE_NAME
-								+ " et ON e.id = et.rowid"
-								+ " JOIN "
-								+ DatabaseHelper.DAYS_TABLE_NAME
-								+ " d ON e.day_index = d._index"
-								+ " JOIN "
-								+ DatabaseHelper.TRACKS_TABLE_NAME
-								+ " t ON e.track_id = t.id"
-								+ " LEFT JOIN "
-								+ DatabaseHelper.EVENTS_PERSONS_TABLE_NAME
-								+ " ep ON e.id = ep.event_id"
-								+ " LEFT JOIN "
-								+ DatabaseHelper.PERSONS_TABLE_NAME
-								+ " p ON ep.person_id = p.rowid"
-								+ " WHERE e.id = ?" + " GROUP BY e.id", selectionArgs);
+		Cursor cursor = helper.getReadableDatabase().rawQuery(
+			"SELECT e.id AS _id, e.start_time, e.end_time, e.room_name, e.slug, et.title, et.subtitle, e.abstract, e.description, GROUP_CONCAT(p.name, ', '), e.day_index, d.date, t.name, t.type" +
+				" FROM " + DatabaseHelper.EVENTS_TABLE_NAME + " e" + " JOIN " +
+				DatabaseHelper.EVENTS_TITLES_TABLE_NAME + " et ON e.id = et.rowid" + " JOIN " +
+				DatabaseHelper.DAYS_TABLE_NAME + " d ON e.day_index = d._index" + " JOIN " +
+				DatabaseHelper.TRACKS_TABLE_NAME + " t ON e.track_id = t.id" + " LEFT JOIN " +
+				DatabaseHelper.EVENTS_PERSONS_TABLE_NAME + " ep ON e.id = ep.event_id" + " LEFT JOIN " +
+				DatabaseHelper.PERSONS_TABLE_NAME + " p ON ep.person_id = p.rowid" + " WHERE e.id = ?" +
+				" GROUP BY e.id", selectionArgs);
 		try {
-			if (cursor.moveToFirst()) {
+			if(cursor.moveToFirst()) {
 				return toEvent(cursor);
 			} else {
 				return null;
@@ -420,168 +457,117 @@ public class DatabaseManager {
 
 	/**
 	 * Returns the events for a specified track.
-	 * 
+	 *
 	 * @param day
 	 * @param track
 	 * @return A cursor to Events
 	 */
-	public Cursor getEvents(Day day, Track track) {
-		String[] selectionArgs = new String[] { String.valueOf(day.getIndex()), track.getName(), track.getType().name() };
-		Cursor cursor = helper
-				.getReadableDatabase()
-				.rawQuery(
-						"SELECT e.id AS _id, e.start_time, e.end_time, e.room_name, e.slug, et.title, et.subtitle, e.abstract, e.description, GROUP_CONCAT(p.name, ', '), e.day_index, d.date, t.name, t.type, b.event_id"
-								+ " FROM "
-								+ DatabaseHelper.EVENTS_TABLE_NAME
-								+ " e"
-								+ " JOIN "
-								+ DatabaseHelper.EVENTS_TITLES_TABLE_NAME
-								+ " et ON e.id = et.rowid"
-								+ " JOIN "
-								+ DatabaseHelper.DAYS_TABLE_NAME
-								+ " d ON e.day_index = d._index"
-								+ " JOIN "
-								+ DatabaseHelper.TRACKS_TABLE_NAME
-								+ " t ON e.track_id = t.id"
-								+ " LEFT JOIN "
-								+ DatabaseHelper.EVENTS_PERSONS_TABLE_NAME
-								+ " ep ON e.id = ep.event_id"
-								+ " LEFT JOIN "
-								+ DatabaseHelper.PERSONS_TABLE_NAME
-								+ " p ON ep.person_id = p.rowid"
-								+ " LEFT JOIN "
-								+ DatabaseHelper.BOOKMARKS_TABLE_NAME
-								+ " b ON e.id = b.event_id"
-								+ " WHERE e.day_index = ? AND t.name = ? AND t.type = ?"
-								+ " GROUP BY e.id" + " ORDER BY e.start_time ASC", selectionArgs);
+	public Cursor getEvents(Day day, Track track)
+	{
+		String[] selectionArgs =
+			new String[] { String.valueOf(day.getIndex()), track.getName(), track.getType().name() };
+		Cursor cursor = helper.getReadableDatabase().rawQuery(
+			"SELECT e.id AS _id, e.start_time, e.end_time, e.room_name, e.slug, et.title, et.subtitle, e.abstract, e.description, GROUP_CONCAT(p.name, ', '), e.day_index, d.date, t.name, t.type, b.event_id" +
+				" FROM " + DatabaseHelper.EVENTS_TABLE_NAME + " e" + " JOIN " +
+				DatabaseHelper.EVENTS_TITLES_TABLE_NAME + " et ON e.id = et.rowid" + " JOIN " +
+				DatabaseHelper.DAYS_TABLE_NAME + " d ON e.day_index = d._index" + " JOIN " +
+				DatabaseHelper.TRACKS_TABLE_NAME + " t ON e.track_id = t.id" + " LEFT JOIN " +
+				DatabaseHelper.EVENTS_PERSONS_TABLE_NAME + " ep ON e.id = ep.event_id" + " LEFT JOIN " +
+				DatabaseHelper.PERSONS_TABLE_NAME + " p ON ep.person_id = p.rowid" + " LEFT JOIN " +
+				DatabaseHelper.BOOKMARKS_TABLE_NAME + " b ON e.id = b.event_id" +
+				" WHERE e.day_index = ? AND t.name = ? AND t.type = ?" + " GROUP BY e.id" +
+				" ORDER BY e.start_time ASC", selectionArgs);
 		cursor.setNotificationUri(context.getContentResolver(), URI_EVENTS);
 		return cursor;
 	}
 
 	/**
 	 * Returns the events in the specified time window, ordered by start time. All parameters are optional but at least one must be provided.
-	 * 
-	 * @param minStartTime
-	 *            Minimum start time, or -1
-	 * @param maxStartTime
-	 *            Maximum start time, or -1
-	 * @param minEndTime
-	 *            Minimum end time, or -1
-	 * @param ascending
-	 *            If true, order results from start time ascending, else order from start time descending
+	 *
+	 * @param minStartTime Minimum start time, or -1
+	 * @param maxStartTime Maximum start time, or -1
+	 * @param minEndTime   Minimum end time, or -1
+	 * @param ascending    If true, order results from start time ascending, else order from start time descending
 	 * @return
 	 */
-	public Cursor getEvents(long minStartTime, long maxStartTime, long minEndTime, boolean ascending) {
+	public Cursor getEvents(long minStartTime, long maxStartTime, long minEndTime, boolean ascending)
+	{
 		ArrayList<String> selectionArgs = new ArrayList<String>(3);
 		StringBuilder whereCondition = new StringBuilder();
 
-		if (minStartTime > 0L) {
+		if(minStartTime > 0L) {
 			whereCondition.append("e.start_time > ?");
 			selectionArgs.add(String.valueOf(minStartTime));
 		}
-		if (maxStartTime > 0L) {
-			if (whereCondition.length() > 0) {
+		if(maxStartTime > 0L) {
+			if(whereCondition.length() > 0) {
 				whereCondition.append(" AND ");
 			}
 			whereCondition.append("e.start_time < ?");
 			selectionArgs.add(String.valueOf(maxStartTime));
 		}
-		if (minEndTime > 0L) {
-			if (whereCondition.length() > 0) {
+		if(minEndTime > 0L) {
+			if(whereCondition.length() > 0) {
 				whereCondition.append(" AND ");
 			}
 			whereCondition.append("e.end_time > ?");
 			selectionArgs.add(String.valueOf(minEndTime));
 		}
-		if (whereCondition.length() == 0) {
+		if(whereCondition.length() == 0) {
 			throw new IllegalArgumentException("At least one filter must be provided");
 		}
 		String ascendingString = ascending ? "ASC" : "DESC";
 
-		Cursor cursor = helper
-				.getReadableDatabase()
-				.rawQuery(
-						"SELECT e.id AS _id, e.start_time, e.end_time, e.room_name, e.slug, et.title, et.subtitle, e.abstract, e.description, GROUP_CONCAT(p.name, ', '), e.day_index, d.date, t.name, t.type, b.event_id"
-								+ " FROM "
-								+ DatabaseHelper.EVENTS_TABLE_NAME
-								+ " e"
-								+ " JOIN "
-								+ DatabaseHelper.EVENTS_TITLES_TABLE_NAME
-								+ " et ON e.id = et.rowid"
-								+ " JOIN "
-								+ DatabaseHelper.DAYS_TABLE_NAME
-								+ " d ON e.day_index = d._index"
-								+ " JOIN "
-								+ DatabaseHelper.TRACKS_TABLE_NAME
-								+ " t ON e.track_id = t.id"
-								+ " LEFT JOIN "
-								+ DatabaseHelper.EVENTS_PERSONS_TABLE_NAME
-								+ " ep ON e.id = ep.event_id"
-								+ " LEFT JOIN "
-								+ DatabaseHelper.PERSONS_TABLE_NAME
-								+ " p ON ep.person_id = p.rowid"
-								+ " LEFT JOIN "
-								+ DatabaseHelper.BOOKMARKS_TABLE_NAME
-								+ " b ON e.id = b.event_id"
-								+ " WHERE "
-								+ whereCondition.toString()
-								+ " GROUP BY e.id"
-								+ " ORDER BY e.start_time " + ascendingString, selectionArgs.toArray(new String[selectionArgs.size()]));
+		Cursor cursor = helper.getReadableDatabase().rawQuery(
+			"SELECT e.id AS _id, e.start_time, e.end_time, e.room_name, e.slug, et.title, et.subtitle, e.abstract, e.description, GROUP_CONCAT(p.name, ', '), e.day_index, d.date, t.name, t.type, b.event_id" +
+				" FROM " + DatabaseHelper.EVENTS_TABLE_NAME + " e" + " JOIN " +
+				DatabaseHelper.EVENTS_TITLES_TABLE_NAME + " et ON e.id = et.rowid" + " JOIN " +
+				DatabaseHelper.DAYS_TABLE_NAME + " d ON e.day_index = d._index" + " JOIN " +
+				DatabaseHelper.TRACKS_TABLE_NAME + " t ON e.track_id = t.id" + " LEFT JOIN " +
+				DatabaseHelper.EVENTS_PERSONS_TABLE_NAME + " ep ON e.id = ep.event_id" + " LEFT JOIN " +
+				DatabaseHelper.PERSONS_TABLE_NAME + " p ON ep.person_id = p.rowid" + " LEFT JOIN " +
+				DatabaseHelper.BOOKMARKS_TABLE_NAME + " b ON e.id = b.event_id" + " WHERE " +
+				whereCondition.toString() + " GROUP BY e.id" + " ORDER BY e.start_time " + ascendingString,
+			selectionArgs.toArray(new String[selectionArgs.size()]));
 		cursor.setNotificationUri(context.getContentResolver(), URI_EVENTS);
 		return cursor;
 	}
 
 	/**
 	 * Returns the events presented by the specified person.
-	 * 
+	 *
 	 * @param person
 	 * @return A cursor to Events
 	 */
-	public Cursor getEvents(Person person) {
+	public Cursor getEvents(Person person)
+	{
 		String[] selectionArgs = new String[] { String.valueOf(person.getId()) };
-		Cursor cursor = helper
-				.getReadableDatabase()
-				.rawQuery(
-						"SELECT e.id AS _id, e.start_time, e.end_time, e.room_name, e.slug, et.title, et.subtitle, e.abstract, e.description, GROUP_CONCAT(p.name, ', '), e.day_index, d.date, t.name, t.type, b.event_id"
-								+ " FROM "
-								+ DatabaseHelper.EVENTS_TABLE_NAME
-								+ " e"
-								+ " JOIN "
-								+ DatabaseHelper.EVENTS_TITLES_TABLE_NAME
-								+ " et ON e.id = et.rowid"
-								+ " JOIN "
-								+ DatabaseHelper.DAYS_TABLE_NAME
-								+ " d ON e.day_index = d._index"
-								+ " JOIN "
-								+ DatabaseHelper.TRACKS_TABLE_NAME
-								+ " t ON e.track_id = t.id"
-								+ " LEFT JOIN "
-								+ DatabaseHelper.EVENTS_PERSONS_TABLE_NAME
-								+ " ep ON e.id = ep.event_id"
-								+ " LEFT JOIN "
-								+ DatabaseHelper.PERSONS_TABLE_NAME
-								+ " p ON ep.person_id = p.rowid"
-								+ " LEFT JOIN "
-								+ DatabaseHelper.BOOKMARKS_TABLE_NAME
-								+ " b ON e.id = b.event_id"
-								+ " JOIN "
-								+ DatabaseHelper.EVENTS_PERSONS_TABLE_NAME
-								+ " ep2 ON e.id = ep2.event_id" + " WHERE ep2.person_id = ?" + " GROUP BY e.id" + " ORDER BY e.start_time ASC", selectionArgs);
+		Cursor cursor = helper.getReadableDatabase().rawQuery(
+			"SELECT e.id AS _id, e.start_time, e.end_time, e.room_name, e.slug, et.title, et.subtitle, e.abstract, e.description, GROUP_CONCAT(p.name, ', '), e.day_index, d.date, t.name, t.type, b.event_id" +
+				" FROM " + DatabaseHelper.EVENTS_TABLE_NAME + " e" + " JOIN " +
+				DatabaseHelper.EVENTS_TITLES_TABLE_NAME + " et ON e.id = et.rowid" + " JOIN " +
+				DatabaseHelper.DAYS_TABLE_NAME + " d ON e.day_index = d._index" + " JOIN " +
+				DatabaseHelper.TRACKS_TABLE_NAME + " t ON e.track_id = t.id" + " LEFT JOIN " +
+				DatabaseHelper.EVENTS_PERSONS_TABLE_NAME + " ep ON e.id = ep.event_id" + " LEFT JOIN " +
+				DatabaseHelper.PERSONS_TABLE_NAME + " p ON ep.person_id = p.rowid" + " LEFT JOIN " +
+				DatabaseHelper.BOOKMARKS_TABLE_NAME + " b ON e.id = b.event_id" + " JOIN " +
+				DatabaseHelper.EVENTS_PERSONS_TABLE_NAME + " ep2 ON e.id = ep2.event_id" + " WHERE ep2.person_id = ?" +
+				" GROUP BY e.id" + " ORDER BY e.start_time ASC", selectionArgs);
 		cursor.setNotificationUri(context.getContentResolver(), URI_EVENTS);
 		return cursor;
 	}
 
 	/**
 	 * Returns the bookmarks.
-	 * 
-	 * @param minStartTime
-	 *            When positive, only return the events starting after this time.
+	 *
+	 * @param minStartTime When positive, only return the events starting after this time.
 	 * @return A cursor to Events
 	 */
-	public Cursor getBookmarks(long minStartTime) {
+	public Cursor getBookmarks(long minStartTime)
+	{
 		String whereCondition;
 		String[] selectionArgs;
-		if (minStartTime > 0L) {
+		if(minStartTime > 0L) {
 			whereCondition = " WHERE e.start_time > ?";
 			selectionArgs = new String[] { String.valueOf(minStartTime) };
 		} else {
@@ -589,31 +575,15 @@ public class DatabaseManager {
 			selectionArgs = null;
 		}
 
-		Cursor cursor = helper
-				.getReadableDatabase()
-				.rawQuery(
-						"SELECT e.id AS _id, e.start_time, e.end_time, e.room_name, e.slug, et.title, et.subtitle, e.abstract, e.description, GROUP_CONCAT(p.name, ', '), e.day_index, d.date, t.name, t.type, 1"
-								+ " FROM "
-								+ DatabaseHelper.BOOKMARKS_TABLE_NAME
-								+ " b"
-								+ " JOIN "
-								+ DatabaseHelper.EVENTS_TABLE_NAME
-								+ " e ON b.event_id = e.id"
-								+ " JOIN "
-								+ DatabaseHelper.EVENTS_TITLES_TABLE_NAME
-								+ " et ON e.id = et.rowid"
-								+ " JOIN "
-								+ DatabaseHelper.DAYS_TABLE_NAME
-								+ " d ON e.day_index = d._index"
-								+ " JOIN "
-								+ DatabaseHelper.TRACKS_TABLE_NAME
-								+ " t ON e.track_id = t.id"
-								+ " LEFT JOIN "
-								+ DatabaseHelper.EVENTS_PERSONS_TABLE_NAME
-								+ " ep ON e.id = ep.event_id"
-								+ " LEFT JOIN "
-								+ DatabaseHelper.PERSONS_TABLE_NAME
-								+ " p ON ep.person_id = p.rowid" + whereCondition + " GROUP BY e.id" + " ORDER BY e.start_time ASC", selectionArgs);
+		Cursor cursor = helper.getReadableDatabase().rawQuery(
+			"SELECT e.id AS _id, e.start_time, e.end_time, e.room_name, e.slug, et.title, et.subtitle, e.abstract, e.description, GROUP_CONCAT(p.name, ', '), e.day_index, d.date, t.name, t.type, 1" +
+				" FROM " + DatabaseHelper.BOOKMARKS_TABLE_NAME + " b" + " JOIN " + DatabaseHelper.EVENTS_TABLE_NAME +
+				" e ON b.event_id = e.id" + " JOIN " + DatabaseHelper.EVENTS_TITLES_TABLE_NAME +
+				" et ON e.id = et.rowid" + " JOIN " + DatabaseHelper.DAYS_TABLE_NAME + " d ON e.day_index = d._index" +
+				" JOIN " + DatabaseHelper.TRACKS_TABLE_NAME + " t ON e.track_id = t.id" + " LEFT JOIN " +
+				DatabaseHelper.EVENTS_PERSONS_TABLE_NAME + " ep ON e.id = ep.event_id" + " LEFT JOIN " +
+				DatabaseHelper.PERSONS_TABLE_NAME + " p ON ep.person_id = p.rowid" + whereCondition + " GROUP BY e.id" +
+				" ORDER BY e.start_time ASC", selectionArgs);
 		cursor.setNotificationUri(context.getContentResolver(), URI_EVENTS);
 		return cursor;
 	}
@@ -621,96 +591,68 @@ public class DatabaseManager {
 	/**
 	 * Search through matching titles, subtitles, track names, person names. We need to use an union of 3 sub-queries because a "match" condition can not be
 	 * accompanied by other conditions in a "where" statement.
-	 * 
+	 *
 	 * @param query
 	 * @return A cursor to Events
 	 */
-	public Cursor getSearchResults(String query) {
+	public Cursor getSearchResults(String query)
+	{
 		final String matchQuery = query + "*";
 		String[] selectionArgs = new String[] { matchQuery, "%" + query + "%", matchQuery };
-		Cursor cursor = helper
-				.getReadableDatabase()
-				.rawQuery(
-						"SELECT e.id AS _id, e.start_time, e.end_time, e.room_name, e.slug, et.title, et.subtitle, e.abstract, e.description, GROUP_CONCAT(p.name, ', '), e.day_index, d.date, t.name, t.type, b.event_id"
-								+ " FROM "
-								+ DatabaseHelper.EVENTS_TABLE_NAME
-								+ " e"
-								+ " JOIN "
-								+ DatabaseHelper.EVENTS_TITLES_TABLE_NAME
-								+ " et ON e.id = et.rowid"
-								+ " JOIN "
-								+ DatabaseHelper.DAYS_TABLE_NAME
-								+ " d ON e.day_index = d._index"
-								+ " JOIN "
-								+ DatabaseHelper.TRACKS_TABLE_NAME
-								+ " t ON e.track_id = t.id"
-								+ " LEFT JOIN "
-								+ DatabaseHelper.EVENTS_PERSONS_TABLE_NAME
-								+ " ep ON e.id = ep.event_id"
-								+ " LEFT JOIN "
-								+ DatabaseHelper.PERSONS_TABLE_NAME
-								+ " p ON ep.person_id = p.rowid"
-								+ " LEFT JOIN "
-								+ DatabaseHelper.BOOKMARKS_TABLE_NAME
-								+ " b ON e.id = b.event_id"
-								+ " WHERE e.id IN ( "
-								+ "SELECT rowid"
-								+ " FROM "
-								+ DatabaseHelper.EVENTS_TITLES_TABLE_NAME
-								+ " WHERE "
-								+ DatabaseHelper.EVENTS_TITLES_TABLE_NAME
-								+ " MATCH ?"
-								+ " UNION "
-								+ "SELECT e.id"
-								+ " FROM "
-								+ DatabaseHelper.EVENTS_TABLE_NAME
-								+ " e"
-								+ " JOIN "
-								+ DatabaseHelper.TRACKS_TABLE_NAME
-								+ " t ON e.track_id = t.id"
-								+ " WHERE t.name LIKE ?"
-								+ " UNION "
-								+ "SELECT ep.event_id"
-								+ " FROM "
-								+ DatabaseHelper.EVENTS_PERSONS_TABLE_NAME
-								+ " ep"
-								+ " JOIN "
-								+ DatabaseHelper.PERSONS_TABLE_NAME
-								+ " p ON ep.person_id = p.rowid" + " WHERE p.name MATCH ?" + " )" + " GROUP BY e.id" + " ORDER BY e.start_time ASC",
-						selectionArgs);
+		Cursor cursor = helper.getReadableDatabase().rawQuery(
+			"SELECT e.id AS _id, e.start_time, e.end_time, e.room_name, e.slug, et.title, et.subtitle, e.abstract, e.description, GROUP_CONCAT(p.name, ', '), e.day_index, d.date, t.name, t.type, b.event_id" +
+				" FROM " + DatabaseHelper.EVENTS_TABLE_NAME + " e" + " JOIN " +
+				DatabaseHelper.EVENTS_TITLES_TABLE_NAME + " et ON e.id = et.rowid" + " JOIN " +
+				DatabaseHelper.DAYS_TABLE_NAME + " d ON e.day_index = d._index" + " JOIN " +
+				DatabaseHelper.TRACKS_TABLE_NAME + " t ON e.track_id = t.id" + " LEFT JOIN " +
+				DatabaseHelper.EVENTS_PERSONS_TABLE_NAME + " ep ON e.id = ep.event_id" + " LEFT JOIN " +
+				DatabaseHelper.PERSONS_TABLE_NAME + " p ON ep.person_id = p.rowid" + " LEFT JOIN " +
+				DatabaseHelper.BOOKMARKS_TABLE_NAME + " b ON e.id = b.event_id" + " WHERE e.id IN ( " + "SELECT rowid" +
+				" FROM " + DatabaseHelper.EVENTS_TITLES_TABLE_NAME + " WHERE " +
+				DatabaseHelper.EVENTS_TITLES_TABLE_NAME + " MATCH ?" + " UNION " + "SELECT e.id" + " FROM " +
+				DatabaseHelper.EVENTS_TABLE_NAME + " e" + " JOIN " + DatabaseHelper.TRACKS_TABLE_NAME +
+				" t ON e.track_id = t.id" + " WHERE t.name LIKE ?" + " UNION " + "SELECT ep.event_id" + " FROM " +
+				DatabaseHelper.EVENTS_PERSONS_TABLE_NAME + " ep" + " JOIN " + DatabaseHelper.PERSONS_TABLE_NAME +
+				" p ON ep.person_id = p.rowid" + " WHERE p.name MATCH ?" + " )" + " GROUP BY e.id" +
+				" ORDER BY e.start_time ASC", selectionArgs);
 		cursor.setNotificationUri(context.getContentResolver(), URI_EVENTS);
 		return cursor;
 	}
 
 	/**
 	 * Method called by SearchSuggestionProvider to return search results in the format expected by the search framework.
-	 * 
 	 */
-	public Cursor getSearchSuggestionResults(String query, int limit) {
+	public Cursor getSearchSuggestionResults(String query, int limit)
+	{
 		final String matchQuery = query + "*";
 		String[] selectionArgs = new String[] { matchQuery, "%" + query + "%", matchQuery, String.valueOf(limit) };
 		// Query is similar to getSearchResults but returns different columns, does not join the Day table or the Bookmark table and limits the result set.
 		Cursor cursor = helper.getReadableDatabase().rawQuery(
-				"SELECT e.id AS " + BaseColumns._ID + ", et.title AS " + SearchManager.SUGGEST_COLUMN_TEXT_1
-						+ ", IFNULL(GROUP_CONCAT(p.name, ', '), '') || ' - ' || t.name AS " + SearchManager.SUGGEST_COLUMN_TEXT_2 + ", e.id AS "
-						+ SearchManager.SUGGEST_COLUMN_INTENT_DATA + " FROM " + DatabaseHelper.EVENTS_TABLE_NAME + " e" + " JOIN "
-						+ DatabaseHelper.EVENTS_TITLES_TABLE_NAME + " et ON e.id = et.rowid" + " JOIN " + DatabaseHelper.TRACKS_TABLE_NAME
-						+ " t ON e.track_id = t.id" + " LEFT JOIN " + DatabaseHelper.EVENTS_PERSONS_TABLE_NAME + " ep ON e.id = ep.event_id" + " LEFT JOIN "
-						+ DatabaseHelper.PERSONS_TABLE_NAME + " p ON ep.person_id = p.rowid" + " WHERE e.id IN ( " + "SELECT rowid" + " FROM "
-						+ DatabaseHelper.EVENTS_TITLES_TABLE_NAME + " WHERE " + DatabaseHelper.EVENTS_TITLES_TABLE_NAME + " MATCH ?" + " UNION "
-						+ "SELECT e.id" + " FROM " + DatabaseHelper.EVENTS_TABLE_NAME + " e" + " JOIN " + DatabaseHelper.TRACKS_TABLE_NAME
-						+ " t ON e.track_id = t.id" + " WHERE t.name LIKE ?" + " UNION " + "SELECT ep.event_id" + " FROM "
-						+ DatabaseHelper.EVENTS_PERSONS_TABLE_NAME + " ep" + " JOIN " + DatabaseHelper.PERSONS_TABLE_NAME + " p ON ep.person_id = p.rowid"
-						+ " WHERE p.name MATCH ?" + " )" + " GROUP BY e.id" + " ORDER BY e.start_time ASC LIMIT ?", selectionArgs);
+			"SELECT e.id AS " + BaseColumns._ID + ", et.title AS " + SearchManager.SUGGEST_COLUMN_TEXT_1 +
+				", IFNULL(GROUP_CONCAT(p.name, ', '), '') || ' - ' || t.name AS " +
+				SearchManager.SUGGEST_COLUMN_TEXT_2 + ", e.id AS " + SearchManager.SUGGEST_COLUMN_INTENT_DATA +
+				" FROM " + DatabaseHelper.EVENTS_TABLE_NAME + " e" + " JOIN " +
+				DatabaseHelper.EVENTS_TITLES_TABLE_NAME + " et ON e.id = et.rowid" + " JOIN " +
+				DatabaseHelper.TRACKS_TABLE_NAME + " t ON e.track_id = t.id" + " LEFT JOIN " +
+				DatabaseHelper.EVENTS_PERSONS_TABLE_NAME + " ep ON e.id = ep.event_id" + " LEFT JOIN " +
+				DatabaseHelper.PERSONS_TABLE_NAME + " p ON ep.person_id = p.rowid" + " WHERE e.id IN ( " +
+				"SELECT rowid" + " FROM " + DatabaseHelper.EVENTS_TITLES_TABLE_NAME + " WHERE " +
+				DatabaseHelper.EVENTS_TITLES_TABLE_NAME + " MATCH ?" + " UNION " + "SELECT e.id" + " FROM " +
+				DatabaseHelper.EVENTS_TABLE_NAME + " e" + " JOIN " + DatabaseHelper.TRACKS_TABLE_NAME +
+				" t ON e.track_id = t.id" + " WHERE t.name LIKE ?" + " UNION " + "SELECT ep.event_id" + " FROM " +
+				DatabaseHelper.EVENTS_PERSONS_TABLE_NAME + " ep" + " JOIN " + DatabaseHelper.PERSONS_TABLE_NAME +
+				" p ON ep.person_id = p.rowid" + " WHERE p.name MATCH ?" + " )" + " GROUP BY e.id" +
+				" ORDER BY e.start_time ASC LIMIT ?", selectionArgs);
 		return cursor;
 	}
 
-	public static Event toEvent(Cursor cursor, Event event) {
+	public static Event toEvent(Cursor cursor, Event event)
+	{
 		Day day;
 		Track track;
 		Date startTime;
 		Date endTime;
-		if (event == null) {
+		if(event == null) {
 			event = new Event();
 			day = new Day();
 			event.setDay(day);
@@ -731,19 +673,19 @@ public class DatabaseManager {
 			day.getDate().setTime(cursor.getLong(11));
 		}
 		event.setId(cursor.getLong(0));
-		if (cursor.isNull(1)) {
+		if(cursor.isNull(1)) {
 			event.setStartTime(null);
 		} else {
-			if (startTime == null) {
+			if(startTime == null) {
 				event.setStartTime(new Date(cursor.getLong(1)));
 			} else {
 				startTime.setTime(cursor.getLong(1));
 			}
 		}
-		if (cursor.isNull(2)) {
+		if(cursor.isNull(2)) {
 			event.setEndTime(null);
 		} else {
-			if (endTime == null) {
+			if(endTime == null) {
 				event.setEndTime(new Date(cursor.getLong(2)));
 			} else {
 				endTime.setTime(cursor.getLong(2));
@@ -766,28 +708,34 @@ public class DatabaseManager {
 		return event;
 	}
 
-	public static Event toEvent(Cursor cursor) {
+	public static Event toEvent(Cursor cursor)
+	{
 		return toEvent(cursor, null);
 	}
 
-	public static long toEventId(Cursor cursor) {
+	public static long toEventId(Cursor cursor)
+	{
 		return cursor.getLong(0);
 	}
 
-	public static long toEventStartTimeMillis(Cursor cursor) {
+	public static long toEventStartTimeMillis(Cursor cursor)
+	{
 		return cursor.isNull(1) ? -1L : cursor.getLong(1);
 	}
 
-	public static boolean toBookmarkStatus(Cursor cursor) {
+	public static boolean toBookmarkStatus(Cursor cursor)
+	{
 		return !cursor.isNull(14);
 	}
 
 	/**
 	 * Returns all persons in alphabetical order.
 	 */
-	public Cursor getPersons() {
+	public Cursor getPersons()
+	{
 		Cursor cursor = helper.getReadableDatabase().rawQuery(
-				"SELECT rowid AS _id, name" + " FROM " + DatabaseHelper.PERSONS_TABLE_NAME + " ORDER BY name COLLATE NOCASE", null);
+			"SELECT rowid AS _id, name" + " FROM " + DatabaseHelper.PERSONS_TABLE_NAME +
+				" ORDER BY name COLLATE NOCASE", null);
 		cursor.setNotificationUri(context.getContentResolver(), URI_EVENTS);
 		return cursor;
 	}
@@ -797,14 +745,16 @@ public class DatabaseManager {
 	/**
 	 * Returns persons presenting the specified event.
 	 */
-	public List<Person> getPersons(Event event) {
+	public List<Person> getPersons(Event event)
+	{
 		String[] selectionArgs = new String[] { String.valueOf(event.getId()) };
 		Cursor cursor = helper.getReadableDatabase().rawQuery(
-				"SELECT p.rowid AS _id, p.name" + " FROM " + DatabaseHelper.PERSONS_TABLE_NAME + " p" + " JOIN " + DatabaseHelper.EVENTS_PERSONS_TABLE_NAME
-						+ " ep ON p.rowid = ep.person_id" + " WHERE ep.event_id = ?", selectionArgs);
+			"SELECT p.rowid AS _id, p.name" + " FROM " + DatabaseHelper.PERSONS_TABLE_NAME + " p" + " JOIN " +
+				DatabaseHelper.EVENTS_PERSONS_TABLE_NAME + " ep ON p.rowid = ep.person_id" + " WHERE ep.event_id = ?",
+			selectionArgs);
 		try {
 			List<Person> result = new ArrayList<Person>(cursor.getCount());
-			while (cursor.moveToNext()) {
+			while(cursor.moveToNext()) {
 				result.add(toPerson(cursor));
 			}
 			return result;
@@ -813,8 +763,9 @@ public class DatabaseManager {
 		}
 	}
 
-	public static Person toPerson(Cursor cursor, Person person) {
-		if (person == null) {
+	public static Person toPerson(Cursor cursor, Person person)
+	{
+		if(person == null) {
 			person = new Person();
 		}
 		person.setId(cursor.getLong(0));
@@ -823,17 +774,20 @@ public class DatabaseManager {
 		return person;
 	}
 
-	public static Person toPerson(Cursor cursor) {
+	public static Person toPerson(Cursor cursor)
+	{
 		return toPerson(cursor, null);
 	}
 
-	public List<Link> getLinks(Event event) {
+	public List<Link> getLinks(Event event)
+	{
 		String[] selectionArgs = new String[] { String.valueOf(event.getId()) };
 		Cursor cursor = helper.getReadableDatabase().rawQuery(
-				"SELECT url, description" + " FROM " + DatabaseHelper.LINKS_TABLE_NAME + " WHERE event_id = ?" + " ORDER BY rowid ASC", selectionArgs);
+			"SELECT url, description" + " FROM " + DatabaseHelper.LINKS_TABLE_NAME + " WHERE event_id = ?" +
+				" ORDER BY rowid ASC", selectionArgs);
 		try {
 			List<Link> result = new ArrayList<Link>(cursor.getCount());
-			while (cursor.moveToNext()) {
+			while(cursor.moveToNext()) {
 				Link link = new Link();
 				link.setUrl(cursor.getString(0));
 				link.setDescription(cursor.getString(1));
@@ -845,12 +799,15 @@ public class DatabaseManager {
 		}
 	}
 
-	public boolean isBookmarked(Event event) {
+	public boolean isBookmarked(Event event)
+	{
 		String[] selectionArgs = new String[] { String.valueOf(event.getId()) };
-		return queryNumEntries(helper.getReadableDatabase(), DatabaseHelper.BOOKMARKS_TABLE_NAME, "event_id = ?", selectionArgs) > 0L;
+		return queryNumEntries(helper.getReadableDatabase(), DatabaseHelper.BOOKMARKS_TABLE_NAME, "event_id = ?",
+							   selectionArgs) > 0L;
 	}
 
-	public boolean addBookmark(Event event) {
+	public boolean addBookmark(Event event)
+	{
 		boolean complete = false;
 
 		SQLiteDatabase db = helper.getWritableDatabase();
@@ -861,7 +818,7 @@ public class DatabaseManager {
 			long result = db.insert(DatabaseHelper.BOOKMARKS_TABLE_NAME, null, values);
 
 			// If the bookmark is already present
-			if (result == -1L) {
+			if(result == -1L) {
 				return false;
 			}
 
@@ -871,12 +828,12 @@ public class DatabaseManager {
 		} finally {
 			db.endTransaction();
 
-			if (complete) {
+			if(complete) {
 				context.getContentResolver().notifyChange(URI_EVENTS, null);
 
 				Intent intent = new Intent(ACTION_ADD_BOOKMARK).putExtra(EXTRA_EVENT_ID, event.getId());
 				Date startTime = event.getStartTime();
-				if (startTime != null) {
+				if(startTime != null) {
 					intent.putExtra(EXTRA_EVENT_START_TIME, startTime.getTime());
 				}
 				LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
@@ -884,21 +841,24 @@ public class DatabaseManager {
 		}
 	}
 
-	public boolean removeBookmark(Event event) {
+	public boolean removeBookmark(Event event)
+	{
 		return removeBookmarks(new long[] { event.getId() });
 	}
 
-	public boolean removeBookmark(long eventId) {
+	public boolean removeBookmark(long eventId)
+	{
 		return removeBookmarks(new long[] { eventId });
 	}
 
-	public boolean removeBookmarks(long[] eventIds) {
+	public boolean removeBookmarks(long[] eventIds)
+	{
 		int length = eventIds.length;
-		if (length == 0) {
+		if(length == 0) {
 			throw new IllegalArgumentException("At least one bookmark id to remove must be passed");
 		}
 		String[] stringEventIds = new String[length];
-		for (int i = 0; i < length; ++i) {
+		for(int i = 0; i < length; ++i) {
 			stringEventIds[i] = String.valueOf(eventIds[i]);
 		}
 
@@ -910,7 +870,7 @@ public class DatabaseManager {
 			String whereClause = "event_id IN (" + TextUtils.join(",", stringEventIds) + ")";
 			int count = db.delete(DatabaseHelper.BOOKMARKS_TABLE_NAME, whereClause, null);
 
-			if (count == 0) {
+			if(count == 0) {
 				return false;
 			}
 
@@ -920,7 +880,7 @@ public class DatabaseManager {
 		} finally {
 			db.endTransaction();
 
-			if (isComplete) {
+			if(isComplete) {
 				context.getContentResolver().notifyChange(URI_EVENTS, null);
 
 				Intent intent = new Intent(ACTION_REMOVE_BOOKMARKS).putExtra(EXTRA_EVENT_IDS, eventIds);

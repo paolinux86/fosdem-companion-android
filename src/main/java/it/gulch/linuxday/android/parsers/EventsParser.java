@@ -1,4 +1,23 @@
+/*
+ * Copyright 2014 Christophe Beyls
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package it.gulch.linuxday.android.parsers;
+
+import android.text.TextUtils;
+
+import org.xmlpull.v1.XmlPullParser;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -7,9 +26,6 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-import org.xmlpull.v1.XmlPullParser;
-
-import android.text.TextUtils;
 import it.gulch.linuxday.android.model.Day;
 import it.gulch.linuxday.android.model.Event;
 import it.gulch.linuxday.android.model.Link;
@@ -19,45 +35,49 @@ import it.gulch.linuxday.android.utils.DateUtils;
 
 /**
  * Main parser for FOSDEM schedule data in pentabarf XML format.
- * 
+ *
  * @author Christophe Beyls
- * 
  */
-public class EventsParser extends IterableAbstractPullParser<Event> {
-
+public class EventsParser extends IterableAbstractPullParser<Event>
+{
 	private final DateFormat DATE_FORMAT = DateUtils.withBelgiumTimeZone(new SimpleDateFormat("yyyy-MM-dd", Locale.US));
 
 	// Calendar used to compute the events time, according to Belgium timezone
 	private final Calendar calendar = Calendar.getInstance(DateUtils.getBelgiumTimeZone(), Locale.US);
 
 	private Day currentDay;
+
 	private String currentRoom;
+
 	private Track currentTrack;
 
 	/**
 	 * Returns the hours portion of a time string in the "hh:mm" format, without allocating objects.
-	 * 
+	 *
 	 * @param time
 	 * @return hours
 	 */
-	private static int getHours(String time) {
+	private static int getHours(String time)
+	{
 		return (Character.getNumericValue(time.charAt(0)) * 10) + Character.getNumericValue(time.charAt(1));
 	}
 
 	/**
 	 * Returns the minutes portion of a time string in the "hh:mm" format, without allocating objects.
-	 * 
+	 *
 	 * @param time
 	 * @return minutes
 	 */
-	private static int getMinutes(String time) {
+	private static int getMinutes(String time)
+	{
 		return (Character.getNumericValue(time.charAt(3)) * 10) + Character.getNumericValue(time.charAt(4));
 	}
 
 	@Override
-	protected boolean parseHeader(XmlPullParser parser) throws Exception {
-		while (!isEndDocument()) {
-			if (isStartTag("schedule")) {
+	protected boolean parseHeader(XmlPullParser parser) throws Exception
+	{
+		while(!isEndDocument()) {
+			if(isStartTag("schedule")) {
 				return true;
 			}
 
@@ -67,18 +87,19 @@ public class EventsParser extends IterableAbstractPullParser<Event> {
 	}
 
 	@Override
-	protected Event parseNext(XmlPullParser parser) throws Exception {
-		while (!isNextEndTag("schedule")) {
-			if (isStartTag()) {
+	protected Event parseNext(XmlPullParser parser) throws Exception
+	{
+		while(!isNextEndTag("schedule")) {
+			if(isStartTag()) {
 				String name = parser.getName();
 
-				if ("day".equals(name)) {
+				if("day".equals(name)) {
 					currentDay = new Day();
 					currentDay.setIndex(Integer.parseInt(parser.getAttributeValue(null, "index")));
 					currentDay.setDate(DATE_FORMAT.parse(parser.getAttributeValue(null, "date")));
-				} else if ("room".equals(name)) {
+				} else if("room".equals(name)) {
 					currentRoom = parser.getAttributeValue(null, "name");
-				} else if ("event".equals(name)) {
+				} else if("event".equals(name)) {
 					Event event = new Event();
 					event.setId(Long.parseLong(parser.getAttributeValue(null, "id")));
 					event.setDay(currentDay);
@@ -93,41 +114,41 @@ public class EventsParser extends IterableAbstractPullParser<Event> {
 					String trackName = "";
 					Track.Type trackType = Track.Type.other;
 
-					while (!isNextEndTag("event")) {
-						if (isStartTag()) {
+					while(!isNextEndTag("event")) {
+						if(isStartTag()) {
 							name = parser.getName();
 
-							if ("start".equals(name)) {
+							if("start".equals(name)) {
 								String time = parser.nextText();
-								if (!TextUtils.isEmpty(time)) {
+								if(!TextUtils.isEmpty(time)) {
 									calendar.setTime(currentDay.getDate());
 									calendar.set(Calendar.HOUR_OF_DAY, getHours(time));
 									calendar.set(Calendar.MINUTE, getMinutes(time));
 									event.setStartTime(calendar.getTime());
 								}
-							} else if ("duration".equals(name)) {
+							} else if("duration".equals(name)) {
 								duration = parser.nextText();
-							} else if ("slug".equals(name)) {
+							} else if("slug".equals(name)) {
 								event.setSlug(parser.nextText());
-							} else if ("title".equals(name)) {
+							} else if("title".equals(name)) {
 								event.setTitle(parser.nextText());
-							} else if ("subtitle".equals(name)) {
+							} else if("subtitle".equals(name)) {
 								event.setSubTitle(parser.nextText());
-							} else if ("track".equals(name)) {
+							} else if("track".equals(name)) {
 								trackName = parser.nextText();
-							} else if ("type".equals(name)) {
+							} else if("type".equals(name)) {
 								try {
 									trackType = Enum.valueOf(Track.Type.class, parser.nextText());
-								} catch (Exception e) {
+								} catch(Exception e) {
 									// trackType will be "other"
 								}
-							} else if ("abstract".equals(name)) {
+							} else if("abstract".equals(name)) {
 								event.setAbstractText(parser.nextText());
-							} else if ("description".equals(name)) {
+							} else if("description".equals(name)) {
 								event.setDescription(parser.nextText());
-							} else if ("persons".equals(name)) {
-								while (!isNextEndTag("persons")) {
-									if (isStartTag("person")) {
+							} else if("persons".equals(name)) {
+								while(!isNextEndTag("persons")) {
+									if(isStartTag("person")) {
 										Person person = new Person();
 										person.setId(Long.parseLong(parser.getAttributeValue(null, "id")));
 										person.setName(parser.nextText());
@@ -135,9 +156,9 @@ public class EventsParser extends IterableAbstractPullParser<Event> {
 										persons.add(person);
 									}
 								}
-							} else if ("links".equals(name)) {
-								while (!isNextEndTag("links")) {
-									if (isStartTag("link")) {
+							} else if("links".equals(name)) {
+								while(!isNextEndTag("links")) {
+									if(isStartTag("link")) {
 										Link link = new Link();
 										link.setUrl(parser.getAttributeValue(null, "href"));
 										link.setDescription(parser.nextText());
@@ -151,13 +172,14 @@ public class EventsParser extends IterableAbstractPullParser<Event> {
 						}
 					}
 
-					if ((event.getStartTime() != null) && !TextUtils.isEmpty(duration)) {
+					if((event.getStartTime() != null) && !TextUtils.isEmpty(duration)) {
 						calendar.add(Calendar.HOUR_OF_DAY, getHours(duration));
 						calendar.add(Calendar.MINUTE, getMinutes(duration));
 						event.setEndTime(calendar.getTime());
 					}
 
-					if ((currentTrack == null) || !trackName.equals(currentTrack.getName()) || (trackType != currentTrack.getType())) {
+					if((currentTrack == null) || !trackName.equals(currentTrack.getName()) ||
+						(trackType != currentTrack.getType())) {
 						currentTrack = new Track(trackName, trackType);
 					}
 					event.setTrack(currentTrack);

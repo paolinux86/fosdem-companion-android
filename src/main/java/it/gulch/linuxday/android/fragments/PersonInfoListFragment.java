@@ -1,3 +1,18 @@
+/*
+ * Copyright 2014 Christophe Beyls
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package it.gulch.linuxday.android.fragments;
 
 import android.content.Context;
@@ -15,6 +30,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
+
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.activities.EventDetailsActivity;
 import it.gulch.linuxday.android.adapters.EventsAdapter;
@@ -23,15 +39,18 @@ import it.gulch.linuxday.android.loaders.SimpleCursorLoader;
 import it.gulch.linuxday.android.model.Event;
 import it.gulch.linuxday.android.model.Person;
 
-public class PersonInfoListFragment extends ListFragment implements LoaderCallbacks<Cursor> {
-
+public class PersonInfoListFragment extends ListFragment implements LoaderCallbacks<Cursor>
+{
 	private static final int PERSON_EVENTS_LOADER_ID = 1;
+
 	private static final String ARG_PERSON = "person";
 
 	private Person person;
+
 	private EventsAdapter adapter;
 
-	public static PersonInfoListFragment newInstance(Person person) {
+	public static PersonInfoListFragment newInstance(Person person)
+	{
 		PersonInfoListFragment f = new PersonInfoListFragment();
 		Bundle args = new Bundle();
 		args.putParcelable(ARG_PERSON, person);
@@ -40,7 +59,8 @@ public class PersonInfoListFragment extends ListFragment implements LoaderCallba
 	}
 
 	@Override
-	public void onCreate(Bundle savedInstanceState) {
+	public void onCreate(Bundle savedInstanceState)
+	{
 		super.onCreate(savedInstanceState);
 
 		adapter = new EventsAdapter(getActivity());
@@ -49,23 +69,26 @@ public class PersonInfoListFragment extends ListFragment implements LoaderCallba
 	}
 
 	@Override
-	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater)
+	{
 		inflater.inflate(R.menu.person, menu);
 	}
 
 	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.more_info:
-			Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(person.getUrl()));
-			startActivity(intent);
-			return true;
+	public boolean onOptionsItemSelected(MenuItem item)
+	{
+		switch(item.getItemId()) {
+			case R.id.more_info:
+				Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(person.getUrl()));
+				startActivity(intent);
+				return true;
 		}
 		return false;
 	}
 
 	@Override
-	public void onActivityCreated(Bundle savedInstanceState) {
+	public void onActivityCreated(Bundle savedInstanceState)
+	{
 		super.onActivityCreated(savedInstanceState);
 
 		setEmptyText(getString(R.string.no_data));
@@ -83,34 +106,39 @@ public class PersonInfoListFragment extends ListFragment implements LoaderCallba
 		getLoaderManager().initLoader(PERSON_EVENTS_LOADER_ID, null, this);
 	}
 
-	private static class PersonEventsLoader extends SimpleCursorLoader {
+	private static class PersonEventsLoader extends SimpleCursorLoader
+	{
 
 		private final Person person;
 
-		public PersonEventsLoader(Context context, Person person) {
+		public PersonEventsLoader(Context context, Person person)
+		{
 			super(context);
 			this.person = person;
 		}
 
 		@Override
-		protected Cursor getCursor() {
+		protected Cursor getCursor()
+		{
 			return DatabaseManager.getInstance().getEvents(person);
 		}
 	}
 
 	@Override
-	public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+	public Loader<Cursor> onCreateLoader(int id, Bundle args)
+	{
 		return new PersonEventsLoader(getActivity(), person);
 	}
 
 	@Override
-	public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-		if (data != null) {
+	public void onLoadFinished(Loader<Cursor> loader, Cursor data)
+	{
+		if(data != null) {
 			adapter.swapCursor(data);
 		}
 
 		// The list should now be shown.
-		if (isResumed()) {
+		if(isResumed()) {
 			setListShown(true);
 		} else {
 			setListShownNoAnimation(true);
@@ -118,14 +146,17 @@ public class PersonInfoListFragment extends ListFragment implements LoaderCallba
 	}
 
 	@Override
-	public void onLoaderReset(Loader<Cursor> loader) {
+	public void onLoaderReset(Loader<Cursor> loader)
+	{
 		adapter.swapCursor(null);
 	}
 
 	@Override
-	public void onListItemClick(ListView l, View v, int position, long id) {
+	public void onListItemClick(ListView l, View v, int position, long id)
+	{
 		Event event = adapter.getItem(position - 1);
-		Intent intent = new Intent(getActivity(), EventDetailsActivity.class).putExtra(EventDetailsActivity.EXTRA_EVENT, event);
+		Intent intent =
+			new Intent(getActivity(), EventDetailsActivity.class).putExtra(EventDetailsActivity.EXTRA_EVENT, event);
 		startActivity(intent);
 	}
 }

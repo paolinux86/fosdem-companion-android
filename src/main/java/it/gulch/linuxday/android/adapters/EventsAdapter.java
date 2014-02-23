@@ -1,7 +1,19 @@
+/*
+ * Copyright 2014 Christophe Beyls
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package it.gulch.linuxday.android.adapters;
-
-import java.text.DateFormat;
-import java.util.Date;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -14,24 +26,32 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import java.text.DateFormat;
+import java.util.Date;
+
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.db.DatabaseManager;
 import it.gulch.linuxday.android.model.Event;
 import it.gulch.linuxday.android.utils.DateUtils;
 
-public class EventsAdapter extends CursorAdapter {
-
+public class EventsAdapter extends CursorAdapter
+{
 	private static final DateFormat TIME_DATE_FORMAT = DateUtils.getTimeDateFormat();
 
 	private final LayoutInflater inflater;
+
 	private final int titleTextSize;
+
 	private final boolean showDay;
 
-	public EventsAdapter(Context context) {
+	public EventsAdapter(Context context)
+	{
 		this(context, true);
 	}
 
-	public EventsAdapter(Context context, boolean showDay) {
+	public EventsAdapter(Context context, boolean showDay)
+	{
 		super(context, null, 0);
 		inflater = LayoutInflater.from(context);
 		titleTextSize = context.getResources().getDimensionPixelSize(R.dimen.list_item_title_text_size);
@@ -39,12 +59,14 @@ public class EventsAdapter extends CursorAdapter {
 	}
 
 	@Override
-	public Event getItem(int position) {
+	public Event getItem(int position)
+	{
 		return DatabaseManager.toEvent((Cursor) super.getItem(position));
 	}
 
 	@Override
-	public View newView(Context context, Cursor cursor, ViewGroup parent) {
+	public View newView(Context context, Cursor cursor, ViewGroup parent)
+	{
 		View view = inflater.inflate(R.layout.item_event, parent, false);
 
 		ViewHolder holder = new ViewHolder();
@@ -58,7 +80,8 @@ public class EventsAdapter extends CursorAdapter {
 	}
 
 	@Override
-	public void bindView(View view, Context context, Cursor cursor) {
+	public void bindView(View view, Context context, Cursor cursor)
+	{
 		ViewHolder holder = (ViewHolder) view.getTag();
 		Event event = DatabaseManager.toEvent(cursor, holder.event);
 		holder.event = event;
@@ -66,7 +89,7 @@ public class EventsAdapter extends CursorAdapter {
 		String eventTitle = event.getTitle();
 		SpannableString spannableString;
 		String personsSummary = event.getPersonsSummary();
-		if (TextUtils.isEmpty(personsSummary)) {
+		if(TextUtils.isEmpty(personsSummary)) {
 			spannableString = new SpannableString(eventTitle);
 		} else {
 			spannableString = new SpannableString(String.format("%1$s\n%2$s", eventTitle, event.getPersonsSummary()));
@@ -83,19 +106,26 @@ public class EventsAdapter extends CursorAdapter {
 		String startTimeString = (startTime != null) ? TIME_DATE_FORMAT.format(startTime) : "?";
 		String endTimeString = (endTime != null) ? TIME_DATE_FORMAT.format(endTime) : "?";
 		String details;
-		if (showDay) {
-			details = String.format("%1$s, %2$s ― %3$s  |  %4$s", event.getDay().getShortName(), startTimeString, endTimeString, event.getRoomName());
+		if(showDay) {
+			details = String
+				.format("%1$s, %2$s ― %3$s  |  %4$s", event.getDay().getShortName(), startTimeString, endTimeString,
+						event.getRoomName());
 		} else {
 			details = String.format("%1$s ― %2$s  |  %3$s", startTimeString, endTimeString, event.getRoomName());
 		}
 		holder.details.setText(details);
 	}
 
-	private static class ViewHolder {
+	private static class ViewHolder
+	{
 		TextView title;
+
 		AbsoluteSizeSpan titleSizeSpan;
+
 		TextView trackName;
+
 		TextView details;
+
 		Event event;
 	}
 }
