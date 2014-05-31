@@ -276,7 +276,6 @@ public class EventDetailsFragment extends Fragment
 
 	private static class UpdateBookmarkAsyncTask extends AsyncTask<Boolean, Void, Void>
 	{
-
 		private final Event event;
 
 		public UpdateBookmarkAsyncTask(Event event)
@@ -329,7 +328,6 @@ public class EventDetailsFragment extends Fragment
 
 	private final LoaderCallbacks<Boolean> bookmarkStatusLoaderCallbacks = new LoaderCallbacks<Boolean>()
 	{
-
 		@Override
 		public Loader<Boolean> onCreateLoader(int id, Bundle args)
 		{
@@ -351,7 +349,6 @@ public class EventDetailsFragment extends Fragment
 
 	private static class EventDetailsLoader extends LocalCacheLoader<EventDetails>
 	{
-
 		private final Event event;
 
 		public EventDetailsLoader(Context context, Event event)
@@ -373,7 +370,6 @@ public class EventDetailsFragment extends Fragment
 
 	private final LoaderCallbacks<EventDetails> eventDetailsLoaderCallbacks = new LoaderCallbacks<EventDetails>()
 	{
-
 		@Override
 		public Loader<EventDetails> onCreateLoader(int id, Bundle args)
 		{
@@ -435,7 +431,6 @@ public class EventDetailsFragment extends Fragment
 
 	private static class PersonClickableSpan extends ClickableSpan
 	{
-
 		private final Person person;
 
 		public PersonClickableSpan(Person person)
@@ -455,7 +450,6 @@ public class EventDetailsFragment extends Fragment
 
 	private static class LinkClickListener implements View.OnClickListener
 	{
-
 		private final Link link;
 
 		public LinkClickListener(Link link)
