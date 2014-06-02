@@ -43,7 +43,6 @@ Il progetto è rilasciato sotto licenza [Apache License, Versione 2.0](http://ww
 ## Used libraries
 
 * [Android Support Library](http://developer.android.com/tools/support-library/) di **The Android Open Source Project**
-* [PagerSlidingTabStrip](https://github.com/astuetz/PagerSlidingTabStrip) di **Andreas Stuetz**
 * [ViewPagerIndicator](http://viewpagerindicator.com/) di **Jake Wharton**
 * [PhotoView](https://github.com/chrisbanes/PhotoView) by **Chris Banes**
 * [PreferenceFragment Support](https://gist.github.com/cbeyls/7475726) di **Christophe Beyls**

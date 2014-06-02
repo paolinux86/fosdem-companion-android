@@ -32,7 +32,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.astuetz.PagerSlidingTabStrip;
+import com.example.android.common.view.SlidingTabLayout;
 
 import java.util.List;
 
@@ -51,7 +51,7 @@ public class TracksFragment extends Fragment implements LoaderCallbacks<List<Day
 
 		ViewPager pager;
 
-		PagerSlidingTabStrip indicator;
+		SlidingTabLayout slidingTabs;
 	}
 
 	private static final int DAYS_LOADER_ID = 1;
@@ -85,7 +85,8 @@ public class TracksFragment extends Fragment implements LoaderCallbacks<List<Day
 		holder.contentView = view.findViewById(R.id.content);
 		holder.emptyView = view.findViewById(android.R.id.empty);
 		holder.pager = (ViewPager) view.findViewById(R.id.pager);
-		holder.indicator = (PagerSlidingTabStrip) view.findViewById(R.id.indicator);
+		holder.slidingTabs = (SlidingTabLayout) view.findViewById(R.id.sliding_tabs);
+		holder.slidingTabs.setSelectedIndicatorColors(getResources().getColor(R.color.fosdem_purple));
 
 		return view;
 	}
@@ -135,7 +136,7 @@ public class TracksFragment extends Fragment implements LoaderCallbacks<List<Day
 			super(context);
 			// Reload days list when the schedule has been refreshed
 			LocalBroadcastManager.getInstance(context).registerReceiver(scheduleRefreshedReceiver, new IntentFilter(
-				DatabaseManager.ACTION_SCHEDULE_REFRESHED));
+					DatabaseManager.ACTION_SCHEDULE_REFRESHED));
 		}
 
 		@Override
@@ -180,7 +181,7 @@ public class TracksFragment extends Fragment implements LoaderCallbacks<List<Day
 			if(holder.pager.getAdapter() == null) {
 				holder.pager.setAdapter(daysAdapter);
 			}
-			holder.indicator.setViewPager(holder.pager);
+			holder.slidingTabs.setViewPager(holder.pager);
 			if(savedCurrentPage != -1) {
 				holder.pager.setCurrentItem(Math.min(savedCurrentPage, totalPages - 1), false);
 				savedCurrentPage = -1;

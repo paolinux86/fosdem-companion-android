@@ -27,7 +27,7 @@ import it.gulch.linuxday.android.utils.DateUtils;
 
 public class Day implements Parcelable
 {
-	private static DateFormat DAY_DATE_FORMAT = DateUtils.withBelgiumTimeZone(new SimpleDateFormat("EEEE", Locale.US));
+	private static final DateFormat DAY_DATE_FORMAT = DateUtils.withBelgiumTimeZone(new SimpleDateFormat("EEEE", Locale.US));
 
 	private int index;
 

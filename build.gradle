@@ -5,9 +5,10 @@ buildscript {
 	}
 
 	dependencies {
-		classpath 'com.android.tools.build:gradle:0.8.+'
+		classpath 'com.android.tools.build:gradle:0.10.+'
 	}
 }
+
 
 apply plugin: 'android'
 
@@ -17,16 +18,14 @@ repositories {
 }
 
 dependencies {
-	compile "com.android.support:appcompat-v7:19.0.+"
-
-	compile 'com.astuetz:pagerslidingtabstrip:1.0.1'
+	compile "com.android.support:appcompat-v7:19.1.+"
 
 	compile files('libs/photoview-1.2.2.jar')
 }
 
 android {
 	compileSdkVersion 19
-	buildToolsVersion "19.0.1"
+	buildToolsVersion "19.1.0"
 
 	defaultConfig {
 		minSdkVersion 8
@@ -50,8 +49,8 @@ android {
 	buildTypes {
 		release {
 			runProguard true
-			proguardFile getDefaultProguardFile('src/main/proguard-android.txt')
-			proguardFile 'src/main/proguard-project.txt'
+			//proguardFile getDefaultProguardFile('src/main/proguard-android.txt')
+			//proguardFile 'src/main/proguard-project.txt'
 		}
 	}
 }

@@ -25,7 +25,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.astuetz.PagerSlidingTabStrip;
+import com.example.android.common.view.SlidingTabLayout;
 
 import it.gulch.linuxday.android.R;
 
@@ -47,8 +47,9 @@ public class LiveFragment extends Fragment
 
 		ViewPager pager = (ViewPager) view.findViewById(R.id.pager);
 		pager.setAdapter(livePagerAdapter);
-		PagerSlidingTabStrip indicator = (PagerSlidingTabStrip) view.findViewById(R.id.indicator);
-		indicator.setViewPager(pager);
+		SlidingTabLayout slidingTabs = (SlidingTabLayout) view.findViewById(R.id.sliding_tabs);
+		slidingTabs.setSelectedIndicatorColors(getResources().getColor(R.color.fosdem_purple));
+		slidingTabs.setViewPager(pager);
 
 		return view;
 	}
