@@ -18,7 +18,7 @@ package it.gulch.linuxday.android.model;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import it.gulch.linuxday.android.api.FosdemUrls;
+import it.gulch.linuxday.android.api.LinuxDayUrls;
 import it.gulch.linuxday.android.db.DatabaseManager;
 import it.gulch.linuxday.android.utils.StringUtils;
 
@@ -54,7 +54,7 @@ public class Person implements Parcelable
 
 	public String getUrl()
 	{
-		return FosdemUrls.getPerson(StringUtils.toSlug(name), DatabaseManager.getInstance().getYear());
+		return LinuxDayUrls.getPerson(StringUtils.toSlug(name), DatabaseManager.getInstance().getYear());
 	}
 
 	@Override

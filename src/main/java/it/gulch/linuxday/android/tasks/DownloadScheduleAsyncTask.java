@@ -18,7 +18,7 @@ package it.gulch.linuxday.android.tasks;
 import android.content.Context;
 import android.os.AsyncTask;
 
-import it.gulch.linuxday.android.api.FosdemApi;
+import it.gulch.linuxday.android.api.LinuxDayApi;
 
 public class DownloadScheduleAsyncTask extends AsyncTask<Void, Void, Void>
 {
@@ -32,7 +32,7 @@ public class DownloadScheduleAsyncTask extends AsyncTask<Void, Void, Void>
 	@Override
 	protected Void doInBackground(Void... args)
 	{
-		FosdemApi.downloadSchedule(appContext);
+		LinuxDayApi.downloadSchedule(appContext);
 		return null;
 	}
 }

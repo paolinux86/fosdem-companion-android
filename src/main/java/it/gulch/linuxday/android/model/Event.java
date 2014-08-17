@@ -22,7 +22,7 @@ import android.text.TextUtils;
 import java.util.Date;
 import java.util.List;
 
-import it.gulch.linuxday.android.api.FosdemUrls;
+import it.gulch.linuxday.android.api.LinuxDayUrls;
 import it.gulch.linuxday.android.db.DatabaseManager;
 
 public class Event implements Parcelable
@@ -137,7 +137,7 @@ public class Event implements Parcelable
 
 	public String getUrl()
 	{
-		return FosdemUrls.getEvent(slug, DatabaseManager.getInstance().getYear());
+		return LinuxDayUrls.getEvent(slug, DatabaseManager.getInstance().getYear());
 	}
 
 	public String getTitle()

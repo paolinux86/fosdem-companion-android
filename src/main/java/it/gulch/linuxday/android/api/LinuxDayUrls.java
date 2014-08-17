@@ -22,13 +22,14 @@ import java.util.Locale;
  *
  * @author Christophe Beyls
  */
-public class FosdemUrls
+public class LinuxDayUrls
 {
-	private FosdemUrls()
+	private LinuxDayUrls()
 	{
 	}
 
-	private static final String SCHEDULE_URL = "https://fosdem.org/schedule/xml";
+//	private static final String SCHEDULE_URL = "https://fosdem.org/schedule/xml";
+	private static final String SCHEDULE_URL = "http://10.0.2.2:8080/conference";
 
 	private static final String EVENT_URL_FORMAT = "https://fosdem.org/%1$d/schedule/event/%2$s/";
 

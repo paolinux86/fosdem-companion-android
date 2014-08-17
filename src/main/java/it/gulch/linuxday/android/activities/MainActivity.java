@@ -53,7 +53,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import it.gulch.linuxday.android.R;
-import it.gulch.linuxday.android.api.FosdemApi;
+import it.gulch.linuxday.android.api.LinuxDayApi;
 import it.gulch.linuxday.android.db.DatabaseManager;
 import it.gulch.linuxday.android.enums.Section;
 import it.gulch.linuxday.android.fragments.dialogs.AboutDialogFragment;
@@ -206,9 +206,9 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 		// Monitor the schedule download
 		LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
 		lbm.registerReceiver(scheduleDownloadProgressReceiver,
-							 new IntentFilter(FosdemApi.ACTION_DOWNLOAD_SCHEDULE_PROGRESS));
+							 new IntentFilter(LinuxDayApi.ACTION_DOWNLOAD_SCHEDULE_PROGRESS));
 		lbm.registerReceiver(scheduleDownloadResultReceiver,
-							 new IntentFilter(FosdemApi.ACTION_DOWNLOAD_SCHEDULE_RESULT));
+							 new IntentFilter(LinuxDayApi.ACTION_DOWNLOAD_SCHEDULE_RESULT));
 
 		// Download reminder
 		long now = System.currentTimeMillis();
@@ -435,7 +435,7 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 		public void onReceive(Context context, Intent intent)
 		{
 			setSupportProgressBarIndeterminate(false);
-			setSupportProgress(intent.getIntExtra(FosdemApi.EXTRA_PROGRESS, 0) * 100);
+			setSupportProgress(intent.getIntExtra(LinuxDayApi.EXTRA_PROGRESS, 0) * 100);
 		}
 	};
 
@@ -448,8 +448,8 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 			setSupportProgressBarIndeterminate(false);
 			setSupportProgress(10000);
 
-			int result = intent.getIntExtra(FosdemApi.EXTRA_RESULT, FosdemApi.RESULT_ERROR);
-			if(result == FosdemApi.RESULT_ERROR) {
+			int result = intent.getIntExtra(LinuxDayApi.EXTRA_RESULT, LinuxDayApi.RESULT_ERROR);
+			if(result == LinuxDayApi.RESULT_ERROR) {
 				Toast.makeText(MainActivity.this, R.string.schedule_loading_error, Toast.LENGTH_LONG).show();
 			} else {
 				Toast.makeText(MainActivity.this, getString(R.string.events_download_completed, result),

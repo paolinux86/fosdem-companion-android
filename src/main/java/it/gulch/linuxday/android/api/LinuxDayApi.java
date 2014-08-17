@@ -18,7 +18,11 @@ package it.gulch.linuxday.android.api;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 
+import org.apache.commons.io.IOUtils;
+
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -32,17 +36,20 @@ import it.gulch.linuxday.android.utils.HttpUtils;
  * Main API entry point.
  *
  * @author Christophe Beyls
+ * @author paolo
  */
-public class FosdemApi
+public class LinuxDayApi
 {
+	private static final String TAG = LinuxDayApi.class.getSimpleName();
+
 	// Local broadcasts parameters
 	public static final String ACTION_DOWNLOAD_SCHEDULE_PROGRESS =
-		"it.gulch.linuxday.android.action.DOWNLOAD_SCHEDULE_PROGRESS";
+			"it.gulch.linuxday.android.action.DOWNLOAD_SCHEDULE_PROGRESS";
 
 	public static final String EXTRA_PROGRESS = "PROGRESS";
 
 	public static final String ACTION_DOWNLOAD_SCHEDULE_RESULT =
-		"it.gulch.linuxday.android.action.DOWNLOAD_SCHEDULE_RESULT";
+			"it.gulch.linuxday.android.action.DOWNLOAD_SCHEDULE_RESULT";
 
 	public static final String EXTRA_RESULT = "RESULT";
 
@@ -51,7 +58,8 @@ public class FosdemApi
 	private static final Lock scheduleLock = new ReentrantLock();
 
 	/**
-	 * Download & store the schedule to the database. Only one thread at a time will perform the actual action, the other ones will return immediately. The
+	 * Download & store the schedule to the database. Only one thread at a time will perform the actual action,
+	 * the other ones will return immediately. The
 	 * result will be sent back in the form of a local broadcast with an ACTION_DOWNLOAD_SCHEDULE_RESULT action.
 	 */
 	public static void downloadSchedule(Context context)
@@ -61,25 +69,49 @@ public class FosdemApi
 			return;
 		}
 
-		int result = RESULT_ERROR;
+		InputStream inputStream = doDownload(context);
+		int result = parseXml(inputStream);
+		sendResult(context, result);
+	}
+
+	private static InputStream doDownload(Context context)
+	{
+		InputStream inputStream;
 		try {
-			InputStream is =
-				HttpUtils.get(context, FosdemUrls.getSchedule(), ACTION_DOWNLOAD_SCHEDULE_PROGRESS, EXTRA_PROGRESS);
-			try {
-				Iterable<Event> events = new EventsParser().parse(is);
-				result = DatabaseManager.getInstance().storeSchedule(events);
-			} finally {
-				try {
-					is.close();
-				} catch(Exception e) {
-				}
-			}
-		} catch(Exception e) {
-			e.printStackTrace();
-		} finally {
-			LocalBroadcastManager.getInstance(context)
-				.sendBroadcast(new Intent(ACTION_DOWNLOAD_SCHEDULE_RESULT).putExtra(EXTRA_RESULT, result));
-			scheduleLock.unlock();
+			String scheduleUrl = LinuxDayUrls.getSchedule();
+			inputStream = HttpUtils.get(context, scheduleUrl, ACTION_DOWNLOAD_SCHEDULE_PROGRESS, EXTRA_PROGRESS);
+		} catch(IOException e) {
+			Log.e(TAG, e.getMessage(), e);
+			return null;
 		}
+
+		return inputStream;
+	}
+
+	private static int parseXml(InputStream inputStream)
+	{
+		int result = RESULT_ERROR;
+
+		try {
+			Iterable<Event> events = new EventsParser().parse(inputStream);
+			result = DatabaseManager.getInstance().storeSchedule(events);
+		} catch(Exception e) {
+			Log.e(TAG, e.getMessage(), e);
+		}
+
+		IOUtils.closeQuietly(inputStream);
+
+		return result;
+	}
+
+	private static void sendResult(Context context, int result)
+	{
+		Intent intent = new Intent(ACTION_DOWNLOAD_SCHEDULE_RESULT);
+		intent.putExtra(EXTRA_RESULT, result);
+
+		LocalBroadcastManager broadcastManager = LocalBroadcastManager.getInstance(context);
+		broadcastManager.sendBroadcast(intent);
+
+		scheduleLock.unlock();
 	}
 }

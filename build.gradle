@@ -5,12 +5,12 @@ buildscript {
 	}
 
 	dependencies {
-		classpath 'com.android.tools.build:gradle:0.10.+'
+		classpath 'com.android.tools.build:gradle:0.12.+'
 	}
 }
 
 
-apply plugin: 'android'
+apply plugin: 'com.android.application'
 
 repositories {
 	mavenLocal()
@@ -18,18 +18,19 @@ repositories {
 }
 
 dependencies {
-	compile "com.android.support:appcompat-v7:19.1.+"
+	compile "com.android.support:appcompat-v7:21.0.0-rc1"
+	compile "commons-io:commons-io:2.4"
 
 	compile files('libs/photoview-1.2.2.jar')
 }
 
 android {
-	compileSdkVersion 19
-	buildToolsVersion "19.1.0"
+	compileSdkVersion "android-L"
+	buildToolsVersion "20.0.0"
 
 	defaultConfig {
 		minSdkVersion 8
-		targetSdkVersion 19
+		targetSdkVersion "android-L"
 		versionCode 1
 		versionName "0.1"
 	}
