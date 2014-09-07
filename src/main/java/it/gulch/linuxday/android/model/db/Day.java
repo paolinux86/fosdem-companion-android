@@ -3,12 +3,7 @@ package it.gulch.linuxday.android.model.db;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
-import java.io.Serializable;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
-
-import it.gulch.linuxday.android.model.json.Track;
 
 /**
  * Created by paolo on 06/09/14.
@@ -27,6 +22,13 @@ public class Day
 
 	public Day()
 	{
+	}
+
+	public Day(it.gulch.linuxday.android.model.json.Day day)
+	{
+		this.id = day.getId();
+		this.name = day.getName();
+		this.dayDate = day.getDayDate().getTime();
 	}
 
 	public Day(Day other)

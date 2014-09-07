@@ -23,6 +23,13 @@ public class EventType
 	{
 	}
 
+	public EventType(it.gulch.linuxday.android.model.json.EventType eventType)
+	{
+		this.code = eventType.getCode();
+		this.description = eventType.getDescription();
+		this.image = null;
+	}
+
 	public EventType(EventType other)
 	{
 		this.code = other.code;

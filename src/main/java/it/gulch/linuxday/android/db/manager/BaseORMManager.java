@@ -14,6 +14,8 @@ public interface BaseORMManager<T, K>
 
 	void save(T object) throws SQLException;
 
+	void saveOrUpdate(T object) throws SQLException;
+
 	void update(T object) throws SQLException;
 
 	void delete(T object) throws SQLException;

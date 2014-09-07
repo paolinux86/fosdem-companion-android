@@ -45,6 +45,17 @@ public class Event
 	{
 	}
 
+	public Event(it.gulch.linuxday.android.model.json.Event event)
+	{
+		this.id = event.getId();
+		this.startDate = event.getStartDate().getTime();
+		this.duration = event.getDuration();
+		this.title = event.getTitle();
+		this.subtitle = event.getSubtitle();
+		this.eventAbstract = event.getEventAbstract();
+		this.description = event.getDescription();
+	}
+
 	public Event(Event other)
 	{
 		this.id = other.id;

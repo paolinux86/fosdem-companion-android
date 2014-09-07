@@ -1,5 +1,7 @@
 package it.gulch.linuxday.android.model.json;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.Serializable;
 import java.util.Calendar;
 import java.util.List;
@@ -9,22 +11,24 @@ import java.util.List;
  */
 public class Day implements Serializable
 {
-	private Long day_id;
+	@JsonProperty("day_id")
+	private Long id;
 
 	private String name;
 
-	private Calendar day_date;
+	@JsonProperty("day_date")
+	private Calendar dayDate;
 
 	private List<Track> tracks;
 
-	public Long getDay_id()
+	public Long getId()
 	{
-		return day_id;
+		return id;
 	}
 
-	public void setDay_id(Long day_id)
+	public void setId(Long id)
 	{
-		this.day_id = day_id;
+		this.id = id;
 	}
 
 	public String getName()
@@ -37,14 +41,14 @@ public class Day implements Serializable
 		this.name = name;
 	}
 
-	public Calendar getDay_date()
+	public Calendar getDayDate()
 	{
-		return day_date;
+		return dayDate;
 	}
 
-	public void setDay_date(Calendar day_date)
+	public void setDayDate(Calendar dayDate)
 	{
-		this.day_date = day_date;
+		this.dayDate = dayDate;
 	}
 
 	public List<Track> getTracks()

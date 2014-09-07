@@ -1,5 +1,7 @@
 package it.gulch.linuxday.android.model.json;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.Serializable;
 
 /**
@@ -7,26 +9,26 @@ import java.io.Serializable;
  */
 public class Person implements Serializable
 {
-	private Long person_id;
+	@JsonProperty("person_id")
+	private Long id;
 
 	private String name;
 
-	private String middle_name;
+	@JsonProperty("middle_name")
+	private String middleName;
 
 	private String surname;
 
 	private String description;
 
-	private byte[] photo;
-
-	public Long getPerson_id()
+	public Long getId()
 	{
-		return person_id;
+		return id;
 	}
 
-	public void setPerson_id(Long person_id)
+	public void setId(Long id)
 	{
-		this.person_id = person_id;
+		this.id = id;
 	}
 
 	public String getName()
@@ -39,14 +41,14 @@ public class Person implements Serializable
 		this.name = name;
 	}
 
-	public String getMiddle_name()
+	public String getMiddleName()
 	{
-		return middle_name;
+		return middleName;
 	}
 
-	public void setMiddle_name(String middle_name)
+	public void setMiddleName(String middleName)
 	{
-		this.middle_name = middle_name;
+		this.middleName = middleName;
 	}
 
 	public String getSurname()
@@ -67,15 +69,5 @@ public class Person implements Serializable
 	public void setDescription(String description)
 	{
 		this.description = description;
-	}
-
-	public byte[] getPhoto()
-	{
-		return photo;
-	}
-
-	public void setPhoto(byte[] photo)
-	{
-		this.photo = photo;
 	}
 }

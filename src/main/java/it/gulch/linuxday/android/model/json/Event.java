@@ -11,9 +11,11 @@ import java.util.List;
  */
 public class Event implements Serializable
 {
-	private Long event_id;
+	@JsonProperty("event_id")
+	private Long id;
 
-	private Calendar start_date;
+	@JsonProperty("start_date")
+	private Calendar startDate;
 
 	private Integer duration;
 
@@ -22,35 +24,36 @@ public class Event implements Serializable
 	private String subtitle;
 
 	@JsonProperty("abstract")
-	private String event_abstract;
+	private String eventAbstract;
 
 	private String description;
 
 	@JsonProperty("event_type")
 	private EventType eventType;
 
-	private List<Person> person;
+	@JsonProperty("person")
+	private List<Person> people;
 
 	private List<Link> links;
 
-	public Long getEvent_id()
+	public Long getId()
 	{
-		return event_id;
+		return id;
 	}
 
-	public void setEvent_id(Long event_id)
+	public void setId(Long id)
 	{
-		this.event_id = event_id;
+		this.id = id;
 	}
 
-	public Calendar getStart_date()
+	public Calendar getStartDate()
 	{
-		return start_date;
+		return startDate;
 	}
 
-	public void setStart_date(Calendar start_date)
+	public void setStartDate(Calendar startDate)
 	{
-		this.start_date = start_date;
+		this.startDate = startDate;
 	}
 
 	public Integer getDuration()
@@ -83,14 +86,14 @@ public class Event implements Serializable
 		this.subtitle = subtitle;
 	}
 
-	public String getEvent_abstract()
+	public String getEventAbstract()
 	{
-		return event_abstract;
+		return eventAbstract;
 	}
 
-	public void setEvent_abstract(String event_abstract)
+	public void setEventAbstract(String eventAbstract)
 	{
-		this.event_abstract = event_abstract;
+		this.eventAbstract = eventAbstract;
 	}
 
 	public String getDescription()
@@ -113,14 +116,14 @@ public class Event implements Serializable
 		this.eventType = eventType;
 	}
 
-	public List<Person> getPerson()
+	public List<Person> getPeople()
 	{
-		return person;
+		return people;
 	}
 
-	public void setPerson(List<Person> person)
+	public void setPeople(List<Person> people)
 	{
-		this.person = person;
+		this.people = people;
 	}
 
 	public List<Link> getLinks()

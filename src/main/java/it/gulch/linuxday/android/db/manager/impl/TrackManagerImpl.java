@@ -2,6 +2,7 @@ package it.gulch.linuxday.android.db.manager.impl;
 
 import android.util.Log;
 
+import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedDelete;
 
 import java.sql.SQLException;
@@ -9,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 import it.gulch.linuxday.android.db.manager.TrackManager;
+import it.gulch.linuxday.android.model.db.Room;
 import it.gulch.linuxday.android.model.db.Track;
 
 /**
@@ -44,6 +46,12 @@ public class TrackManagerImpl extends BaseORMManagerImpl<Track, Long> implements
 	public void save(Track object) throws SQLException
 	{
 		dao.create(object);
+	}
+
+	@Override
+	public void saveOrUpdate(Track object) throws SQLException
+	{
+		dao.createOrUpdate(object);
 	}
 
 	@Override

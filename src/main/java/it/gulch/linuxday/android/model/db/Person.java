@@ -32,6 +32,16 @@ public class Person
 	{
 	}
 
+	public Person(it.gulch.linuxday.android.model.json.Person person)
+	{
+		this.id = person.getId();
+		this.name = person.getName();
+		this.middleName = person.getMiddleName();
+		this.surname = person.getSurname();
+		this.description = person.getDescription();
+		this.photo = null;
+	}
+
 	public Person(Person other)
 	{
 		this.id = other.id;

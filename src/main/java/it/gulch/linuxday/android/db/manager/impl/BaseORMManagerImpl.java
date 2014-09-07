@@ -1,6 +1,7 @@
 package it.gulch.linuxday.android.db.manager.impl;
 
 import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.dao.DaoManager;
 
 import it.gulch.linuxday.android.db.manager.BaseORMManager;
 

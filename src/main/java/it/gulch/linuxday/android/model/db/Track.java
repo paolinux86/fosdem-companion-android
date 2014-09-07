@@ -28,6 +28,14 @@ public class Track
 	{
 	}
 
+	public Track(it.gulch.linuxday.android.model.json.Track track)
+	{
+		this.id = track.getId();
+		this.title = track.getTitle();
+		this.subtitle = track.getSubtitle();
+		this.room = new Room(track.getRoom());
+	}
+
 	public Track(Track other)
 	{
 		this.id = other.id;

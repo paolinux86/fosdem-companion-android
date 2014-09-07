@@ -3,8 +3,6 @@ package it.gulch.linuxday.android.model.db;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
-import java.io.Serializable;
-
 /**
  * Created by paolo on 06/09/14.
  */
@@ -25,6 +23,13 @@ public class Link
 
 	public Link()
 	{
+	}
+
+	public Link(it.gulch.linuxday.android.model.json.Link link)
+	{
+		this.id = link.getId();
+		this.link = link.getLink();
+		this.description = link.getDescription();
 	}
 
 	public Link(Link other)

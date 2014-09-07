@@ -49,6 +49,12 @@ public class DayManagerImpl extends BaseORMManagerImpl<Day, Long> implements Day
 	}
 
 	@Override
+	public void saveOrUpdate(Day object) throws SQLException
+	{
+		dao.createOrUpdate(object);
+	}
+
+	@Override
 	public void update(Day object) throws SQLException
 	{
 		dao.update(object);

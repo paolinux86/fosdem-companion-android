@@ -16,6 +16,11 @@ public class Room
 	{
 	}
 
+	public Room(it.gulch.linuxday.android.model.json.Room room)
+	{
+		this.name = room.getName();
+	}
+
 	public Room(Room other)
 	{
 		this.name = other.name;

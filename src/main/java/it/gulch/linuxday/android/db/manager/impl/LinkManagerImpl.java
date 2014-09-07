@@ -8,20 +8,20 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
-import it.gulch.linuxday.android.db.manager.BookmarkManager;
-import it.gulch.linuxday.android.db.manager.EventManager;
-import it.gulch.linuxday.android.model.db.Bookmark;
-import it.gulch.linuxday.android.model.db.Event;
+import it.gulch.linuxday.android.db.manager.DayManager;
+import it.gulch.linuxday.android.db.manager.LinkManager;
+import it.gulch.linuxday.android.model.db.Day;
+import it.gulch.linuxday.android.model.db.Link;
 
 /**
  * Created by paolo on 07/09/14.
  */
-public class BookmarkManagerImpl extends BaseORMManagerImpl<Bookmark, Long> implements BookmarkManager
+public class LinkManagerImpl extends BaseORMManagerImpl<Link, Long> implements LinkManager
 {
-	private static final String TAG = BookmarkManagerImpl.class.getSimpleName();
+	private static final String TAG = LinkManagerImpl.class.getSimpleName();
 
 	@Override
-	public Bookmark get(Long id)
+	public Link get(Long id)
 	{
 		try {
 			return dao.queryForId(id);
@@ -32,7 +32,7 @@ public class BookmarkManagerImpl extends BaseORMManagerImpl<Bookmark, Long> impl
 	}
 
 	@Override
-	public List<Bookmark> getAll()
+	public List<Link> getAll()
 	{
 		try {
 			return dao.queryForAll();
@@ -43,25 +43,25 @@ public class BookmarkManagerImpl extends BaseORMManagerImpl<Bookmark, Long> impl
 	}
 
 	@Override
-	public void save(Bookmark object) throws SQLException
+	public void save(Link object) throws SQLException
 	{
 		dao.create(object);
 	}
 
 	@Override
-	public void saveOrUpdate(Bookmark object) throws SQLException
+	public void saveOrUpdate(Link object) throws SQLException
 	{
 		dao.createOrUpdate(object);
 	}
 
 	@Override
-	public void update(Bookmark object) throws SQLException
+	public void update(Link object) throws SQLException
 	{
 		dao.update(object);
 	}
 
 	@Override
-	public void delete(Bookmark object) throws SQLException
+	public void delete(Link object) throws SQLException
 	{
 		dao.delete(object);
 	}
@@ -69,7 +69,7 @@ public class BookmarkManagerImpl extends BaseORMManagerImpl<Bookmark, Long> impl
 	@Override
 	public void truncate() throws SQLException
 	{
-		PreparedDelete<Bookmark> preparedDelete = dao.deleteBuilder().prepare();
+		PreparedDelete<Link> preparedDelete = dao.deleteBuilder().prepare();
 		dao.delete(preparedDelete);
 	}
 }

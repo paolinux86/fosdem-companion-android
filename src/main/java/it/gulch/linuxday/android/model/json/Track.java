@@ -1,5 +1,7 @@
 package it.gulch.linuxday.android.model.json;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -8,7 +10,8 @@ import java.util.List;
  */
 public class Track implements Serializable
 {
-	private Long track_id;
+	@JsonProperty("track_id")
+	private Long id;
 
 	private String title;
 
@@ -18,14 +21,14 @@ public class Track implements Serializable
 
 	private List<Event> events;
 
-	public Long getTrack_id()
+	public Long getId()
 	{
-		return track_id;
+		return id;
 	}
 
-	public void setTrack_id(Long track_id)
+	public void setId(Long id)
 	{
-		this.track_id = track_id;
+		this.id = id;
 	}
 
 	public String getTitle()

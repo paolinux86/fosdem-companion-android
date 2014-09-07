@@ -1,5 +1,7 @@
 package it.gulch.linuxday.android.model.json;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.Serializable;
 
 /**
@@ -7,20 +9,21 @@ import java.io.Serializable;
  */
 public class Link implements Serializable
 {
-	private Long link_id;
+	@JsonProperty("link_id")
+	private Long id;
 
 	private String link;
 
 	private String description;
 
-	public Long getLink_id()
+	public Long getId()
 	{
-		return link_id;
+		return id;
 	}
 
-	public void setLink_id(Long link_id)
+	public void setId(Long id)
 	{
-		this.link_id = link_id;
+		this.id = id;
 	}
 
 	public String getLink()

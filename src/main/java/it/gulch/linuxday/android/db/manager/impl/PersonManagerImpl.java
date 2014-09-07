@@ -4,11 +4,13 @@ import android.util.Log;
 
 import com.j256.ormlite.stmt.PreparedDelete;
 
+import java.sql.SQLDataException;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
 import it.gulch.linuxday.android.db.manager.PersonManager;
+import it.gulch.linuxday.android.model.db.Event;
 import it.gulch.linuxday.android.model.db.Person;
 import it.gulch.linuxday.android.model.db.Room;
 
@@ -45,6 +47,12 @@ public class PersonManagerImpl extends BaseORMManagerImpl<Person, Long> implemen
 	public void save(Person object) throws SQLException
 	{
 		dao.create(object);
+	}
+
+	@Override
+	public void saveOrUpdate(Person object) throws SQLException
+	{
+		dao.createOrUpdate(object);
 	}
 
 	@Override
