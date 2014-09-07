@@ -3,7 +3,6 @@ package it.gulch.linuxday.android.model.db;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -40,6 +39,8 @@ public class Event
 	@DatabaseField(canBeNull = false, foreign = true, index = true)
 	private Track track;
 
+	private List<Person> people;
+
 	public Event()
 	{
 	}
@@ -55,6 +56,7 @@ public class Event
 		this.description = other.description;
 		this.eventType = other.eventType;
 		this.track = other.track;
+		this.people = other.people;
 	}
 
 	public Long getId()
@@ -145,5 +147,15 @@ public class Event
 	public void setTrack(Track track)
 	{
 		this.track = track;
+	}
+
+	public List<Person> getPeople()
+	{
+		return people;
+	}
+
+	public void setPeople(List<Person> people)
+	{
+		this.people = people;
 	}
 }
