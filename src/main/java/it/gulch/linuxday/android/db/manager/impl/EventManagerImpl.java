@@ -8,19 +8,20 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
-import it.gulch.linuxday.android.db.manager.RoomManager;
-import it.gulch.linuxday.android.model.db.Day;
-import it.gulch.linuxday.android.model.db.Room;
+import it.gulch.linuxday.android.db.manager.EventManager;
+import it.gulch.linuxday.android.db.manager.TrackManager;
+import it.gulch.linuxday.android.model.db.Event;
+import it.gulch.linuxday.android.model.db.Track;
 
 /**
  * Created by paolo on 07/09/14.
  */
-public class RoomManagerImpl extends BaseORMManagerImpl<Room, Long> implements RoomManager
+public class EventManagerImpl extends BaseORMManagerImpl<Event, Long> implements EventManager
 {
-	private static final String TAG = RoomManagerImpl.class.getSimpleName();
+	private static final String TAG = EventManagerImpl.class.getSimpleName();
 
 	@Override
-	public Room get(Long id)
+	public Event get(Long id)
 	{
 		try {
 			return dao.queryForId(id);
@@ -31,7 +32,7 @@ public class RoomManagerImpl extends BaseORMManagerImpl<Room, Long> implements R
 	}
 
 	@Override
-	public List<Room> getAll()
+	public List<Event> getAll()
 	{
 		try {
 			return dao.queryForAll();
@@ -42,19 +43,19 @@ public class RoomManagerImpl extends BaseORMManagerImpl<Room, Long> implements R
 	}
 
 	@Override
-	public void save(Room object) throws SQLException
+	public void save(Event object) throws SQLException
 	{
 		dao.create(object);
 	}
 
 	@Override
-	public void update(Room object) throws SQLException
+	public void update(Event object) throws SQLException
 	{
 		dao.update(object);
 	}
 
 	@Override
-	public void delete(Room object) throws SQLException
+	public void delete(Event object) throws SQLException
 	{
 		dao.delete(object);
 	}
@@ -62,7 +63,7 @@ public class RoomManagerImpl extends BaseORMManagerImpl<Room, Long> implements R
 	@Override
 	public void truncate() throws SQLException
 	{
-		PreparedDelete<Room> preparedDelete = dao.deleteBuilder().prepare();
+		PreparedDelete<Event> preparedDelete = dao.deleteBuilder().prepare();
 		dao.delete(preparedDelete);
 	}
 }
