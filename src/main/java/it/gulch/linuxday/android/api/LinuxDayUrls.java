@@ -29,7 +29,8 @@ public class LinuxDayUrls
 	}
 
 //	private static final String SCHEDULE_URL = "https://fosdem.org/schedule/xml";
-	private static final String SCHEDULE_URL = "http://10.0.2.2:8080/conference";
+	//private static final String SCHEDULE_URL = "http://10.0.2.2:8000/api/conference/app";
+	private static final String SCHEDULE_URL = "http://172.20.0.199:8000/api/conference/app";
 
 	private static final String EVENT_URL_FORMAT = "https://fosdem.org/%1$d/schedule/event/%2$s/";
 

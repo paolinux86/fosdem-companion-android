@@ -20,6 +20,8 @@ import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -28,6 +30,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import it.gulch.linuxday.android.db.DatabaseManager;
+import it.gulch.linuxday.android.model.json.Conference;
 import it.gulch.linuxday.android.model.Event;
 import it.gulch.linuxday.android.parsers.EventsParser;
 import it.gulch.linuxday.android.utils.HttpUtils;
@@ -70,7 +73,8 @@ public class LinuxDayApi
 		}
 
 		InputStream inputStream = doDownload(context);
-		int result = parseXml(inputStream);
+		//int result = parseXml(inputStream);
+		int result = parseJson(inputStream);
 		sendResult(context, result);
 	}
 
@@ -95,6 +99,22 @@ public class LinuxDayApi
 		try {
 			Iterable<Event> events = new EventsParser().parse(inputStream);
 			result = DatabaseManager.getInstance().storeSchedule(events);
+		} catch(Exception e) {
+			Log.e(TAG, e.getMessage(), e);
+		}
+
+		IOUtils.closeQuietly(inputStream);
+
+		return result;
+	}
+
+	private static int parseJson(InputStream inputStream)
+	{
+		int result = RESULT_ERROR;
+
+		try {
+			Conference conference = new ObjectMapper().readValue(inputStream, Conference.class);
+			result = 0; //DatabaseManager.getInstance().storeSchedule(events);
 		} catch(Exception e) {
 			Log.e(TAG, e.getMessage(), e);
 		}
