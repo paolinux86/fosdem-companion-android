@@ -45,4 +45,14 @@ public class Link implements Serializable
 	{
 		this.description = description;
 	}
+
+	public it.gulch.linuxday.android.model.db.Link toDatabaseLink()
+	{
+		it.gulch.linuxday.android.model.db.Link dbLink = new it.gulch.linuxday.android.model.db.Link();
+		dbLink.setId(id);
+		dbLink.setLink(link);
+		dbLink.setDescription(description);
+
+		return dbLink;
+	}
 }

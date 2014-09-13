@@ -3,6 +3,7 @@ package it.gulch.linuxday.android.model.db;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -168,5 +169,14 @@ public class Event
 	public void setPeople(List<Person> people)
 	{
 		this.people = people;
+	}
+
+	public void addPerson(Person person)
+	{
+		if(people == null) {
+			people = new ArrayList<Person>();
+		}
+
+		people.add(person);
 	}
 }

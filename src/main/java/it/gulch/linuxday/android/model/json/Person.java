@@ -70,4 +70,16 @@ public class Person implements Serializable
 	{
 		this.description = description;
 	}
+
+	public it.gulch.linuxday.android.model.db.Person toDatabasePerson()
+	{
+		it.gulch.linuxday.android.model.db.Person person = new it.gulch.linuxday.android.model.db.Person();
+		person.setId(id);
+		person.setName(name);
+		person.setMiddleName(middleName);
+		person.setSurname(surname);
+		person.setDescription(description);
+
+		return person;
+	}
 }

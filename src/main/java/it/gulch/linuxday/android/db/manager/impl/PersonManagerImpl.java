@@ -2,13 +2,18 @@ package it.gulch.linuxday.android.db.manager.impl;
 
 import android.util.Log;
 
+import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedDelete;
+
+import org.androidannotations.annotations.EBean;
+import org.androidannotations.annotations.OrmLiteDao;
 
 import java.sql.SQLDataException;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
+import it.gulch.linuxday.android.db.OrmLiteDatabaseHelper;
 import it.gulch.linuxday.android.db.manager.PersonManager;
 import it.gulch.linuxday.android.model.db.Event;
 import it.gulch.linuxday.android.model.db.Person;
@@ -17,9 +22,13 @@ import it.gulch.linuxday.android.model.db.Room;
 /**
  * Created by paolo on 07/09/14.
  */
-public class PersonManagerImpl extends BaseORMManagerImpl<Person, Long> implements PersonManager
+@EBean(scope = EBean.Scope.Singleton)
+public class PersonManagerImpl implements PersonManager
 {
 	private static final String TAG = PersonManagerImpl.class.getSimpleName();
+
+	@OrmLiteDao(helper = OrmLiteDatabaseHelper.class, model = Person.class)
+	Dao<Person, Long> dao;
 
 	@Override
 	public Person get(Long id)
@@ -72,5 +81,11 @@ public class PersonManagerImpl extends BaseORMManagerImpl<Person, Long> implemen
 	{
 		PreparedDelete<Person> preparedDelete = dao.deleteBuilder().prepare();
 		dao.delete(preparedDelete);
+	}
+
+	@Override
+	public boolean exists(Long objectId) throws SQLException
+	{
+		return dao.idExists(objectId);
 	}
 }

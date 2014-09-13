@@ -60,4 +60,14 @@ public class Day implements Serializable
 	{
 		this.tracks = tracks;
 	}
+
+	public it.gulch.linuxday.android.model.db.Day toDatabaseDay()
+	{
+		it.gulch.linuxday.android.model.db.Day day = new it.gulch.linuxday.android.model.db.Day();
+		day.setId(id);
+		day.setName(name);
+		day.setDayDate(dayDate.getTime());
+
+		return day;
+	}
 }

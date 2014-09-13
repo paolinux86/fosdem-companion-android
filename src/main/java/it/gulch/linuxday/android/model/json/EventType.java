@@ -9,8 +9,6 @@ public class EventType
 
 	private String description;
 
-	private byte[] image;
-
 	public String getCode()
 	{
 		return code;
@@ -31,13 +29,12 @@ public class EventType
 		this.description = description;
 	}
 
-	public byte[] getImage()
+	public it.gulch.linuxday.android.model.db.EventType toDatabaseEventType()
 	{
-		return image;
-	}
+		it.gulch.linuxday.android.model.db.EventType eventType = new it.gulch.linuxday.android.model.db.EventType();
+		eventType.setCode(code);
+		eventType.setDescription(description);
 
-	public void setImage(byte[] image)
-	{
-		this.image = image;
+		return eventType;
 	}
 }

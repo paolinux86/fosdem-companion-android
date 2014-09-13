@@ -1,5 +1,7 @@
 package it.gulch.linuxday.android.db.manager;
 
+import java.sql.SQLException;
+
 import it.gulch.linuxday.android.model.db.Event;
 
 /**
@@ -7,4 +9,5 @@ import it.gulch.linuxday.android.model.db.Event;
  */
 public interface EventManager extends BaseORMManager<Event, Long>
 {
+	long countEvents() throws SQLException;
 }

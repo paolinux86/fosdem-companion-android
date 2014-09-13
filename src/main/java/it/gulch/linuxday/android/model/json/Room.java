@@ -18,4 +18,12 @@ public class Room implements Serializable
 	{
 		this.name = name;
 	}
+
+	public it.gulch.linuxday.android.model.db.Room toDatabaseRoom()
+	{
+		it.gulch.linuxday.android.model.db.Room room = new it.gulch.linuxday.android.model.db.Room();
+		room.setName(name);
+
+		return room;
+	}
 }

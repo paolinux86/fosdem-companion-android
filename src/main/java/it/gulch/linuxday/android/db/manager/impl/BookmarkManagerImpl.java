@@ -2,12 +2,17 @@ package it.gulch.linuxday.android.db.manager.impl;
 
 import android.util.Log;
 
+import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedDelete;
+
+import org.androidannotations.annotations.EBean;
+import org.androidannotations.annotations.OrmLiteDao;
 
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
+import it.gulch.linuxday.android.db.OrmLiteDatabaseHelper;
 import it.gulch.linuxday.android.db.manager.BookmarkManager;
 import it.gulch.linuxday.android.db.manager.EventManager;
 import it.gulch.linuxday.android.model.db.Bookmark;
@@ -16,9 +21,13 @@ import it.gulch.linuxday.android.model.db.Event;
 /**
  * Created by paolo on 07/09/14.
  */
-public class BookmarkManagerImpl extends BaseORMManagerImpl<Bookmark, Long> implements BookmarkManager
+@EBean(scope = EBean.Scope.Singleton)
+public class BookmarkManagerImpl implements BookmarkManager
 {
 	private static final String TAG = BookmarkManagerImpl.class.getSimpleName();
+
+	@OrmLiteDao(helper = OrmLiteDatabaseHelper.class, model = Bookmark.class)
+	Dao<Bookmark, Long> dao;
 
 	@Override
 	public Bookmark get(Long id)
@@ -71,5 +80,11 @@ public class BookmarkManagerImpl extends BaseORMManagerImpl<Bookmark, Long> impl
 	{
 		PreparedDelete<Bookmark> preparedDelete = dao.deleteBuilder().prepare();
 		dao.delete(preparedDelete);
+	}
+
+	@Override
+	public boolean exists(Long objectId) throws SQLException
+	{
+		return dao.idExists(objectId);
 	}
 }

@@ -135,4 +135,18 @@ public class Event implements Serializable
 	{
 		this.links = links;
 	}
+
+	public it.gulch.linuxday.android.model.db.Event toDatabaseEvent()
+	{
+		it.gulch.linuxday.android.model.db.Event event = new it.gulch.linuxday.android.model.db.Event();
+		event.setId(id);
+		event.setStartDate(startDate.getTime());
+		event.setDuration(duration);
+		event.setTitle(title);
+		event.setSubtitle(subtitle);
+		event.setEventAbstract(eventAbstract);
+		event.setDescription(description);
+
+		return event;
+	}
 }

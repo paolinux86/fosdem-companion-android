@@ -1,12 +1,13 @@
 package it.gulch.linuxday.android.db.manager;
 
+import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.List;
 
 /**
  * Created by paolo on 07/09/14.
  */
-public interface BaseORMManager<T, K>
+public interface BaseORMManager<T, K extends Serializable>
 {
 	T get(K id);
 
@@ -21,4 +22,6 @@ public interface BaseORMManager<T, K>
 	void delete(T object) throws SQLException;
 
 	void truncate() throws SQLException;
+
+	boolean exists(K objectId) throws SQLException;
 }

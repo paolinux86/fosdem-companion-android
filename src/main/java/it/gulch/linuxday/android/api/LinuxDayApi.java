@@ -22,6 +22,8 @@ import android.util.Log;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EBean;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -29,6 +31,7 @@ import java.io.InputStream;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import it.gulch.linuxday.android.db.ConferenceImportManager;
 import it.gulch.linuxday.android.db.DatabaseManager;
 import it.gulch.linuxday.android.model.json.Conference;
 import it.gulch.linuxday.android.model.Event;
@@ -41,6 +44,7 @@ import it.gulch.linuxday.android.utils.HttpUtils;
  * @author Christophe Beyls
  * @author paolo
  */
+@EBean
 public class LinuxDayApi
 {
 	private static final String TAG = LinuxDayApi.class.getSimpleName();
@@ -60,12 +64,15 @@ public class LinuxDayApi
 
 	private static final Lock scheduleLock = new ReentrantLock();
 
+	@Bean
+	ConferenceImportManager conferenceImportManager;
+
 	/**
 	 * Download & store the schedule to the database. Only one thread at a time will perform the actual action,
 	 * the other ones will return immediately. The
 	 * result will be sent back in the form of a local broadcast with an ACTION_DOWNLOAD_SCHEDULE_RESULT action.
 	 */
-	public static void downloadSchedule(Context context)
+	public void downloadSchedule(Context context)
 	{
 		if(!scheduleLock.tryLock()) {
 			// If a download is already in progress, return immediately
@@ -74,11 +81,11 @@ public class LinuxDayApi
 
 		InputStream inputStream = doDownload(context);
 		//int result = parseXml(inputStream);
-		int result = parseJson(inputStream);
+		long result = parseJson(inputStream);
 		sendResult(context, result);
 	}
 
-	private static InputStream doDownload(Context context)
+	private InputStream doDownload(Context context)
 	{
 		InputStream inputStream;
 		try {
@@ -92,7 +99,7 @@ public class LinuxDayApi
 		return inputStream;
 	}
 
-	private static int parseXml(InputStream inputStream)
+	private int parseXml(InputStream inputStream)
 	{
 		int result = RESULT_ERROR;
 
@@ -108,13 +115,14 @@ public class LinuxDayApi
 		return result;
 	}
 
-	private static int parseJson(InputStream inputStream)
+	private long parseJson(InputStream inputStream)
 	{
-		int result = RESULT_ERROR;
+		long result = RESULT_ERROR;
 
 		try {
 			Conference conference = new ObjectMapper().readValue(inputStream, Conference.class);
-			result = 0; //DatabaseManager.getInstance().storeSchedule(events);
+			result = conferenceImportManager.importConference(conference);
+			//DatabaseManager.getInstance().storeSchedule(events);
 		} catch(Exception e) {
 			Log.e(TAG, e.getMessage(), e);
 		}
@@ -124,7 +132,7 @@ public class LinuxDayApi
 		return result;
 	}
 
-	private static void sendResult(Context context, int result)
+	private void sendResult(Context context, long result)
 	{
 		Intent intent = new Intent(ACTION_DOWNLOAD_SCHEDULE_RESULT);
 		intent.putExtra(EXTRA_RESULT, result);

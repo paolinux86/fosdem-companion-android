@@ -5,10 +5,14 @@ import android.util.Log;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedDelete;
 
+import org.androidannotations.annotations.EBean;
+import org.androidannotations.annotations.OrmLiteDao;
+
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
+import it.gulch.linuxday.android.db.OrmLiteDatabaseHelper;
 import it.gulch.linuxday.android.db.manager.TrackManager;
 import it.gulch.linuxday.android.model.db.Room;
 import it.gulch.linuxday.android.model.db.Track;
@@ -16,9 +20,13 @@ import it.gulch.linuxday.android.model.db.Track;
 /**
  * Created by paolo on 07/09/14.
  */
-public class TrackManagerImpl extends BaseORMManagerImpl<Track, Long> implements TrackManager
+@EBean(scope = EBean.Scope.Singleton)
+public class TrackManagerImpl implements TrackManager
 {
 	private static final String TAG = TrackManagerImpl.class.getSimpleName();
+
+	@OrmLiteDao(helper = OrmLiteDatabaseHelper.class, model = Track.class)
+	Dao<Track, Long> dao;
 
 	@Override
 	public Track get(Long id)
@@ -71,5 +79,11 @@ public class TrackManagerImpl extends BaseORMManagerImpl<Track, Long> implements
 	{
 		PreparedDelete<Track> preparedDelete = dao.deleteBuilder().prepare();
 		dao.delete(preparedDelete);
+	}
+
+	@Override
+	public boolean exists(Long objectId) throws SQLException
+	{
+		return dao.idExists(objectId);
 	}
 }

@@ -8,11 +8,15 @@ import com.j256.ormlite.stmt.PreparedDelete;
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
 
+import org.androidannotations.annotations.EBean;
+import org.androidannotations.annotations.OrmLiteDao;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import it.gulch.linuxday.android.db.OrmLiteDatabaseHelper;
 import it.gulch.linuxday.android.db.manager.EventManager;
 import it.gulch.linuxday.android.model.db.Event;
 import it.gulch.linuxday.android.model.db.Person;
@@ -21,11 +25,16 @@ import it.gulch.linuxday.android.model.db.PersonPresentsEvent;
 /**
  * Created by paolo on 07/09/14.
  */
-public class EventManagerImpl extends BaseORMManagerImpl<Event, Long> implements EventManager
+@EBean(scope = EBean.Scope.Singleton)
+public class EventManagerImpl implements EventManager
 {
 	private static final String TAG = EventManagerImpl.class.getSimpleName();
 
-	private Dao<PersonPresentsEvent, Long> personPresentsEventDao;
+	@OrmLiteDao(helper = OrmLiteDatabaseHelper.class, model = Event.class)
+	Dao<Event, Long> dao;
+
+	@OrmLiteDao(helper = OrmLiteDatabaseHelper.class, model = PersonPresentsEvent.class)
+	Dao<PersonPresentsEvent, Long> personPresentsEventDao;
 
 	@Override
 	public Event get(Long id)
@@ -65,11 +74,15 @@ public class EventManagerImpl extends BaseORMManagerImpl<Event, Long> implements
 		insertPeopleInEvent(object);
 	}
 
-	private void insertPeopleInEvent(Event object) throws SQLException
+	private void insertPeopleInEvent(Event event) throws SQLException
 	{
-		for(Person person : object.getPeople()) {
+		if(event.getPeople() == null || event.getPeople().size() == 0) {
+			return;
+		}
+
+		for(Person person : event.getPeople()) {
 			PersonPresentsEvent personPresentsEvent = new PersonPresentsEvent();
-			personPresentsEvent.setEvent(object);
+			personPresentsEvent.setEvent(event);
 			personPresentsEvent.setPerson(person);
 
 			personPresentsEventDao.create(personPresentsEvent);
@@ -121,6 +134,12 @@ public class EventManagerImpl extends BaseORMManagerImpl<Event, Long> implements
 		dao.delete(eventPreparedDelete);
 	}
 
+	@Override
+	public boolean exists(Long objectId) throws SQLException
+	{
+		return dao.idExists(objectId);
+	}
+
 	private void addPeople(Event event) throws SQLException
 	{
 		QueryBuilder<PersonPresentsEvent, Long> queryBuilder = personPresentsEventDao.queryBuilder();
@@ -134,5 +153,14 @@ public class EventManagerImpl extends BaseORMManagerImpl<Event, Long> implements
 		}
 
 		event.setPeople(people);
+	}
+
+	@Override
+	public long countEvents() throws SQLException
+	{
+		QueryBuilder<Event, Long> queryBuilder = dao.queryBuilder();
+		PreparedQuery<Event> preparedQuery = queryBuilder.prepare();
+
+		return dao.countOf(preparedQuery);
 	}
 }

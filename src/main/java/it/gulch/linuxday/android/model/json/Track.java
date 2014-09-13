@@ -70,4 +70,14 @@ public class Track implements Serializable
 	{
 		this.events = events;
 	}
+
+	public it.gulch.linuxday.android.model.db.Track toDatabaseTrack()
+	{
+		it.gulch.linuxday.android.model.db.Track track = new it.gulch.linuxday.android.model.db.Track();
+		track.setId(id);
+		track.setTitle(title);
+		track.setSubtitle(subtitle);
+
+		return track;
+	}
 }
