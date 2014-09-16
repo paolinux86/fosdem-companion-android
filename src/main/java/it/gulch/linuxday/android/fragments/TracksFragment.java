@@ -34,13 +34,19 @@ import android.view.ViewGroup;
 
 import com.example.android.common.view.SlidingTabLayout;
 
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EFragment;
+
 import java.util.List;
 
 import it.gulch.linuxday.android.R;
-import it.gulch.linuxday.android.db.DatabaseManager;
+import it.gulch.linuxday.android.constants.ActionConstants;
+import it.gulch.linuxday.android.db.manager.DayManager;
+import it.gulch.linuxday.android.db.manager.impl.DayManagerImpl;
 import it.gulch.linuxday.android.loaders.GlobalCacheLoader;
-import it.gulch.linuxday.android.model.Day;
+import it.gulch.linuxday.android.model.db.Day;
 
+@EFragment
 public class TracksFragment extends Fragment implements LoaderCallbacks<List<Day>>
 {
 	private static class ViewHolder
@@ -63,6 +69,9 @@ public class TracksFragment extends Fragment implements LoaderCallbacks<List<Day
 	private ViewHolder holder;
 
 	private int savedCurrentPage = -1;
+
+	@Bean(DayManagerImpl.class)
+	DayManager dayManager;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -118,7 +127,7 @@ public class TracksFragment extends Fragment implements LoaderCallbacks<List<Day
 		}
 	}
 
-	private static class DaysLoader extends GlobalCacheLoader<List<Day>>
+	private class DaysLoader extends GlobalCacheLoader<List<Day>>
 	{
 
 		private final BroadcastReceiver scheduleRefreshedReceiver = new BroadcastReceiver()
@@ -136,7 +145,7 @@ public class TracksFragment extends Fragment implements LoaderCallbacks<List<Day
 			super(context);
 			// Reload days list when the schedule has been refreshed
 			LocalBroadcastManager.getInstance(context).registerReceiver(scheduleRefreshedReceiver, new IntentFilter(
-					DatabaseManager.ACTION_SCHEDULE_REFRESHED));
+					ActionConstants.ACTION_SCHEDULE_REFRESHED));
 		}
 
 		@Override
@@ -149,13 +158,13 @@ public class TracksFragment extends Fragment implements LoaderCallbacks<List<Day
 		@Override
 		protected List<Day> getCachedResult()
 		{
-			return DatabaseManager.getInstance().getCachedDays();
+			return dayManager.getCachedDays();
 		}
 
 		@Override
 		public List<Day> loadInBackground()
 		{
-			return DatabaseManager.getInstance().getDays();
+			return dayManager.getAll();
 		}
 	}
 
@@ -196,7 +205,6 @@ public class TracksFragment extends Fragment implements LoaderCallbacks<List<Day
 
 	private static class DaysAdapter extends FragmentStatePagerAdapter
 	{
-
 		private List<Day> days;
 
 		public DaysAdapter(FragmentManager fm)

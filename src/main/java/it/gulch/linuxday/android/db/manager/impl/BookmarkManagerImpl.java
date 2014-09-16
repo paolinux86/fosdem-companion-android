@@ -3,6 +3,7 @@ package it.gulch.linuxday.android.db.manager.impl;
 import android.util.Log;
 
 import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.PreparedDelete;
 
 import org.androidannotations.annotations.EBean;
@@ -86,5 +87,48 @@ public class BookmarkManagerImpl implements BookmarkManager
 	public boolean exists(Long objectId) throws SQLException
 	{
 		return dao.idExists(objectId);
+	}
+
+	@Override
+	public void deleteOldBookmarks(Long minEventId) throws SQLException
+	{
+		DeleteBuilder<Bookmark, Long> deleteBuilder = dao.deleteBuilder();
+		deleteBuilder.where().lt("event_id", minEventId);
+		PreparedDelete<Bookmark> preparedDelete = deleteBuilder.prepare();
+		dao.delete(preparedDelete);
+	}
+
+	@Override
+	public void addBookmark(Event event) throws SQLException
+	{
+		Bookmark bookmark = new Bookmark();
+		bookmark.setEvent(event);
+
+		save(bookmark);
+	}
+
+	@Override
+	public void removeBookmark(Event event) throws SQLException
+	{
+		DeleteBuilder<Bookmark, Long> deleteBuilder = dao.deleteBuilder();
+		deleteBuilder.where().eq("event_id", event.getId());
+
+		dao.delete(deleteBuilder.prepare());
+	}
+
+	@Override
+	public void removeBookmarksByEventId(long[] eventIds) throws SQLException
+	{
+		DeleteBuilder<Bookmark, Long> deleteBuilder = dao.deleteBuilder();
+		deleteBuilder.where().in("event_id", eventIds);
+
+		dao.delete(deleteBuilder.prepare());
+	}
+
+	@Override
+	public List<Bookmark> getBookmarks(long minStartTime)
+	{
+		// TODO: implementare
+		return Collections.emptyList();
 	}
 }

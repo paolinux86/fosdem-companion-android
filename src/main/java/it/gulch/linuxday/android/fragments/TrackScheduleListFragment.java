@@ -17,46 +17,38 @@ package it.gulch.linuxday.android.fragments;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.res.Resources;
 import android.database.Cursor;
-import android.graphics.Typeface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.Loader;
-import android.support.v4.widget.CursorAdapter;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.TextUtils;
-import android.text.style.AbsoluteSizeSpan;
-import android.text.style.StyleSpan;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ListView;
-import android.widget.TextView;
 
-import java.text.DateFormat;
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EFragment;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import it.gulch.linuxday.android.R;
-import it.gulch.linuxday.android.db.DatabaseManager;
-import it.gulch.linuxday.android.loaders.TrackScheduleLoader;
-import it.gulch.linuxday.android.model.Day;
-import it.gulch.linuxday.android.model.Event;
-import it.gulch.linuxday.android.model.Track;
-import it.gulch.linuxday.android.utils.DateUtils;
+import it.gulch.linuxday.android.adapters.TrackScheduleAdapter;
+import it.gulch.linuxday.android.db.manager.EventManager;
+import it.gulch.linuxday.android.db.manager.impl.EventManagerImpl;
+import it.gulch.linuxday.android.loaders.SimpleDatabaseLoader;
+import it.gulch.linuxday.android.model.db.Day;
+import it.gulch.linuxday.android.model.db.Event;
+import it.gulch.linuxday.android.model.db.Track;
 
-public class TrackScheduleListFragment extends ListFragment implements Handler.Callback, LoaderCallbacks<Cursor>
+@EFragment
+public class TrackScheduleListFragment extends ListFragment implements Handler.Callback, LoaderCallbacks<List<Event>>
 {
-	/**
-	 * Interface implemented by container activities
-	 */
-	public interface Callbacks
-	{
-		void onEventSelected(int position, Event event);
-	}
+	@Bean(EventManagerImpl.class)
+	EventManager eventManager;
 
 	private static final int EVENTS_LOADER_ID = 1;
 
@@ -82,12 +74,14 @@ public class TrackScheduleListFragment extends ListFragment implements Handler.C
 
 	private boolean isListAlreadyShown = false;
 
+	private List<Event> events;
+
 	public static TrackScheduleListFragment newInstance(Day day, Track track)
 	{
 		TrackScheduleListFragment f = new TrackScheduleListFragment();
 		Bundle args = new Bundle();
-		args.putParcelable(ARG_DAY, day);
-		args.putParcelable(ARG_TRACK, track);
+		args.putSerializable(ARG_DAY, day);
+		args.putSerializable(ARG_TRACK, track);
 		f.setArguments(args);
 		return f;
 	}
@@ -95,8 +89,8 @@ public class TrackScheduleListFragment extends ListFragment implements Handler.C
 	public static TrackScheduleListFragment newInstance(Day day, Track track, long fromEventId)
 	{
 		Bundle args = new Bundle();
-		args.putParcelable(ARG_DAY, day);
-		args.putParcelable(ARG_TRACK, track);
+		args.putSerializable(ARG_DAY, day);
+		args.putSerializable(ARG_TRACK, track);
 		args.putLong(ARG_FROM_EVENT_ID, fromEventId);
 
 		TrackScheduleListFragment f = new TrackScheduleListFragment();
@@ -110,9 +104,12 @@ public class TrackScheduleListFragment extends ListFragment implements Handler.C
 	{
 		super.onCreate(savedInstanceState);
 
-		day = getArguments().getParcelable(ARG_DAY);
+		day = (Day) getArguments().getSerializable(ARG_DAY);
 		handler = new Handler(this);
-		adapter = new TrackScheduleAdapter(getActivity());
+
+		events = new ArrayList<Event>();
+
+		adapter = new TrackScheduleAdapter(getActivity(), events);
 		setListAdapter(adapter);
 
 		if(savedInstanceState != null) {
@@ -175,7 +172,7 @@ public class TrackScheduleListFragment extends ListFragment implements Handler.C
 
 		// Setup display auto-refresh during the track's day
 		long now = System.currentTimeMillis();
-		long dayStart = day.getDate().getTime();
+		long dayStart = day.getDayDate().getTime();
 		if(now < dayStart) {
 			// Before track day, schedule refresh in the future
 			handler.sendEmptyMessageDelayed(REFRESH_TIME_WHAT, dayStart - now);
@@ -209,18 +206,20 @@ public class TrackScheduleListFragment extends ListFragment implements Handler.C
 	}
 
 	@Override
-	public Loader<Cursor> onCreateLoader(int id, Bundle args)
+	public Loader<List<Event>> onCreateLoader(int id, Bundle args)
 	{
-		Day day = getArguments().getParcelable(ARG_DAY);
-		Track track = getArguments().getParcelable(ARG_TRACK);
-		return new TrackScheduleLoader(getActivity(), day, track);
+		Day day = (Day) getArguments().getSerializable(ARG_DAY);
+		Track track = (Track) getArguments().getSerializable(ARG_TRACK);
+		return new TrackScheduleLoader(getActivity(), track);
 	}
 
 	@Override
-	public void onLoadFinished(Loader<Cursor> loader, Cursor data)
+	public void onLoadFinished(Loader<List<Event>> loader, List<Event> data)
 	{
 		if(data != null) {
-			adapter.swapCursor(data);
+			events.clear();
+			events.addAll(data);
+			adapter.notifyDataSetChanged();
 
 			if(selectionEnabled) {
 				final int count = adapter.getCount();
@@ -280,9 +279,10 @@ public class TrackScheduleListFragment extends ListFragment implements Handler.C
 
 
 	@Override
-	public void onLoaderReset(Loader<Cursor> loader)
+	public void onLoaderReset(Loader<List<Event>> loader)
 	{
-		adapter.swapCursor(null);
+		events.clear();
+		adapter.notifyDataSetChanged();
 	}
 
 	@Override
@@ -291,113 +291,32 @@ public class TrackScheduleListFragment extends ListFragment implements Handler.C
 		notifyEventSelected(position);
 	}
 
-	private static class TrackScheduleAdapter extends CursorAdapter
+	private class TrackScheduleLoader extends SimpleDatabaseLoader<List<Event>>
 	{
+		private final Track track;
 
-		private static final DateFormat TIME_DATE_FORMAT = DateUtils.getTimeDateFormat();
-
-		private final LayoutInflater inflater;
-
-		private final int timeBackgroundColor;
-
-		private final int timeForegroundColor;
-
-		private final int timeRunningBackgroundColor;
-
-		private final int timeRunningForegroundColor;
-
-		private final int titleTextSize;
-
-		private long currentTime = -1;
-
-		public TrackScheduleAdapter(Context context)
+		public TrackScheduleLoader(Context context, Track track)
 		{
-			super(context, null, 0);
-			inflater = LayoutInflater.from(context);
-			Resources res = context.getResources();
-			timeBackgroundColor = res.getColor(R.color.schedule_time_background);
-			timeForegroundColor = res.getColor(R.color.schedule_time_foreground);
-			timeRunningBackgroundColor = res.getColor(R.color.schedule_time_running_background);
-			timeRunningForegroundColor = res.getColor(R.color.schedule_time_running_foreground);
-			titleTextSize = res.getDimensionPixelSize(R.dimen.list_item_title_text_size);
-		}
-
-		public void setCurrentTime(long time)
-		{
-			if(currentTime != time) {
-				currentTime = time;
-				notifyDataSetChanged();
-			}
+			super(context);
+			this.track = track;
 		}
 
 		@Override
-		public Event getItem(int position)
+		protected List<Event> getObject()
 		{
-			return DatabaseManager.toEvent((Cursor) super.getItem(position));
-		}
-
-		@Override
-		public View newView(Context context, Cursor cursor, ViewGroup parent)
-		{
-			View view = inflater.inflate(R.layout.item_schedule_event, parent, false);
-
-			ViewHolder holder = new ViewHolder();
-			holder.time = (TextView) view.findViewById(R.id.time);
-			holder.text = (TextView) view.findViewById(R.id.text);
-			holder.titleSizeSpan = new AbsoluteSizeSpan(titleTextSize);
-			holder.boldStyleSpan = new StyleSpan(Typeface.BOLD);
-			view.setTag(holder);
-
-			return view;
-		}
-
-		@Override
-		public void bindView(View view, Context context, Cursor cursor)
-		{
-			ViewHolder holder = (ViewHolder) view.getTag();
-			Event event = DatabaseManager.toEvent(cursor, holder.event);
-			holder.event = event;
-
-			holder.time.setText(TIME_DATE_FORMAT.format(event.getStartTime()));
-			if((currentTime != -1L) && event.isRunningAtTime(currentTime)) {
-				// Contrast colors for running event
-				holder.time.setBackgroundColor(timeRunningBackgroundColor);
-				holder.time.setTextColor(timeRunningForegroundColor);
-			} else {
-				// Normal colors
-				holder.time.setBackgroundColor(timeBackgroundColor);
-				holder.time.setTextColor(timeForegroundColor);
+			try {
+				return eventManager.searchEventsByTrack(track);
+			} catch(SQLException e) {
+				return Collections.emptyList();
 			}
-
-			SpannableString spannableString;
-			String eventTitle = event.getTitle();
-			String personsSummary = event.getPersonsSummary();
-			if(TextUtils.isEmpty(personsSummary)) {
-				spannableString = new SpannableString(String.format("%1$s\n%2$s", eventTitle, event.getRoomName()));
-			} else {
-				spannableString = new SpannableString(
-						String.format("%1$s\n%2$s\n%3$s", eventTitle, personsSummary, event.getRoomName()));
-			}
-			spannableString.setSpan(holder.titleSizeSpan, 0, eventTitle.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-			spannableString.setSpan(holder.boldStyleSpan, 0, eventTitle.length() + personsSummary.length() + 1,
-									Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-			holder.text.setText(spannableString);
-			int bookmarkDrawable = DatabaseManager.toBookmarkStatus(cursor) ? R.drawable.ic_small_starred : 0;
-			holder.text.setCompoundDrawablesWithIntrinsicBounds(0, 0, bookmarkDrawable, 0);
 		}
+	}
 
-		private static class ViewHolder
-		{
-			TextView time;
-
-			TextView text;
-
-			AbsoluteSizeSpan titleSizeSpan;
-
-			StyleSpan boldStyleSpan;
-
-			Event event;
-		}
+	/**
+	 * Interface implemented by container activities
+	 */
+	public interface Callbacks
+	{
+		void onEventSelected(int position, Event event);
 	}
 }

@@ -16,16 +16,31 @@
 package it.gulch.linuxday.android.fragments;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
 
-import it.gulch.linuxday.android.R;
-import it.gulch.linuxday.android.db.DatabaseManager;
-import it.gulch.linuxday.android.loaders.BaseLiveLoader;
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EFragment;
 
+import java.sql.SQLException;
+import java.util.Collections;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
+
+import it.gulch.linuxday.android.R;
+import it.gulch.linuxday.android.db.manager.EventManager;
+import it.gulch.linuxday.android.db.manager.impl.EventManagerImpl;
+import it.gulch.linuxday.android.enums.DatabaseOrder;
+import it.gulch.linuxday.android.loaders.BaseLiveLoader;
+import it.gulch.linuxday.android.model.db.Event;
+
+@EFragment
 public class NowLiveListFragment extends BaseLiveListFragment
 {
+	@Bean(EventManagerImpl.class)
+	EventManager eventManager;
+
 	@Override
 	protected String getEmptyText()
 	{
@@ -33,24 +48,28 @@ public class NowLiveListFragment extends BaseLiveListFragment
 	}
 
 	@Override
-	public Loader<Cursor> onCreateLoader(int id, Bundle args)
+	public Loader<List<Event>> onCreateLoader(int id, Bundle args)
 	{
 		return new NowLiveLoader(getActivity());
 	}
 
-	private static class NowLiveLoader extends BaseLiveLoader
+	private class NowLiveLoader extends BaseLiveLoader
 	{
-
 		public NowLiveLoader(Context context)
 		{
 			super(context);
 		}
 
 		@Override
-		protected Cursor getCursor()
+		protected List<Event> getObject()
 		{
-			long now = System.currentTimeMillis();
-			return DatabaseManager.getInstance().getEvents(-1L, now, now, false);
+			Date now = GregorianCalendar.getInstance().getTime();
+
+			try {
+				return eventManager.search(null, now, now, DatabaseOrder.DESCENDING);
+			} catch(SQLException e) {
+				return Collections.emptyList();
+			}
 		}
 	}
 }

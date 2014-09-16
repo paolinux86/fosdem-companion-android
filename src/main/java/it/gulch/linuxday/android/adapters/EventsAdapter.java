@@ -16,26 +16,29 @@
 package it.gulch.linuxday.android.adapters;
 
 import android.content.Context;
-import android.database.Cursor;
-import android.support.v4.widget.CursorAdapter;
 import android.text.Spannable;
 import android.text.SpannableString;
-import android.text.TextUtils;
 import android.text.style.AbsoluteSizeSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+
 import java.text.DateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
 
 import it.gulch.linuxday.android.R;
-import it.gulch.linuxday.android.db.DatabaseManager;
-import it.gulch.linuxday.android.model.Event;
+import it.gulch.linuxday.android.model.db.Event;
 import it.gulch.linuxday.android.utils.DateUtils;
 
-public class EventsAdapter extends CursorAdapter
+public class EventsAdapter extends BaseAdapter
 {
 	private static final DateFormat TIME_DATE_FORMAT = DateUtils.getTimeDateFormat();
 
@@ -45,75 +48,106 @@ public class EventsAdapter extends CursorAdapter
 
 	private final boolean showDay;
 
-	public EventsAdapter(Context context)
+	private List<Event> events;
+
+	public EventsAdapter(Context context, List<Event> events)
 	{
-		this(context, true);
+		this(context, events, true);
 	}
 
-	public EventsAdapter(Context context, boolean showDay)
+	public EventsAdapter(Context context, List<Event> events, boolean showDay)
 	{
-		super(context, null, 0);
+		super();
 		inflater = LayoutInflater.from(context);
 		titleTextSize = context.getResources().getDimensionPixelSize(R.dimen.list_item_title_text_size);
 		this.showDay = showDay;
+		this.events = events;
 	}
 
 	@Override
 	public Event getItem(int position)
 	{
-		return DatabaseManager.toEvent((Cursor) super.getItem(position));
+		if(events == null || events.size() < 1 || position > events.size()) {
+			return null;
+		}
+
+		return events.get(position);
 	}
 
 	@Override
-	public View newView(Context context, Cursor cursor, ViewGroup parent)
+	public long getItemId(int i)
 	{
-		View view = inflater.inflate(R.layout.item_event, parent, false);
-
-		ViewHolder holder = new ViewHolder();
-		holder.title = (TextView) view.findViewById(R.id.title);
-		holder.titleSizeSpan = new AbsoluteSizeSpan(titleTextSize);
-		holder.trackName = (TextView) view.findViewById(R.id.track_name);
-		holder.details = (TextView) view.findViewById(R.id.details);
-		view.setTag(holder);
-
-		return view;
+		return events.get(i).getId();
 	}
 
 	@Override
-	public void bindView(View view, Context context, Cursor cursor)
+	public int getCount()
 	{
-		ViewHolder holder = (ViewHolder) view.getTag();
-		Event event = DatabaseManager.toEvent(cursor, holder.event);
-		holder.event = event;
+		if(events == null) {
+			return 0;
+		}
+
+		return events.size();
+	}
+
+	@Override
+	public View getView(int position, View convertView, ViewGroup parent)
+	{
+		ViewHolder viewHolder;
+		if(convertView != null) {
+			viewHolder = (ViewHolder) convertView.getTag();
+		} else {
+			convertView = inflater.inflate(R.layout.item_event, parent, false);
+
+			viewHolder = new ViewHolder();
+			viewHolder.title = (TextView) convertView.findViewById(R.id.title);
+			viewHolder.titleSizeSpan = new AbsoluteSizeSpan(titleTextSize);
+			viewHolder.trackName = (TextView) convertView.findViewById(R.id.track_name);
+			viewHolder.details = (TextView) convertView.findViewById(R.id.details);
+			convertView.setTag(viewHolder);
+		}
+
+		Event event = getItem(position);
+		bindView(viewHolder, event);
+
+		return convertView;
+	}
+
+	private void bindView(ViewHolder viewHolder, Event event)
+	{
+		viewHolder.event = event;
 
 		String eventTitle = event.getTitle();
 		SpannableString spannableString;
-		String personsSummary = event.getPersonsSummary();
-		if(TextUtils.isEmpty(personsSummary)) {
+		if(CollectionUtils.isEmpty(event.getPeople())) {
 			spannableString = new SpannableString(eventTitle);
 		} else {
-			spannableString = new SpannableString(String.format("%1$s\n%2$s", eventTitle, event.getPersonsSummary()));
+			String personsSummary = StringUtils.join(event.getPeople(), ", ");
+			spannableString = new SpannableString(String.format("%1$s\n%2$s", eventTitle, personsSummary));
 		}
-		spannableString.setSpan(holder.titleSizeSpan, 0, eventTitle.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-		holder.title.setText(spannableString);
-		int bookmarkDrawable = DatabaseManager.toBookmarkStatus(cursor) ? R.drawable.ic_small_starred : 0;
-		holder.title.setCompoundDrawablesWithIntrinsicBounds(0, 0, bookmarkDrawable, 0);
 
-		holder.trackName.setText(event.getTrack().getName());
+		spannableString.setSpan(viewHolder.titleSizeSpan, 0, eventTitle.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		viewHolder.title.setText(spannableString);
+		int bookmarkDrawable = event.isBookmarked() ? R.drawable.ic_small_starred : 0;
+		viewHolder.title.setCompoundDrawablesWithIntrinsicBounds(0, 0, bookmarkDrawable, 0);
 
-		Date startTime = event.getStartTime();
-		Date endTime = event.getEndTime();
+		viewHolder.trackName.setText(event.getTrack().getTitle());
+
+		Date startTime = event.getStartDate();
+		Date endTime = event.getEndDate();
+
 		String startTimeString = (startTime != null) ? TIME_DATE_FORMAT.format(startTime) : "?";
 		String endTimeString = (endTime != null) ? TIME_DATE_FORMAT.format(endTime) : "?";
 		String details;
+
+		String roomName = event.getTrack().getRoom().getName();
 		if(showDay) {
-			details = String
-				.format("%1$s, %2$s ― %3$s  |  %4$s", event.getDay().getShortName(), startTimeString, endTimeString,
-						event.getRoomName());
+			details = String.format("%1$s, %2$s ― %3$s  |  %4$s", event.getTrack().getDay().getName(), startTimeString,
+									endTimeString, roomName);
 		} else {
-			details = String.format("%1$s ― %2$s  |  %3$s", startTimeString, endTimeString, event.getRoomName());
+			details = String.format("%1$s ― %2$s  |  %3$s", startTimeString, endTimeString, roomName);
 		}
-		holder.details.setText(details);
+		viewHolder.details.setText(details);
 	}
 
 	private static class ViewHolder

@@ -16,7 +16,6 @@
 package it.gulch.linuxday.android.fragments;
 
 import android.content.Intent;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
@@ -24,13 +23,18 @@ import android.support.v4.content.Loader;
 import android.view.View;
 import android.widget.ListView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import it.gulch.linuxday.android.activities.EventDetailsActivity;
 import it.gulch.linuxday.android.adapters.EventsAdapter;
-import it.gulch.linuxday.android.model.Event;
+import it.gulch.linuxday.android.model.db.Event;
 
-public abstract class BaseLiveListFragment extends ListFragment implements LoaderCallbacks<Cursor>
+public abstract class BaseLiveListFragment extends ListFragment implements LoaderCallbacks<List<Event>>
 {
 	private static final int EVENTS_LOADER_ID = 1;
+
+	private List<Event> events;
 
 	private EventsAdapter adapter;
 
@@ -38,7 +42,10 @@ public abstract class BaseLiveListFragment extends ListFragment implements Loade
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		adapter = new EventsAdapter(getActivity(), false);
+
+		events = new ArrayList<Event>();
+
+		adapter = new EventsAdapter(getActivity(), events, false);
 		setListAdapter(adapter);
 	}
 
@@ -56,10 +63,12 @@ public abstract class BaseLiveListFragment extends ListFragment implements Loade
 	protected abstract String getEmptyText();
 
 	@Override
-	public void onLoadFinished(Loader<Cursor> loader, Cursor data)
+	public void onLoadFinished(Loader<List<Event>> loader, List<Event> data)
 	{
 		if(data != null) {
-			adapter.swapCursor(data);
+			events.clear();
+			events.addAll(data);
+			adapter.notifyDataSetChanged();
 		}
 
 		// The list should now be shown.
@@ -71,9 +80,10 @@ public abstract class BaseLiveListFragment extends ListFragment implements Loade
 	}
 
 	@Override
-	public void onLoaderReset(Loader<Cursor> loader)
+	public void onLoaderReset(Loader<List<Event>> loader)
 	{
-		adapter.swapCursor(null);
+		events.clear();
+		adapter.notifyDataSetChanged();
 	}
 
 	@Override

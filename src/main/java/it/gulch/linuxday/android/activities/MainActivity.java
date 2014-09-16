@@ -48,16 +48,21 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EActivity;
+
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.Locale;
 
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.api.LinuxDayApi;
-import it.gulch.linuxday.android.db.DatabaseManager;
+import it.gulch.linuxday.android.constants.ActionConstants;
 import it.gulch.linuxday.android.enums.Section;
 import it.gulch.linuxday.android.fragments.dialogs.AboutDialogFragment;
 import it.gulch.linuxday.android.fragments.dialogs.DownloadScheduleReminderDialogFragment;
+import it.gulch.linuxday.android.services.PreferencesService;
+import it.gulch.linuxday.android.services.impl.PreferencesServiceImpl;
 import it.gulch.linuxday.android.tasks.DownloadScheduleAsyncTask;
 
 /**
@@ -66,6 +71,7 @@ import it.gulch.linuxday.android.tasks.DownloadScheduleAsyncTask;
  * @author Christophe Beyls
  * @author Paolo Cortis
  */
+@EActivity
 public class MainActivity extends ActionBarActivity implements ListView.OnItemClickListener
 {
 	private static final long DATABASE_VALIDITY_DURATION = 24L * 60L * 60L * 1000L; // 24h
@@ -90,6 +96,9 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 	private TextView lastUpdateTextView;
 
 	private MainMenuAdapter menuAdapter;
+
+	@Bean(PreferencesServiceImpl.class)
+	PreferencesService preferencesService;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -140,7 +149,7 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 		menuListView.addHeaderView(menuHeaderView, null, false);
 
 		LocalBroadcastManager.getInstance(this)
-			.registerReceiver(scheduleRefreshedReceiver, new IntentFilter(DatabaseManager.ACTION_SCHEDULE_REFRESHED));
+			.registerReceiver(scheduleRefreshedReceiver, new IntentFilter(ActionConstants.ACTION_SCHEDULE_REFRESHED));
 
 		menuAdapter = new MainMenuAdapter(inflater);
 		menuListView.setAdapter(menuAdapter);
@@ -156,7 +165,7 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 
 	private void updateLastUpdateTime()
 	{
-		long lastUpdateTime = DatabaseManager.getInstance().getLastUpdateTime();
+		long lastUpdateTime = preferencesService.getLastUpdateTime();
 		lastUpdateTextView.setText(getString(R.string.last_update, (lastUpdateTime == -1L) ? getString(R.string.never) :
 			LAST_UPDATE_DATE_FORMAT.format(new Date(lastUpdateTime))));
 	}
@@ -212,7 +221,7 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 
 		// Download reminder
 		long now = System.currentTimeMillis();
-		long time = DatabaseManager.getInstance().getLastUpdateTime();
+		long time = preferencesService.getLastUpdateTime();
 		if((time == -1L) || (time < (now - DATABASE_VALIDITY_DURATION))) {
 			SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
 			time = prefs.getLong(PREF_LAST_DOWNLOAD_REMINDER_TIME, -1L);
@@ -337,9 +346,14 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 		// Start by displaying indeterminate progress, determinate will come later
 		setSupportProgressBarIndeterminate(true);
 		setSupportProgressBarVisibility(true);
+
+		// FIXME
+		//DownloadScheduleAsyncTask_ instance = DownloadScheduleAsyncTask_.getInstance_(this);
 		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+			//instance.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 			new DownloadScheduleAsyncTask(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 		} else {
+			//instance.execute();
 			new DownloadScheduleAsyncTask(this).execute();
 		}
 	}

@@ -24,7 +24,7 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 
-import it.gulch.linuxday.android.db.DatabaseManager;
+import it.gulch.linuxday.android.constants.ActionConstants;
 import it.gulch.linuxday.android.fragments.SettingsFragment;
 import it.gulch.linuxday.android.services.AlarmIntentService;
 
@@ -114,10 +114,10 @@ public class FosdemAlarmManager implements OnSharedPreferenceChangeListener
 	private void registerReceivers()
 	{
 		LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(context);
-		lbm.registerReceiver(scheduleRefreshedReceiver, new IntentFilter(DatabaseManager.ACTION_SCHEDULE_REFRESHED));
+		lbm.registerReceiver(scheduleRefreshedReceiver, new IntentFilter(ActionConstants.ACTION_SCHEDULE_REFRESHED));
 		IntentFilter filter = new IntentFilter();
-		filter.addAction(DatabaseManager.ACTION_ADD_BOOKMARK);
-		filter.addAction(DatabaseManager.ACTION_REMOVE_BOOKMARKS);
+		filter.addAction(ActionConstants.ACTION_ADD_BOOKMARK);
+		filter.addAction(ActionConstants.ACTION_REMOVE_BOOKMARKS);
 		lbm.registerReceiver(bookmarksReceiver, filter);
 	}
 

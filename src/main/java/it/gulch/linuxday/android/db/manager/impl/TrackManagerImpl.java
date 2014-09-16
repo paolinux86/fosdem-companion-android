@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedDelete;
+import com.j256.ormlite.stmt.QueryBuilder;
 
 import org.androidannotations.annotations.EBean;
 import org.androidannotations.annotations.OrmLiteDao;
@@ -14,6 +15,7 @@ import java.util.List;
 
 import it.gulch.linuxday.android.db.OrmLiteDatabaseHelper;
 import it.gulch.linuxday.android.db.manager.TrackManager;
+import it.gulch.linuxday.android.model.db.Day;
 import it.gulch.linuxday.android.model.db.Room;
 import it.gulch.linuxday.android.model.db.Track;
 
@@ -85,5 +87,14 @@ public class TrackManagerImpl implements TrackManager
 	public boolean exists(Long objectId) throws SQLException
 	{
 		return dao.idExists(objectId);
+	}
+
+	@Override
+	public List<Track> findByDay(Day day) throws SQLException
+	{
+		QueryBuilder<Track, Long> queryBuilder = dao.queryBuilder();
+		queryBuilder.where().eq("day_id", day.getId());
+
+		return dao.query(queryBuilder.prepare());
 	}
 }

@@ -1,10 +1,21 @@
 package it.gulch.linuxday.android.db;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
+
 import org.androidannotations.annotations.Bean;
 import org.androidannotations.annotations.EBean;
+import org.androidannotations.annotations.RootContext;
 
 import java.sql.SQLException;
 
+import it.gulch.linuxday.android.constants.ActionConstants;
+import it.gulch.linuxday.android.constants.SharedPreferencesConstants;
+import it.gulch.linuxday.android.constants.UriConstants;
 import it.gulch.linuxday.android.db.manager.BookmarkManager;
 import it.gulch.linuxday.android.db.manager.DayManager;
 import it.gulch.linuxday.android.db.manager.EventManager;
@@ -21,6 +32,7 @@ import it.gulch.linuxday.android.db.manager.impl.LinkManagerImpl;
 import it.gulch.linuxday.android.db.manager.impl.PersonManagerImpl;
 import it.gulch.linuxday.android.db.manager.impl.RoomManagerImpl;
 import it.gulch.linuxday.android.db.manager.impl.TrackManagerImpl;
+import it.gulch.linuxday.android.exceptions.ImportException;
 import it.gulch.linuxday.android.model.json.Conference;
 import it.gulch.linuxday.android.model.json.Day;
 import it.gulch.linuxday.android.model.json.Event;
@@ -29,6 +41,8 @@ import it.gulch.linuxday.android.model.json.Link;
 import it.gulch.linuxday.android.model.json.Person;
 import it.gulch.linuxday.android.model.json.Room;
 import it.gulch.linuxday.android.model.json.Track;
+import it.gulch.linuxday.android.services.PreferencesService;
+import it.gulch.linuxday.android.services.impl.PreferencesServiceImpl;
 
 /**
  * Created by paolo on 13/09/14.
@@ -36,6 +50,8 @@ import it.gulch.linuxday.android.model.json.Track;
 @EBean(scope = EBean.Scope.Singleton)
 public class ConferenceImportManager
 {
+	private static final String TAG = ConferenceImportManager.class.getSimpleName();
+
 	@Bean(BookmarkManagerImpl.class)
 	BookmarkManager bookmarkManager;
 
@@ -60,7 +76,15 @@ public class ConferenceImportManager
 	@Bean(TrackManagerImpl.class)
 	TrackManager trackManager;
 
-	public long importConference(Conference conference) throws SQLException
+	@Bean(PreferencesServiceImpl.class)
+	PreferencesService preferencesService;
+
+	@RootContext
+	Context context;
+
+	private Long minEventId;
+
+	public long importConference(Conference conference) throws ImportException
 	{
 		if(conference == null || conference.getDays() == null || conference.getDays().size() == 0) {
 			// FIXME
@@ -68,6 +92,7 @@ public class ConferenceImportManager
 		}
 
 		try {
+			minEventId = Long.MAX_VALUE;
 			clearDatabase();
 			for(Day day : conference.getDays()) {
 				it.gulch.linuxday.android.model.db.Day dbDay = day.toDatabaseDay();
@@ -75,12 +100,17 @@ public class ConferenceImportManager
 
 				insertTracks(day);
 			}
-		} catch(SQLException e) {
-			// TODO
-			e.printStackTrace();
-		}
 
-		return eventManager.countEvents();
+			if(minEventId < Long.MAX_VALUE) {
+				bookmarkManager.deleteOldBookmarks(minEventId);
+			}
+
+			notifyCompletion();
+
+			return eventManager.countEvents();
+		} catch(SQLException e) {
+			throw new ImportException(e);
+		}
 	}
 
 	private void insertTracks(Day day) throws SQLException
@@ -128,6 +158,11 @@ public class ConferenceImportManager
 		}
 
 		for(Event event : track.getEvents()) {
+			long eventId = event.getId();
+			if(eventId < minEventId) {
+				minEventId = eventId;
+			}
+
 			it.gulch.linuxday.android.model.db.EventType eventType = insertEventType(event.getEventType());
 
 			it.gulch.linuxday.android.model.db.Event dbEvent = event.toDatabaseEvent();
@@ -183,6 +218,16 @@ public class ConferenceImportManager
 		}
 	}
 
+	private void notifyCompletion()
+	{
+		preferencesService.updateLastUpdateTime();
+
+		context.getContentResolver().notifyChange(UriConstants.URI_TRACKS, null);
+		context.getContentResolver().notifyChange(UriConstants.URI_EVENTS, null);
+		LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(ActionConstants
+																					.ACTION_SCHEDULE_REFRESHED));
+	}
+
 	private void clearDatabase() throws SQLException
 	{
 		eventManager.truncate();
@@ -192,6 +237,12 @@ public class ConferenceImportManager
 		trackManager.truncate();
 		roomManager.truncate();
 		dayManager.truncate();
-		bookmarkManager.truncate();
+
+		preferencesService.resetLastUpdateTime();
+
+		context.getContentResolver().notifyChange(UriConstants.URI_TRACKS, null);
+		context.getContentResolver().notifyChange(UriConstants.URI_EVENTS, null);
+		LocalBroadcastManager.getInstance(context).sendBroadcast(new Intent(ActionConstants
+																					.ACTION_SCHEDULE_REFRESHED));
 	}
 }

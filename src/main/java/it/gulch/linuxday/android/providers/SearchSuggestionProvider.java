@@ -22,7 +22,17 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.text.TextUtils;
 
-import it.gulch.linuxday.android.db.DatabaseManager;
+import com.j256.ormlite.android.AndroidDatabaseResults;
+import com.j256.ormlite.android.apptools.OpenHelperManager;
+import com.j256.ormlite.dao.CloseableIterator;
+import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.stmt.PreparedQuery;
+import com.j256.ormlite.stmt.QueryBuilder;
+
+import java.sql.SQLException;
+
+import it.gulch.linuxday.android.db.OrmLiteDatabaseHelper;
+import it.gulch.linuxday.android.model.db.Event;
 
 /**
  * Simple content provider responsible for search suggestions.
@@ -81,6 +91,39 @@ public class SearchSuggestionProvider extends ContentProvider
 		String limitParam = uri.getQueryParameter("limit");
 		int limit = TextUtils.isEmpty(limitParam) ? DEFAULT_MAX_RESULTS : Integer.parseInt(limitParam);
 
-		return DatabaseManager.getInstance().getSearchSuggestionResults(query, limit);
+		try {
+			Cursor cursor = getSearchSuggestionResults(query, limit);
+			cursor.setNotificationUri(this.getContext().getContentResolver(), uri);
+
+			return cursor;
+		} catch(SQLException e) {
+			return null;
+		}
+	}
+
+	public Cursor getSearchSuggestionResults(String query, int limit) throws SQLException
+	{
+		OrmLiteDatabaseHelper helper = OpenHelperManager.getHelper(getContext(), OrmLiteDatabaseHelper.class);
+		Dao<Event, Long> eventDao = helper.getDao(Event.class);
+
+		CloseableIterator<Event> iterator = null;
+		Cursor cursor = null;
+		try {
+			iterator = eventDao.iterator(prepareQuery(eventDao, query, limit));
+			AndroidDatabaseResults results = (AndroidDatabaseResults) iterator.getRawResults();
+			cursor = results.getRawCursor();
+		} catch(SQLException e) {
+			// FIXME
+			e.printStackTrace();
+		}
+
+		return cursor;
+	}
+
+	private PreparedQuery<Event> prepareQuery(Dao<Event, Long> eventDao, String query, int limit) throws SQLException
+	{
+		// TODO implementare
+		QueryBuilder<Event, Long> queryBuilder = eventDao.queryBuilder();
+		return queryBuilder.prepare();
 	}
 }

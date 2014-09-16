@@ -3,13 +3,14 @@ package it.gulch.linuxday.android.model.db;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * Created by paolo on 06/09/14.
  */
 @DatabaseTable(tableName = "day")
-public class Day
+public class Day implements Serializable
 {
 	@DatabaseField(generatedId = true)
 	private Long id;

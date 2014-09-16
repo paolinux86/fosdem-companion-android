@@ -27,6 +27,8 @@ public class DayManagerImpl implements DayManager
 	@OrmLiteDao(helper = OrmLiteDatabaseHelper.class, model = Day.class)
 	Dao<Day, Long> dao;
 
+	List<Day> cachedDays;
+
 	@Override
 	public Day get(Long id)
 	{
@@ -42,7 +44,8 @@ public class DayManagerImpl implements DayManager
 	public List<Day> getAll()
 	{
 		try {
-			return dao.queryForAll();
+			cachedDays = dao.queryForAll();
+			return cachedDays;
 		} catch(SQLException e) {
 			Log.e(TAG, e.getMessage(), e);
 			return Collections.emptyList();
@@ -84,5 +87,11 @@ public class DayManagerImpl implements DayManager
 	public boolean exists(Long objectId) throws SQLException
 	{
 		return dao.idExists(objectId);
+	}
+
+	@Override
+	public List<Day> getCachedDays()
+	{
+		return cachedDays;
 	}
 }

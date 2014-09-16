@@ -32,10 +32,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import it.gulch.linuxday.android.db.ConferenceImportManager;
-import it.gulch.linuxday.android.db.DatabaseManager;
 import it.gulch.linuxday.android.model.json.Conference;
-import it.gulch.linuxday.android.model.Event;
-import it.gulch.linuxday.android.parsers.EventsParser;
 import it.gulch.linuxday.android.utils.HttpUtils;
 
 /**
@@ -97,22 +94,6 @@ public class LinuxDayApi
 		}
 
 		return inputStream;
-	}
-
-	private int parseXml(InputStream inputStream)
-	{
-		int result = RESULT_ERROR;
-
-		try {
-			Iterable<Event> events = new EventsParser().parse(inputStream);
-			result = DatabaseManager.getInstance().storeSchedule(events);
-		} catch(Exception e) {
-			Log.e(TAG, e.getMessage(), e);
-		}
-
-		IOUtils.closeQuietly(inputStream);
-
-		return result;
 	}
 
 	private long parseJson(InputStream inputStream)

@@ -140,12 +140,15 @@ public class Event implements Serializable
 	{
 		it.gulch.linuxday.android.model.db.Event event = new it.gulch.linuxday.android.model.db.Event();
 		event.setId(id);
-		event.setStartDate(startDate.getTime());
-		event.setDuration(duration);
 		event.setTitle(title);
 		event.setSubtitle(subtitle);
 		event.setEventAbstract(eventAbstract);
 		event.setDescription(description);
+
+		event.setStartDate(startDate.getTime());
+		Calendar endCalendar = (Calendar) startDate.clone();
+		endCalendar.add(Calendar.MINUTE, duration);
+		event.setEndDate(endCalendar.getTime());
 
 		return event;
 	}

@@ -17,26 +17,32 @@ package it.gulch.linuxday.android.fragments;
 
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.Loader;
-import android.support.v4.widget.CursorAdapter;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ListView;
-import android.widget.TextView;
+
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EFragment;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.activities.TrackScheduleActivity;
-import it.gulch.linuxday.android.db.DatabaseManager;
-import it.gulch.linuxday.android.loaders.SimpleCursorLoader;
-import it.gulch.linuxday.android.model.Day;
-import it.gulch.linuxday.android.model.Track;
+import it.gulch.linuxday.android.adapters.TracksAdapter;
+import it.gulch.linuxday.android.db.manager.TrackManager;
+import it.gulch.linuxday.android.db.manager.impl.TrackManagerImpl;
+import it.gulch.linuxday.android.loaders.SimpleDatabaseLoader;
+import it.gulch.linuxday.android.model.db.Day;
+import it.gulch.linuxday.android.model.db.Track;
 
-public class TracksListFragment extends ListFragment implements LoaderCallbacks<Cursor>
+@EFragment
+public class TracksListFragment extends ListFragment implements LoaderCallbacks<List<Track>>
 {
 	private static final int TRACKS_LOADER_ID = 1;
 
@@ -46,11 +52,16 @@ public class TracksListFragment extends ListFragment implements LoaderCallbacks<
 
 	private TracksAdapter adapter;
 
+	private List<Track> tracks;
+
+	@Bean(TrackManagerImpl.class)
+	TrackManager trackManager;
+
 	public static TracksListFragment newInstance(Day day)
 	{
 		TracksListFragment f = new TracksListFragment();
 		Bundle args = new Bundle();
-		args.putParcelable(ARG_DAY, day);
+		args.putSerializable(ARG_DAY, day);
 		f.setArguments(args);
 		return f;
 	}
@@ -59,8 +70,11 @@ public class TracksListFragment extends ListFragment implements LoaderCallbacks<
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		adapter = new TracksAdapter(getActivity());
-		day = getArguments().getParcelable(ARG_DAY);
+
+		tracks = new ArrayList<Track>();
+
+		adapter = new TracksAdapter(getActivity(), tracks);
+		day = (Day) getArguments().getSerializable(ARG_DAY);
 		setListAdapter(adapter);
 	}
 
@@ -75,9 +89,8 @@ public class TracksListFragment extends ListFragment implements LoaderCallbacks<
 		getLoaderManager().initLoader(TRACKS_LOADER_ID, null, this);
 	}
 
-	private static class TracksLoader extends SimpleCursorLoader
+	private class TracksLoader extends SimpleDatabaseLoader<List<Track>>
 	{
-
 		private final Day day;
 
 		public TracksLoader(Context context, Day day)
@@ -87,23 +100,29 @@ public class TracksListFragment extends ListFragment implements LoaderCallbacks<
 		}
 
 		@Override
-		protected Cursor getCursor()
+		protected List<Track> getObject()
 		{
-			return DatabaseManager.getInstance().getTracks(day);
+			try {
+				return trackManager.findByDay(day);
+			} catch(SQLException e) {
+				return Collections.emptyList();
+			}
 		}
 	}
 
 	@Override
-	public Loader<Cursor> onCreateLoader(int id, Bundle args)
+	public Loader<List<Track>> onCreateLoader(int id, Bundle args)
 	{
 		return new TracksLoader(getActivity(), day);
 	}
 
 	@Override
-	public void onLoadFinished(Loader<Cursor> loader, Cursor data)
+	public void onLoadFinished(Loader<List<Track>> loader, List<Track> data)
 	{
 		if(data != null) {
-			adapter.swapCursor(data);
+			tracks.clear();
+			tracks.addAll(data);
+			adapter.notifyDataSetChanged();
 		}
 
 		// The list should now be shown.
@@ -115,9 +134,10 @@ public class TracksListFragment extends ListFragment implements LoaderCallbacks<
 	}
 
 	@Override
-	public void onLoaderReset(Loader<Cursor> loader)
+	public void onLoaderReset(Loader<List<Track>> loader)
 	{
-		adapter.swapCursor(null);
+		tracks.clear();
+		adapter.notifyDataSetChanged();
 	}
 
 	@Override
@@ -125,57 +145,8 @@ public class TracksListFragment extends ListFragment implements LoaderCallbacks<
 	{
 		Track track = adapter.getItem(position);
 		Intent intent =
-			new Intent(getActivity(), TrackScheduleActivity.class).putExtra(TrackScheduleActivity.EXTRA_DAY, day)
-				.putExtra(TrackScheduleActivity.EXTRA_TRACK, track);
+				new Intent(getActivity(), TrackScheduleActivity.class).putExtra(TrackScheduleActivity.EXTRA_DAY, day)
+						.putExtra(TrackScheduleActivity.EXTRA_TRACK, track);
 		startActivity(intent);
-	}
-
-	private static class TracksAdapter extends CursorAdapter
-	{
-
-		private final LayoutInflater inflater;
-
-		public TracksAdapter(Context context)
-		{
-			super(context, null, 0);
-			inflater = LayoutInflater.from(context);
-		}
-
-		@Override
-		public Track getItem(int position)
-		{
-			return DatabaseManager.toTrack((Cursor) super.getItem(position));
-		}
-
-		@Override
-		public View newView(Context context, Cursor cursor, ViewGroup parent)
-		{
-			View view = inflater.inflate(android.R.layout.simple_list_item_2, parent, false);
-
-			ViewHolder holder = new ViewHolder();
-			holder.name = (TextView) view.findViewById(android.R.id.text1);
-			holder.type = (TextView) view.findViewById(android.R.id.text2);
-			view.setTag(holder);
-
-			return view;
-		}
-
-		@Override
-		public void bindView(View view, Context context, Cursor cursor)
-		{
-			ViewHolder holder = (ViewHolder) view.getTag();
-			holder.track = DatabaseManager.toTrack(cursor, holder.track);
-			holder.name.setText(holder.track.getName());
-			holder.type.setText(holder.track.getType().getNameResId());
-		}
-
-		private static class ViewHolder
-		{
-			TextView name;
-
-			TextView type;
-
-			Track track;
-		}
 	}
 }

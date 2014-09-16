@@ -1,5 +1,7 @@
 package it.gulch.linuxday.android.db.manager;
 
+import java.util.List;
+
 import it.gulch.linuxday.android.model.db.Day;
 
 /**
@@ -7,4 +9,5 @@ import it.gulch.linuxday.android.model.db.Day;
  */
 public interface DayManager extends BaseORMManager<Day, Long>
 {
+	List<Day> getCachedDays();
 }

@@ -24,8 +24,11 @@ import android.view.MenuItem;
 import android.widget.AbsListView;
 import android.widget.AbsListView.MultiChoiceModeListener;
 
+import java.sql.SQLException;
+
 import it.gulch.linuxday.android.R;
-import it.gulch.linuxday.android.db.DatabaseManager;
+import it.gulch.linuxday.android.db.manager.BookmarkManager;
+import it.gulch.linuxday.android.db.manager.EventManager;
 
 /**
  * Context menu for the bookmarks list items, available for API 11+ only.
@@ -37,16 +40,19 @@ public class BookmarksMultiChoiceModeListener implements MultiChoiceModeListener
 {
 	private AbsListView listView;
 
-	public static void register(AbsListView listView)
+	private BookmarkManager bookmarkManager;
+
+	public static void register(AbsListView listView, BookmarkManager bookmarkManager)
 	{
 		listView.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE_MODAL);
-		BookmarksMultiChoiceModeListener listener = new BookmarksMultiChoiceModeListener(listView);
+		BookmarksMultiChoiceModeListener listener = new BookmarksMultiChoiceModeListener(listView, bookmarkManager);
 		listView.setMultiChoiceModeListener(listener);
 	}
 
-	private BookmarksMultiChoiceModeListener(AbsListView listView)
+	private BookmarksMultiChoiceModeListener(AbsListView listView, BookmarkManager bookmarkManager)
 	{
 		this.listView = listView;
+		this.bookmarkManager = bookmarkManager;
 	}
 
 	@Override
@@ -79,6 +85,7 @@ public class BookmarksMultiChoiceModeListener implements MultiChoiceModeListener
 				mode.finish();
 				return true;
 		}
+
 		return false;
 	}
 
@@ -93,15 +100,19 @@ public class BookmarksMultiChoiceModeListener implements MultiChoiceModeListener
 	{
 	}
 
-	private static class RemoveBookmarksAsyncTask extends AsyncTask<long[], Void, Void>
+	private class RemoveBookmarksAsyncTask extends AsyncTask<long[], Void, Void>
 	{
-
 		@Override
 		protected Void doInBackground(long[]... params)
 		{
-			DatabaseManager.getInstance().removeBookmarks(params[0]);
+			try {
+				bookmarkManager.removeBookmarksByEventId(params[0]);
+			} catch(SQLException e) {
+				// FIXME
+				e.printStackTrace();
+			}
+
 			return null;
 		}
-
 	}
 }

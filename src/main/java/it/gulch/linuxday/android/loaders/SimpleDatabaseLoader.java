@@ -16,8 +16,6 @@
 package it.gulch.linuxday.android.loaders;
 
 import android.content.Context;
-import android.database.Cursor;
-import android.net.Uri;
 import android.support.v4.content.AsyncTaskLoader;
 
 /**
@@ -25,56 +23,37 @@ import android.support.v4.content.AsyncTaskLoader;
  *
  * @author Christophe Beyls
  */
-public abstract class SimpleCursorLoader extends AsyncTaskLoader<Cursor>
+public abstract class SimpleDatabaseLoader<T> extends AsyncTaskLoader<T>
 {
 	private final ForceLoadContentObserver mObserver;
 
-	private Cursor mCursor;
+	private T mObject;
+
+	public SimpleDatabaseLoader(Context context)
+	{
+		super(context);
+		mObserver = new ForceLoadContentObserver();
+	}
 
 	/* Runs on a worker thread */
 	@Override
-	public Cursor loadInBackground()
+	public T loadInBackground()
 	{
-		Cursor cursor = getCursor();
-		if(cursor != null) {
-			// Ensure the cursor window is filled
-			cursor.getCount();
-			cursor.registerContentObserver(mObserver);
-		}
-		return cursor;
+		return getObject();
 	}
 
 	/* Runs on the UI thread */
 	@Override
-	public void deliverResult(Cursor cursor)
+	public void deliverResult(T object)
 	{
 		if(isReset()) {
-			// An async query came in while the loader is stopped
-			if(cursor != null) {
-				cursor.close();
-			}
 			return;
 		}
-		Cursor oldCursor = mCursor;
-		mCursor = cursor;
 
+		mObject = object;
 		if(isStarted()) {
-			super.deliverResult(cursor);
+			super.deliverResult(object);
 		}
-
-		if(oldCursor != null && oldCursor != cursor && !oldCursor.isClosed()) {
-			oldCursor.close();
-		}
-	}
-
-	/**
-	 * Creates an empty unspecified CursorLoader. You must follow this with calls to {@link #setUri(Uri)}, {@link #setSelection(String)}, etc to specify the
-	 * query to perform.
-	 */
-	public SimpleCursorLoader(Context context)
-	{
-		super(context);
-		mObserver = new ForceLoadContentObserver();
 	}
 
 	/**
@@ -86,10 +65,10 @@ public abstract class SimpleCursorLoader extends AsyncTaskLoader<Cursor>
 	@Override
 	protected void onStartLoading()
 	{
-		if(mCursor != null) {
-			deliverResult(mCursor);
+		if(mObject != null) {
+			deliverResult(mObject);
 		}
-		if(takeContentChanged() || mCursor == null) {
+		if(takeContentChanged() || mObject == null) {
 			forceLoad();
 		}
 	}
@@ -105,11 +84,8 @@ public abstract class SimpleCursorLoader extends AsyncTaskLoader<Cursor>
 	}
 
 	@Override
-	public void onCanceled(Cursor cursor)
+	public void onCanceled(T object)
 	{
-		if(cursor != null && !cursor.isClosed()) {
-			cursor.close();
-		}
 		// Retry a refresh the next time the loader is started
 		onContentChanged();
 	}
@@ -122,11 +98,8 @@ public abstract class SimpleCursorLoader extends AsyncTaskLoader<Cursor>
 		// Ensure the loader is stopped
 		onStopLoading();
 
-		if(mCursor != null && !mCursor.isClosed()) {
-			mCursor.close();
-		}
-		mCursor = null;
+		mObject = null;
 	}
 
-	protected abstract Cursor getCursor();
+	protected abstract T getObject();
 }

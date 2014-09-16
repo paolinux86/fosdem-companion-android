@@ -22,12 +22,14 @@ import android.content.IntentFilter;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.LocalBroadcastManager;
 
-import it.gulch.linuxday.android.db.DatabaseManager;
-import it.gulch.linuxday.android.model.Event;
+import it.gulch.linuxday.android.constants.ActionConstants;
+import it.gulch.linuxday.android.constants.ExtraConstants;
+import it.gulch.linuxday.android.model.db.Event;
 import it.gulch.linuxday.android.utils.ArrayUtils;
 
 /**
- * This loader retrieves the bookmark status of an event from the database, then updates it in real time by listening to broadcasts.
+ * This loader retrieves the bookmark status of an event from the database, then updates it in real time by listening
+ * to broadcasts.
  *
  * @author Christophe Beyls
  */
@@ -43,7 +45,7 @@ public class BookmarkStatusLoader extends AsyncTaskLoader<Boolean>
 		@Override
 		public void onReceive(Context context, Intent intent)
 		{
-			if(event.getId() == intent.getLongExtra(DatabaseManager.EXTRA_EVENT_ID, -1L)) {
+			if(event.getId() == intent.getLongExtra(ExtraConstants.EXTRA_EVENT_ID, -1L)) {
 				updateBookmark(true);
 			}
 		}
@@ -55,7 +57,7 @@ public class BookmarkStatusLoader extends AsyncTaskLoader<Boolean>
 		@Override
 		public void onReceive(Context context, Intent intent)
 		{
-			long[] eventIds = intent.getLongArrayExtra(DatabaseManager.EXTRA_EVENT_IDS);
+			long[] eventIds = intent.getLongArrayExtra(ExtraConstants.EXTRA_EVENT_IDS);
 			if(ArrayUtils.indexOf(eventIds, event.getId()) != -1) {
 				updateBookmark(false);
 			}
@@ -68,8 +70,8 @@ public class BookmarkStatusLoader extends AsyncTaskLoader<Boolean>
 		this.event = event;
 
 		LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(getContext());
-		lbm.registerReceiver(addBookmarkReceiver, new IntentFilter(DatabaseManager.ACTION_ADD_BOOKMARK));
-		lbm.registerReceiver(removeBookmarksReceiver, new IntentFilter(DatabaseManager.ACTION_REMOVE_BOOKMARKS));
+		lbm.registerReceiver(addBookmarkReceiver, new IntentFilter(ActionConstants.ACTION_ADD_BOOKMARK));
+		lbm.registerReceiver(removeBookmarksReceiver, new IntentFilter(ActionConstants.ACTION_REMOVE_BOOKMARKS));
 	}
 
 	private void updateBookmark(Boolean result)
@@ -127,6 +129,6 @@ public class BookmarkStatusLoader extends AsyncTaskLoader<Boolean>
 	@Override
 	public Boolean loadInBackground()
 	{
-		return DatabaseManager.getInstance().isBookmarked(event);
+		return event.isBookmarked();
 	}
 }

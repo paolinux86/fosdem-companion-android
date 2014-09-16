@@ -18,8 +18,12 @@ package it.gulch.linuxday.android.tasks;
 import android.content.Context;
 import android.os.AsyncTask;
 
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EBean;
+
 import it.gulch.linuxday.android.api.LinuxDayApi;
 
+@EBean
 public class DownloadScheduleAsyncTask extends AsyncTask<Void, Void, Void>
 {
 	private final Context appContext;
@@ -29,10 +33,14 @@ public class DownloadScheduleAsyncTask extends AsyncTask<Void, Void, Void>
 		appContext = context.getApplicationContext();
 	}
 
+	@Bean
+	LinuxDayApi linuxDayApi;
+
 	@Override
 	protected Void doInBackground(Void... args)
 	{
-		LinuxDayApi.downloadSchedule(appContext);
+		//LinuxDayApi.downloadSchedule(appContext);
+		linuxDayApi.downloadSchedule(appContext);
 		return null;
 	}
 }

@@ -19,9 +19,12 @@ import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.MenuItem;
 
+import org.androidannotations.annotations.EActivity;
+
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.fragments.SettingsFragment;
 
+@EActivity
 public class SettingsActivity extends ActionBarActivity
 {
 	@Override

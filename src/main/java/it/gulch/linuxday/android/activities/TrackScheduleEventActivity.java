@@ -15,6 +15,7 @@
  */
 package it.gulch.linuxday.android.activities;
 
+import android.content.Context;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.BaseColumns;
@@ -31,12 +32,23 @@ import android.view.View;
 
 import com.viewpagerindicator.PageIndicator;
 
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EActivity;
+import org.apache.commons.collections4.CollectionUtils;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import it.gulch.linuxday.android.R;
-import it.gulch.linuxday.android.db.DatabaseManager;
+import it.gulch.linuxday.android.db.manager.EventManager;
+import it.gulch.linuxday.android.db.manager.impl.EventManagerImpl;
 import it.gulch.linuxday.android.fragments.EventDetailsFragment;
-import it.gulch.linuxday.android.loaders.TrackScheduleLoader;
-import it.gulch.linuxday.android.model.Day;
-import it.gulch.linuxday.android.model.Track;
+import it.gulch.linuxday.android.loaders.SimpleDatabaseLoader;
+import it.gulch.linuxday.android.model.db.Day;
+import it.gulch.linuxday.android.model.db.Event;
+import it.gulch.linuxday.android.model.db.Track;
 import it.gulch.linuxday.android.utils.NfcUtils;
 
 /**
@@ -44,8 +56,9 @@ import it.gulch.linuxday.android.utils.NfcUtils;
  *
  * @author Christophe Beyls
  */
+@EActivity
 public class TrackScheduleEventActivity extends ActionBarActivity
-	implements LoaderCallbacks<Cursor>, NfcUtils.CreateNfcAppDataCallback
+	implements LoaderCallbacks<List<Event>>, NfcUtils.CreateNfcAppDataCallback
 {
 	public static final String EXTRA_DAY = "day";
 
@@ -54,8 +67,6 @@ public class TrackScheduleEventActivity extends ActionBarActivity
 	public static final String EXTRA_POSITION = "position";
 
 	private static final int EVENTS_LOADER_ID = 1;
-
-	private Day day;
 
 	private Track track;
 
@@ -69,16 +80,22 @@ public class TrackScheduleEventActivity extends ActionBarActivity
 
 	private TrackScheduleEventAdapter adapter;
 
+	private List<Event> events;
+
+	@Bean(EventManagerImpl.class)
+	EventManager eventManager;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 
+		events = new ArrayList<Event>();
+
 		setContentView(R.layout.track_schedule_event);
 
 		Bundle extras = getIntent().getExtras();
-		day = extras.getParcelable(EXTRA_DAY);
-		track = extras.getParcelable(EXTRA_TRACK);
+		track = (Track) extras.getSerializable(EXTRA_TRACK);
 
 		progress = findViewById(R.id.progress);
 		pager = (ViewPager) findViewById(R.id.pager);
@@ -94,7 +111,7 @@ public class TrackScheduleEventActivity extends ActionBarActivity
 		ActionBar bar = getSupportActionBar();
 		bar.setDisplayHomeAsUpEnabled(true);
 		bar.setTitle(R.string.event_details);
-		bar.setSubtitle(track.getName());
+		bar.setSubtitle(track.getTitle());
 
 		// Enable Android Beam
 		NfcUtils.setAppDataPushMessageCallbackIfAvailable(this, this);
@@ -135,18 +152,20 @@ public class TrackScheduleEventActivity extends ActionBarActivity
 	}
 
 	@Override
-	public Loader<Cursor> onCreateLoader(int id, Bundle args)
+	public Loader<List<Event>> onCreateLoader(int id, Bundle args)
 	{
-		return new TrackScheduleLoader(this, day, track);
+		return new TrackScheduleLoader(this, track);
 	}
 
 	@Override
-	public void onLoadFinished(Loader<Cursor> loader, Cursor data)
+	public void onLoadFinished(Loader<List<Event>> loader, List<Event> data)
 	{
 		setCustomProgressVisibility(false);
 
 		if(data != null) {
-			adapter.setCursor(data);
+			events.clear();
+			events.addAll(data);
+			adapter.notifyDataSetChanged();
 
 			// Delay setting the adapter when the instance state is restored
 			// to ensure the current position is restored properly
@@ -163,51 +182,63 @@ public class TrackScheduleEventActivity extends ActionBarActivity
 	}
 
 	@Override
-	public void onLoaderReset(Loader<Cursor> loader)
+	public void onLoaderReset(Loader<List<Event>> loader)
 	{
-		adapter.setCursor(null);
+		events.clear();
+		adapter.notifyDataSetChanged();
 	}
 
-	public static class TrackScheduleEventAdapter extends FragmentStatePagerAdapter
+	public class TrackScheduleEventAdapter extends FragmentStatePagerAdapter
 	{
-		private Cursor cursor;
-
 		public TrackScheduleEventAdapter(FragmentManager fm)
 		{
 			super(fm);
 		}
 
-		public Cursor getCursor()
-		{
-			return cursor;
-		}
-
-		public void setCursor(Cursor cursor)
-		{
-			this.cursor = cursor;
-			notifyDataSetChanged();
-		}
-
 		@Override
 		public int getCount()
 		{
-			return (cursor == null) ? 0 : cursor.getCount();
+			if(CollectionUtils.isEmpty(events)) {
+				return 0;
+			}
+
+			return events.size();
 		}
 
 		@Override
 		public Fragment getItem(int position)
 		{
-			cursor.moveToPosition(position);
-			return EventDetailsFragment.newInstance(DatabaseManager.toEvent(cursor));
-		}
-
-		public long getItemId(int position)
-		{
-			if(!cursor.moveToPosition(position)) {
-				return -1L;
+			if(CollectionUtils.isEmpty(events)) {
+				return null;
 			}
 
-			return cursor.getLong(cursor.getColumnIndexOrThrow(BaseColumns._ID));
+			return EventDetailsFragment.newInstance(events.get(position));
+		}
+
+		public long getItemId(int id)
+		{
+			return id;
+		}
+	}
+
+	private class TrackScheduleLoader extends SimpleDatabaseLoader<List<Event>>
+	{
+		private final Track track;
+
+		public TrackScheduleLoader(Context context, Track track)
+		{
+			super(context);
+			this.track = track;
+		}
+
+		@Override
+		protected List<Event> getObject()
+		{
+			try {
+				return eventManager.searchEventsByTrack(track);
+			} catch(SQLException e) {
+				return Collections.emptyList();
+			}
 		}
 	}
 }

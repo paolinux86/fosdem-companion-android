@@ -25,13 +25,15 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.view.MenuItem;
 
+import org.androidannotations.annotations.EActivity;
+
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.fragments.EventDetailsFragment;
 import it.gulch.linuxday.android.fragments.RoomImageDialogFragment;
 import it.gulch.linuxday.android.fragments.TrackScheduleListFragment;
-import it.gulch.linuxday.android.model.Day;
-import it.gulch.linuxday.android.model.Event;
-import it.gulch.linuxday.android.model.Track;
+import it.gulch.linuxday.android.model.db.Day;
+import it.gulch.linuxday.android.model.db.Event;
+import it.gulch.linuxday.android.model.db.Track;
 import it.gulch.linuxday.android.utils.NfcUtils;
 
 /**
@@ -39,6 +41,7 @@ import it.gulch.linuxday.android.utils.NfcUtils;
  *
  * @author Christophe Beyls
  */
+@EActivity
 public class TrackScheduleActivity extends ActionBarActivity
 	implements TrackScheduleListFragment.Callbacks, NfcUtils.CreateNfcAppDataCallback
 {
@@ -64,8 +67,8 @@ public class TrackScheduleActivity extends ActionBarActivity
 		setContentView(R.layout.track_schedule);
 
 		Bundle extras = getIntent().getExtras();
-		day = extras.getParcelable(EXTRA_DAY);
-		track = extras.getParcelable(EXTRA_TRACK);
+		day = (Day) extras.getSerializable(EXTRA_DAY);
+		track = (Track) extras.getSerializable(EXTRA_TRACK);
 
 		ActionBar bar = getSupportActionBar();
 		bar.setDisplayHomeAsUpEnabled(true);

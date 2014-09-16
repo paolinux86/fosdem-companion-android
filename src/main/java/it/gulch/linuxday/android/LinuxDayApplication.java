@@ -19,7 +19,6 @@ import android.app.Application;
 import android.preference.PreferenceManager;
 
 import it.gulch.linuxday.android.alarms.FosdemAlarmManager;
-import it.gulch.linuxday.android.db.DatabaseManager;
 
 public class LinuxDayApplication extends Application
 {
@@ -28,7 +27,6 @@ public class LinuxDayApplication extends Application
 	{
 		super.onCreate();
 
-		DatabaseManager.init(this);
 		// Initialize settings
 		PreferenceManager.setDefaultValues(this, R.xml.settings, false);
 		// Alarms (requires settings)

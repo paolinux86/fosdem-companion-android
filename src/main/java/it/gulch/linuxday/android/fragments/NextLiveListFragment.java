@@ -16,16 +16,31 @@
 package it.gulch.linuxday.android.fragments;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
 
-import it.gulch.linuxday.android.R;
-import it.gulch.linuxday.android.db.DatabaseManager;
-import it.gulch.linuxday.android.loaders.BaseLiveLoader;
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EFragment;
 
+import java.sql.SQLException;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.GregorianCalendar;
+import java.util.List;
+
+import it.gulch.linuxday.android.R;
+import it.gulch.linuxday.android.db.manager.EventManager;
+import it.gulch.linuxday.android.db.manager.impl.EventManagerImpl;
+import it.gulch.linuxday.android.enums.DatabaseOrder;
+import it.gulch.linuxday.android.loaders.BaseLiveLoader;
+import it.gulch.linuxday.android.model.db.Event;
+
+@EFragment
 public class NextLiveListFragment extends BaseLiveListFragment
 {
+	@Bean(EventManagerImpl.class)
+	EventManager eventManager;
+
 	@Override
 	protected String getEmptyText()
 	{
@@ -33,14 +48,14 @@ public class NextLiveListFragment extends BaseLiveListFragment
 	}
 
 	@Override
-	public Loader<Cursor> onCreateLoader(int id, Bundle args)
+	public Loader<List<Event>> onCreateLoader(int id, Bundle args)
 	{
 		return new NextLiveLoader(getActivity());
 	}
 
-	private static class NextLiveLoader extends BaseLiveLoader
+	private class NextLiveLoader extends BaseLiveLoader
 	{
-		private static final long INTERVAL = 30L * 60L * 1000L; // 30 minutes
+		private static final int INTERVAL_IN_MINUTES = 30;
 
 		public NextLiveLoader(Context context)
 		{
@@ -48,10 +63,17 @@ public class NextLiveListFragment extends BaseLiveListFragment
 		}
 
 		@Override
-		protected Cursor getCursor()
+		protected List<Event> getObject()
 		{
-			long now = System.currentTimeMillis();
-			return DatabaseManager.getInstance().getEvents(now, now + INTERVAL, -1L, true);
+			Calendar minStart = GregorianCalendar.getInstance();
+			Calendar maxStart = (Calendar) minStart.clone();
+			maxStart.add(Calendar.MINUTE, INTERVAL_IN_MINUTES);
+
+			try {
+				return eventManager.search(minStart.getTime(), maxStart.getTime(), null, DatabaseOrder.ASCENDING);
+			} catch(SQLException e) {
+				return Collections.emptyList();
+			}
 		}
 	}
 }

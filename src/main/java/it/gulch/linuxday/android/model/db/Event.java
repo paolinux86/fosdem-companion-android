@@ -3,15 +3,18 @@ package it.gulch.linuxday.android.model.db;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 /**
  * Created by paolo on 07/09/14.
  */
 @DatabaseTable(tableName = "event")
-public class Event
+public class Event implements Serializable
 {
 	@DatabaseField(generatedId = true)
 	private Long id;
@@ -20,7 +23,7 @@ public class Event
 	private Date startDate;
 
 	@DatabaseField(canBeNull = false)
-	private Integer duration;
+	private Date endDate;
 
 	@DatabaseField(canBeNull = false)
 	private String title;
@@ -40,7 +43,11 @@ public class Event
 	@DatabaseField(canBeNull = false, foreign = true, index = true)
 	private Track track;
 
+	private Boolean bookmarked;
+
 	private List<Person> people;
+
+	private List<Link> links;
 
 	public Event()
 	{
@@ -49,19 +56,23 @@ public class Event
 	public Event(it.gulch.linuxday.android.model.json.Event event)
 	{
 		this.id = event.getId();
-		this.startDate = event.getStartDate().getTime();
-		this.duration = event.getDuration();
 		this.title = event.getTitle();
 		this.subtitle = event.getSubtitle();
 		this.eventAbstract = event.getEventAbstract();
 		this.description = event.getDescription();
+
+		this.startDate = event.getStartDate().getTime();
+		Calendar endTimeCalendar = (Calendar) event.getStartDate().clone();
+		endTimeCalendar.add(Calendar.MINUTE, event.getDuration());
+
+		this.endDate = endTimeCalendar.getTime();
 	}
 
 	public Event(Event other)
 	{
 		this.id = other.id;
 		this.startDate = other.startDate;
-		this.duration = other.duration;
+		this.endDate = other.endDate;
 		this.title = other.title;
 		this.subtitle = other.subtitle;
 		this.eventAbstract = other.eventAbstract;
@@ -69,6 +80,7 @@ public class Event
 		this.eventType = other.eventType;
 		this.track = other.track;
 		this.people = other.people;
+		this.links = other.links;
 	}
 
 	public Long getId()
@@ -91,14 +103,14 @@ public class Event
 		this.startDate = startDate;
 	}
 
-	public Integer getDuration()
+	public Date getEndDate()
 	{
-		return duration;
+		return endDate;
 	}
 
-	public void setDuration(Integer duration)
+	public void setEndDate(Date endDate)
 	{
-		this.duration = duration;
+		this.endDate = endDate;
 	}
 
 	public String getTitle()
@@ -178,5 +190,30 @@ public class Event
 		}
 
 		people.add(person);
+	}
+
+	public List<Link> getLinks()
+	{
+		return links;
+	}
+
+	public void setLinks(List<Link> links)
+	{
+		this.links = links;
+	}
+
+	public Boolean isBookmarked()
+	{
+		return bookmarked;
+	}
+
+	public void setBookmarked(Boolean bookmarked)
+	{
+		this.bookmarked = bookmarked;
+	}
+
+	public boolean isRunningAtTime(long time)
+	{
+		return (startDate != null) && (endDate != null) && (startDate.getTime() < time) && (time < endDate.getTime());
 	}
 }

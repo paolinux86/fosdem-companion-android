@@ -18,12 +18,16 @@ package it.gulch.linuxday.android.loaders;
 import android.content.Context;
 import android.os.Handler;
 
+import java.util.List;
+
+import it.gulch.linuxday.android.model.db.Event;
+
 /**
  * A cursor loader which also automatically refreshes its data at a specified interval.
  *
  * @author Christophe Beyls
  */
-public abstract class BaseLiveLoader extends SimpleCursorLoader
+public abstract class BaseLiveLoader extends SimpleDatabaseLoader<List<Event>>
 {
 	private static final long REFRESH_INTERVAL = 60L * 1000L; // 1 minute
 

@@ -4,11 +4,14 @@ import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
+import java.io.Serializable;
+import java.text.MessageFormat;
+
 /**
  * Created by paolo on 07/09/14.
  */
 @DatabaseTable(tableName = "person")
-public class Person
+public class Person implements Serializable
 {
 	@DatabaseField(generatedId = true)
 	private Long id;
@@ -110,5 +113,11 @@ public class Person
 	public void setPhoto(byte[] photo)
 	{
 		this.photo = photo;
+	}
+
+	@Override
+	public String toString()
+	{
+		return MessageFormat.format("{0} {1} {2}", surname, middleName, name);
 	}
 }

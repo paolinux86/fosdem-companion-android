@@ -20,11 +20,14 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ImageView;
 
+import org.androidannotations.annotations.EActivity;
+
 /**
  * A special Activity which is displayed like a dialog and shows a room image. Specify the room name and the room image id as Intent extras.
  *
  * @author Christophe Beyls
  */
+@EActivity
 public class RoomImageDialogActivity extends Activity
 {
 	public static final String EXTRA_ROOM_NAME = "roomName";

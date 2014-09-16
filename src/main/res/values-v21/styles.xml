@@ -4,10 +4,10 @@
 	<style name="AppTheme" parent="@style/AppTheme_">
 		<!-- Main theme colors -->
 		<!--   your app's branding color (for the app bar) -->
-		<item name="android:colorPrimary">@color/fosdem_purple</item>
+		<!--<item name="android:colorPrimary">@color/fosdem_purple</item>-->
 		<!--   darker variant of colorPrimary (for status bar, contextual app bars) -->
-		<item name="android:colorPrimaryDark">@color/fosdem_purple_darker</item>
+		<!--<item name="android:colorPrimaryDark">@color/fosdem_purple_darker</item>-->
 		<!--   theme UI controls like checkboxes and text fields -->
-		<item name="android:colorAccent">@color/fosdem_purple</item>
+		<!--<item name="android:colorAccent">@color/fosdem_purple</item>-->
 	</style>
 </resources>

@@ -21,10 +21,13 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.view.MenuItem;
 
+import org.androidannotations.annotations.EActivity;
+
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.fragments.PersonInfoListFragment;
-import it.gulch.linuxday.android.model.Person;
+import it.gulch.linuxday.android.model.db.Person;
 
+@EActivity
 public class PersonInfoActivity extends ActionBarActivity
 {
 	public static final String EXTRA_PERSON = "person";
@@ -35,7 +38,7 @@ public class PersonInfoActivity extends ActionBarActivity
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.content);
 
-		Person person = getIntent().getParcelableExtra(EXTRA_PERSON);
+		Person person = (Person) getIntent().getSerializableExtra(EXTRA_PERSON);
 
 		ActionBar bar = getSupportActionBar();
 		bar.setDisplayHomeAsUpEnabled(true);

@@ -35,7 +35,7 @@ import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.method.MovementMethod;
 import android.text.style.ClickableSpan;
-import android.text.style.UnderlineSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -44,40 +44,30 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EFragment;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.List;
 
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.activities.PersonInfoActivity;
-import it.gulch.linuxday.android.db.DatabaseManager;
+import it.gulch.linuxday.android.db.manager.BookmarkManager;
+import it.gulch.linuxday.android.db.manager.impl.BookmarkManagerImpl;
 import it.gulch.linuxday.android.loaders.BookmarkStatusLoader;
 import it.gulch.linuxday.android.loaders.LocalCacheLoader;
-import it.gulch.linuxday.android.model.Building;
-import it.gulch.linuxday.android.model.Event;
-import it.gulch.linuxday.android.model.Link;
-import it.gulch.linuxday.android.model.Person;
+import it.gulch.linuxday.android.model.db.Event;
+import it.gulch.linuxday.android.model.db.Link;
+import it.gulch.linuxday.android.model.db.Person;
 import it.gulch.linuxday.android.utils.DateUtils;
-import it.gulch.linuxday.android.utils.StringUtils;
 
+@EFragment
 public class EventDetailsFragment extends Fragment
 {
-	private static class EventDetails
-	{
-		List<Person> persons;
-
-		List<Link> links;
-	}
-
-	private static class ViewHolder
-	{
-		LayoutInflater inflater;
-
-		TextView personsTextView;
-
-		ViewGroup linksContainer;
-	}
-
 	private static final int BOOKMARK_STATUS_LOADER_ID = 1;
 
 	private static final int EVENT_DETAILS_LOADER_ID = 2;
@@ -96,11 +86,14 @@ public class EventDetailsFragment extends Fragment
 
 	private MenuItem bookmarkMenuItem;
 
+	@Bean(BookmarkManagerImpl.class)
+	BookmarkManager bookmarkManager;
+
 	public static EventDetailsFragment newInstance(Event event)
 	{
 		EventDetailsFragment f = new EventDetailsFragment();
 		Bundle args = new Bundle();
-		args.putParcelable(ARG_EVENT, event);
+		args.putSerializable(ARG_EVENT, event);
 		f.setArguments(args);
 		return f;
 	}
@@ -109,7 +102,7 @@ public class EventDetailsFragment extends Fragment
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		event = getArguments().getParcelable(ARG_EVENT);
+		event = (Event) getArguments().getSerializable(ARG_EVENT);
 		setHasOptionsMenu(true);
 	}
 
@@ -128,7 +121,7 @@ public class EventDetailsFragment extends Fragment
 
 		((TextView) view.findViewById(R.id.title)).setText(event.getTitle());
 		TextView textView = (TextView) view.findViewById(R.id.subtitle);
-		String text = event.getSubTitle();
+		String text = event.getSubtitle();
 		if(TextUtils.isEmpty(text)) {
 			textView.setVisibility(View.GONE);
 		} else {
@@ -139,50 +132,51 @@ public class EventDetailsFragment extends Fragment
 
 		// Set the persons summary text first; replace it with the clickable text when the loader completes
 		holder.personsTextView = (TextView) view.findViewById(R.id.persons);
-		String personsSummary = event.getPersonsSummary();
-		if(TextUtils.isEmpty(personsSummary)) {
+		String personsSummary = "";
+		if(CollectionUtils.isEmpty(event.getPeople())) {
 			holder.personsTextView.setVisibility(View.GONE);
 		} else {
+			personsSummary = StringUtils.join(event.getPeople(), ", ");
 			holder.personsTextView.setText(personsSummary);
 			holder.personsTextView.setMovementMethod(linkMovementMethod);
 			holder.personsTextView.setVisibility(View.VISIBLE);
 		}
 
-		((TextView) view.findViewById(R.id.track)).setText(event.getTrack().getName());
-		Date startTime = event.getStartTime();
-		Date endTime = event.getEndTime();
-		text = String.format("%1$s, %2$s ― %3$s", event.getDay().toString(),
+		((TextView) view.findViewById(R.id.track)).setText(event.getTrack().getTitle());
+		Date startTime = event.getStartDate();
+		Date endTime = event.getEndDate();
+		text = String.format("%1$s, %2$s ― %3$s", event.getTrack().getDay().getName(),
 							 (startTime != null) ? TIME_DATE_FORMAT.format(startTime) : "?",
 							 (endTime != null) ? TIME_DATE_FORMAT.format(endTime) : "?");
 		((TextView) view.findViewById(R.id.time)).setText(text);
-		final String roomName = event.getRoomName();
+		final String roomName = event.getTrack().getRoom().getName();
 		TextView roomTextView = (TextView) view.findViewById(R.id.room);
-		Spannable roomText =
-			new SpannableString(String.format("%1$s (Building %2$s)", roomName, Building.fromRoomName(roomName)));
-		final int roomImageResId = getResources()
-			.getIdentifier(StringUtils.roomNameToResourceName(roomName), "drawable", getActivity().getPackageName());
-		// If the room image exists, make the room text clickable to display it
-		if(roomImageResId != 0) {
-			roomText.setSpan(new UnderlineSpan(), 0, roomText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-			roomTextView.setOnClickListener(new View.OnClickListener()
-			{
-
-				@Override
-				public void onClick(View view)
-				{
-					RoomImageDialogFragment.newInstance(roomName, roomImageResId).show(getFragmentManager());
-				}
-			});
-			roomTextView.setFocusable(true);
-		}
+		Spannable roomText = new SpannableString(String.format("%1$s", roomName));
+		//		final int roomImageResId = getResources()
+		//				.getIdentifier(StringUtils.roomNameToResourceName(roomName), "drawable",
+		//							   getActivity().getPackageName());
+		//		// If the room image exists, make the room text clickable to display it
+		//		if(roomImageResId != 0) {
+		//			roomText.setSpan(new UnderlineSpan(), 0, roomText.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		//			roomTextView.setOnClickListener(new View.OnClickListener()
+		//			{
+		//
+		//				@Override
+		//				public void onClick(View view)
+		//				{
+		//					RoomImageDialogFragment.newInstance(roomName, roomImageResId).show(getFragmentManager());
+		//				}
+		//			});
+		//			roomTextView.setFocusable(true);
+		//		}
 		roomTextView.setText(roomText);
 
 		textView = (TextView) view.findViewById(R.id.abstract_text);
-		text = event.getAbstractText();
+		text = event.getEventAbstract();
 		if(TextUtils.isEmpty(text)) {
 			textView.setVisibility(View.GONE);
 		} else {
-			textView.setText(StringUtils.trimEnd(Html.fromHtml(text)));
+			textView.setText(StringUtils.stripEnd(Html.fromHtml(text).toString(), " "));
 			textView.setMovementMethod(linkMovementMethod);
 		}
 		textView = (TextView) view.findViewById(R.id.description);
@@ -190,7 +184,7 @@ public class EventDetailsFragment extends Fragment
 		if(TextUtils.isEmpty(text)) {
 			textView.setVisibility(View.GONE);
 		} else {
-			textView.setText(StringUtils.trimEnd(Html.fromHtml(text)));
+			textView.setText(StringUtils.stripEnd(Html.fromHtml(text).toString(), " "));
 			textView.setMovementMethod(linkMovementMethod);
 		}
 
@@ -224,12 +218,14 @@ public class EventDetailsFragment extends Fragment
 		updateOptionsMenu();
 	}
 
+	// FIXME: ricontrollare
 	private Intent getShareChooserIntent()
 	{
 		return ShareCompat.IntentBuilder.from(getActivity())
-			.setSubject(String.format("%1$s (FOSDEM)", event.getTitle())).setType("text/plain")
-			.setText(String.format("%1$s %2$s #FOSDEM", event.getTitle(), event.getUrl()))
-			.setChooserTitle(R.string.share).createChooserIntent();
+				.setSubject(String.format("%1$s (FOSDEM)", event.getTitle())).setType("text/plain")
+						//.setText(String.format("%1$s %2$s #FOSDEM", event.getTitle(), event.getUrl()))
+				.setText(String.format("%1$s #FOSDEM", event.getTitle())).setChooserTitle(R.string.share)
+				.createChooserIntent();
 	}
 
 	private void updateOptionsMenu()
@@ -274,8 +270,10 @@ public class EventDetailsFragment extends Fragment
 		return false;
 	}
 
-	private static class UpdateBookmarkAsyncTask extends AsyncTask<Boolean, Void, Void>
+	private class UpdateBookmarkAsyncTask extends AsyncTask<Boolean, Void, Void>
 	{
+		private final String TAG = UpdateBookmarkAsyncTask.class.getSimpleName();
+
 		private final Event event;
 
 		public UpdateBookmarkAsyncTask(Event event)
@@ -286,11 +284,16 @@ public class EventDetailsFragment extends Fragment
 		@Override
 		protected Void doInBackground(Boolean... remove)
 		{
-			if(remove[0]) {
-				DatabaseManager.getInstance().removeBookmark(event);
-			} else {
-				DatabaseManager.getInstance().addBookmark(event);
+			try {
+				if(remove[0]) {
+					bookmarkManager.removeBookmark(event);
+				} else {
+					bookmarkManager.addBookmark(event);
+				}
+			} catch(SQLException e) {
+				Log.e(TAG, e.getMessage(), e);
 			}
+
 			return null;
 		}
 	}
@@ -301,25 +304,26 @@ public class EventDetailsFragment extends Fragment
 		Intent intent = new Intent(Intent.ACTION_EDIT);
 		intent.setType("vnd.android.cursor.item/event");
 		intent.putExtra(CalendarContract.Events.TITLE, event.getTitle());
-		intent.putExtra(CalendarContract.Events.EVENT_LOCATION, "ULB - " + event.getRoomName());
-		String description = event.getAbstractText();
+		intent.putExtra(CalendarContract.Events.EVENT_LOCATION, "ULB - " + event.getTrack().getRoom().getName());
+		String description = event.getEventAbstract();
 		if(TextUtils.isEmpty(description)) {
 			description = event.getDescription();
 		}
 		// Strip HTML
-		description = StringUtils.trimEnd(Html.fromHtml(description)).toString();
+		description = StringUtils.stripEnd(Html.fromHtml(description).toString(), " ");
 		// Add speaker info if available
 		if(personsCount > 0) {
-			description = String
-				.format("%1$s: %2$s\n\n%3$s", getResources().getQuantityString(R.plurals.speakers, personsCount),
-						event.getPersonsSummary(), description);
+			String personsSummary = StringUtils.join(event.getPeople(), ", ");
+			description = String.format("%1$s: %2$s\n\n%3$s",
+										getResources().getQuantityString(R.plurals.speakers, personsCount),
+										personsSummary, description);
 		}
 		intent.putExtra(CalendarContract.Events.DESCRIPTION, description);
-		Date time = event.getStartTime();
+		Date time = event.getStartDate();
 		if(time != null) {
 			intent.putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, time.getTime());
 		}
-		time = event.getEndTime();
+		time = event.getEndDate();
 		if(time != null) {
 			intent.putExtra(CalendarContract.EXTRA_EVENT_END_TIME, time.getTime());
 		}
@@ -361,9 +365,8 @@ public class EventDetailsFragment extends Fragment
 		public EventDetails loadInBackground()
 		{
 			EventDetails result = new EventDetails();
-			DatabaseManager dbm = DatabaseManager.getInstance();
-			result.persons = dbm.getPersons(event);
-			result.links = dbm.getLinks(event);
+			result.people = event.getPeople();
+			result.links = event.getLinks();
 			return result;
 		}
 	}
@@ -380,13 +383,13 @@ public class EventDetailsFragment extends Fragment
 		public void onLoadFinished(Loader<EventDetails> loader, EventDetails data)
 		{
 			// 1. Persons
-			if(data.persons != null) {
-				personsCount = data.persons.size();
+			if(data.people != null) {
+				personsCount = data.people.size();
 				if(personsCount > 0) {
 					// Build a list of clickable persons
 					SpannableStringBuilder sb = new SpannableStringBuilder();
 					int length = 0;
-					for(Person person : data.persons) {
+					for(Person person : data.people) {
 						if(length != 0) {
 							sb.append(", ");
 						}
@@ -413,7 +416,7 @@ public class EventDetailsFragment extends Fragment
 					View view = holder.inflater.inflate(R.layout.item_link, holder.linksContainer, false);
 					TextView tv = (TextView) view.findViewById(R.id.description);
 					tv.setText(link.getDescription());
-					view.setOnClickListener(new LinkClickListener(link));
+					//view.setOnClickListener(new LinkClickListener(link));
 					holder.linksContainer.addView(view);
 					// Add a list divider
 					holder.inflater.inflate(R.layout.list_divider, holder.linksContainer, true);
@@ -443,25 +446,42 @@ public class EventDetailsFragment extends Fragment
 		{
 			Context context = v.getContext();
 			Intent intent =
-				new Intent(context, PersonInfoActivity.class).putExtra(PersonInfoActivity.EXTRA_PERSON, person);
+					new Intent(context, PersonInfoActivity.class).putExtra(PersonInfoActivity.EXTRA_PERSON, person);
 			context.startActivity(intent);
 		}
 	}
 
-	private static class LinkClickListener implements View.OnClickListener
+	// TODO
+//	private static class LinkClickListener implements View.OnClickListener
+//	{
+//		private final Link link;
+//
+//		public LinkClickListener(Link link)
+//		{
+//			this.link = link;
+//		}
+//
+//		@Override
+//		public void onClick(View v)
+//		{
+//			Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link.getUrl()));
+//			v.getContext().startActivity(intent);
+//		}
+//	}
+
+	private static class EventDetails
 	{
-		private final Link link;
+		List<Person> people;
 
-		public LinkClickListener(Link link)
-		{
-			this.link = link;
-		}
+		List<Link> links;
+	}
 
-		@Override
-		public void onClick(View v)
-		{
-			Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link.getUrl()));
-			v.getContext().startActivity(intent);
-		}
+	private static class ViewHolder
+	{
+		LayoutInflater inflater;
+
+		TextView personsTextView;
+
+		ViewGroup linksContainer;
 	}
 }

@@ -28,11 +28,15 @@ import android.support.v7.app.ActionBarActivity;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EActivity;
+
 import it.gulch.linuxday.android.R;
-import it.gulch.linuxday.android.db.DatabaseManager;
+import it.gulch.linuxday.android.db.manager.EventManager;
+import it.gulch.linuxday.android.db.manager.impl.EventManagerImpl;
 import it.gulch.linuxday.android.fragments.EventDetailsFragment;
 import it.gulch.linuxday.android.loaders.LocalCacheLoader;
-import it.gulch.linuxday.android.model.Event;
+import it.gulch.linuxday.android.model.db.Event;
 import it.gulch.linuxday.android.utils.NfcUtils;
 
 /**
@@ -40,6 +44,7 @@ import it.gulch.linuxday.android.utils.NfcUtils;
  *
  * @author Christophe Beyls
  */
+@EActivity
 public class EventDetailsActivity extends ActionBarActivity
 	implements LoaderCallbacks<Event>, NfcUtils.CreateNfcAppDataCallback
 {
@@ -49,6 +54,9 @@ public class EventDetailsActivity extends ActionBarActivity
 
 	private Event event;
 
+	@Bean(EventManagerImpl.class)
+	EventManager eventManager;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
@@ -57,7 +65,7 @@ public class EventDetailsActivity extends ActionBarActivity
 
 		getSupportActionBar().setTitle(R.string.event_details);
 
-		Event event = getIntent().getParcelableExtra(EXTRA_EVENT);
+		Event event = (Event) getIntent().getSerializableExtra(EXTRA_EVENT);
 		if(event != null) {
 			// The event has been passed as parameter, it can be displayed immediately
 			initEvent(event);
@@ -91,7 +99,7 @@ public class EventDetailsActivity extends ActionBarActivity
 			case android.R.id.home:
 				// Navigate up to the track associated to this event
 				Intent upIntent = new Intent(this, TrackScheduleActivity.class);
-				upIntent.putExtra(TrackScheduleActivity.EXTRA_DAY, event.getDay());
+				upIntent.putExtra(TrackScheduleActivity.EXTRA_DAY, event.getTrack().getDay());
 				upIntent.putExtra(TrackScheduleActivity.EXTRA_TRACK, event.getTrack());
 				upIntent.putExtra(TrackScheduleActivity.EXTRA_FROM_EVENT_ID, event.getId());
 				upIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -114,7 +122,7 @@ public class EventDetailsActivity extends ActionBarActivity
 		return String.valueOf(event.getId()).getBytes();
 	}
 
-	private static class EventLoader extends LocalCacheLoader<Event>
+	private class EventLoader extends LocalCacheLoader<Event>
 	{
 		private final long eventId;
 
@@ -127,7 +135,7 @@ public class EventDetailsActivity extends ActionBarActivity
 		@Override
 		public Event loadInBackground()
 		{
-			return DatabaseManager.getInstance().getEvent(eventId);
+			return eventManager.get(eventId);
 		}
 	}
 

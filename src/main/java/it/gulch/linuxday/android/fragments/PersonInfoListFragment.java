@@ -18,7 +18,6 @@ package it.gulch.linuxday.android.fragments;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
@@ -26,20 +25,29 @@ import android.support.v4.content.Loader;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EFragment;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.activities.EventDetailsActivity;
 import it.gulch.linuxday.android.adapters.EventsAdapter;
-import it.gulch.linuxday.android.db.DatabaseManager;
-import it.gulch.linuxday.android.loaders.SimpleCursorLoader;
-import it.gulch.linuxday.android.model.Event;
-import it.gulch.linuxday.android.model.Person;
+import it.gulch.linuxday.android.db.manager.EventManager;
+import it.gulch.linuxday.android.db.manager.impl.EventManagerImpl;
+import it.gulch.linuxday.android.loaders.SimpleDatabaseLoader;
+import it.gulch.linuxday.android.model.db.Event;
+import it.gulch.linuxday.android.model.db.Person;
 
-public class PersonInfoListFragment extends ListFragment implements LoaderCallbacks<Cursor>
+@EFragment
+public class PersonInfoListFragment extends ListFragment implements LoaderCallbacks<List<Event>>
 {
 	private static final int PERSON_EVENTS_LOADER_ID = 1;
 
@@ -49,11 +57,16 @@ public class PersonInfoListFragment extends ListFragment implements LoaderCallba
 
 	private EventsAdapter adapter;
 
+	private List<Event> events;
+
+	@Bean(EventManagerImpl.class)
+	EventManager eventManager;
+
 	public static PersonInfoListFragment newInstance(Person person)
 	{
 		PersonInfoListFragment f = new PersonInfoListFragment();
 		Bundle args = new Bundle();
-		args.putParcelable(ARG_PERSON, person);
+		args.putSerializable(ARG_PERSON, person);
 		f.setArguments(args);
 		return f;
 	}
@@ -63,8 +76,10 @@ public class PersonInfoListFragment extends ListFragment implements LoaderCallba
 	{
 		super.onCreate(savedInstanceState);
 
-		adapter = new EventsAdapter(getActivity());
-		person = getArguments().getParcelable(ARG_PERSON);
+		events = new ArrayList<Event>();
+
+		adapter = new EventsAdapter(getActivity(), events);
+		person = (Person) getArguments().getSerializable(ARG_PERSON);
 		setHasOptionsMenu(true);
 	}
 
@@ -74,17 +89,18 @@ public class PersonInfoListFragment extends ListFragment implements LoaderCallba
 		inflater.inflate(R.menu.person, menu);
 	}
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item)
-	{
-		switch(item.getItemId()) {
-			case R.id.more_info:
-				Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(person.getUrl()));
-				startActivity(intent);
-				return true;
-		}
-		return false;
-	}
+	// FIXME
+//	@Override
+//	public boolean onOptionsItemSelected(MenuItem item)
+//	{
+//		switch(item.getItemId()) {
+//			case R.id.more_info:
+//				Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(person.getUrl()));
+//				startActivity(intent);
+//				return true;
+//		}
+//		return false;
+//	}
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState)
@@ -109,9 +125,8 @@ public class PersonInfoListFragment extends ListFragment implements LoaderCallba
 		getLoaderManager().initLoader(PERSON_EVENTS_LOADER_ID, null, this);
 	}
 
-	private static class PersonEventsLoader extends SimpleCursorLoader
+	private class PersonEventsLoader extends SimpleDatabaseLoader<List<Event>>
 	{
-
 		private final Person person;
 
 		public PersonEventsLoader(Context context, Person person)
@@ -121,23 +136,29 @@ public class PersonInfoListFragment extends ListFragment implements LoaderCallba
 		}
 
 		@Override
-		protected Cursor getCursor()
+		protected List<Event> getObject()
 		{
-			return DatabaseManager.getInstance().getEvents(person);
+			try {
+				return eventManager.searchEventsByPerson(person);
+			} catch(SQLException e) {
+				return Collections.emptyList();
+			}
 		}
 	}
 
 	@Override
-	public Loader<Cursor> onCreateLoader(int id, Bundle args)
+	public Loader<List<Event>> onCreateLoader(int id, Bundle args)
 	{
 		return new PersonEventsLoader(getActivity(), person);
 	}
 
 	@Override
-	public void onLoadFinished(Loader<Cursor> loader, Cursor data)
+	public void onLoadFinished(Loader<List<Event>> loader, List<Event> data)
 	{
 		if(data != null) {
-			adapter.swapCursor(data);
+			events.clear();
+			events.addAll(data);
+			adapter.notifyDataSetChanged();
 		}
 
 		// The list should now be shown.
@@ -149,9 +170,10 @@ public class PersonInfoListFragment extends ListFragment implements LoaderCallba
 	}
 
 	@Override
-	public void onLoaderReset(Loader<Cursor> loader)
+	public void onLoaderReset(Loader<List<Event>> loader)
 	{
-		adapter.swapCursor(null);
+		events.clear();
+		adapter.notifyDataSetChanged();
 	}
 
 	@Override

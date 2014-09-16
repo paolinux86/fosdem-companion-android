@@ -17,7 +17,6 @@ package it.gulch.linuxday.android.fragments;
 
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -30,12 +29,27 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 
+import org.androidannotations.annotations.Bean;
+import org.androidannotations.annotations.EFragment;
+import org.apache.commons.collections4.CollectionUtils;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
+
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.activities.EventDetailsActivity;
 import it.gulch.linuxday.android.adapters.EventsAdapter;
-import it.gulch.linuxday.android.db.DatabaseManager;
-import it.gulch.linuxday.android.loaders.SimpleCursorLoader;
-import it.gulch.linuxday.android.model.Event;
+import it.gulch.linuxday.android.db.manager.BookmarkManager;
+import it.gulch.linuxday.android.db.manager.EventManager;
+import it.gulch.linuxday.android.db.manager.impl.BookmarkManagerImpl;
+import it.gulch.linuxday.android.db.manager.impl.EventManagerImpl;
+import it.gulch.linuxday.android.loaders.SimpleDatabaseLoader;
+import it.gulch.linuxday.android.model.db.Event;
 import it.gulch.linuxday.android.widgets.BookmarksMultiChoiceModeListener;
 
 /**
@@ -43,7 +57,8 @@ import it.gulch.linuxday.android.widgets.BookmarksMultiChoiceModeListener;
  *
  * @author Christophe Beyls
  */
-public class BookmarksListFragment extends ListFragment implements LoaderCallbacks<Cursor>
+@EFragment
+public class BookmarksListFragment extends ListFragment implements LoaderCallbacks<List<Event>>
 {
 	private static final int BOOKMARKS_LOADER_ID = 1;
 
@@ -57,12 +72,22 @@ public class BookmarksListFragment extends ListFragment implements LoaderCallbac
 
 	private MenuItem upcomingOnlyMenuItem;
 
+	private List<Event> events;
+
+	@Bean(EventManagerImpl.class)
+	EventManager eventManager;
+
+	@Bean(BookmarkManagerImpl.class)
+	BookmarkManager bookmarkManager;
+
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 
-		adapter = new EventsAdapter(getActivity());
+		events = new ArrayList<Event>();
+
+		adapter = new EventsAdapter(getActivity(), events);
 		setListAdapter(adapter);
 
 		upcomingOnly = getActivity().getPreferences(Context.MODE_PRIVATE).getBoolean(PREF_UPCOMING_ONLY, false);
@@ -76,7 +101,7 @@ public class BookmarksListFragment extends ListFragment implements LoaderCallbac
 		super.onActivityCreated(savedInstanceState);
 
 		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			BookmarksMultiChoiceModeListener.register(getListView());
+			BookmarksMultiChoiceModeListener.register(getListView(), bookmarkManager);
 		}
 
 		setEmptyText(getString(R.string.no_bookmark));
@@ -118,18 +143,19 @@ public class BookmarksListFragment extends ListFragment implements LoaderCallbac
 				upcomingOnly = !upcomingOnly;
 				updateOptionsMenu();
 				getActivity().getPreferences(Context.MODE_PRIVATE).edit().putBoolean(PREF_UPCOMING_ONLY, upcomingOnly)
-					.commit();
+						.commit();
 				getLoaderManager().restartLoader(BOOKMARKS_LOADER_ID, null, this);
 				return true;
 		}
 		return false;
 	}
 
-	private static class BookmarksLoader extends SimpleCursorLoader
+	private class BookmarksLoader extends SimpleDatabaseLoader<List<Event>>
 	{
-
 		// Events that just started are still shown for 5 minutes
 		private static final long TIME_OFFSET = 5L * 60L * 1000L;
+
+		private static final int TIME_OFFSET_IN_MINUTES = 5;
 
 		private final boolean upcomingOnly;
 
@@ -153,24 +179,33 @@ public class BookmarksListFragment extends ListFragment implements LoaderCallbac
 		}
 
 		@Override
-		public void deliverResult(Cursor cursor)
+		public void deliverResult(List<Event> events)
 		{
 			if(upcomingOnly && !isReset()) {
-				handler.removeCallbacks(timeoutRunnable);
-				// The loader will be refreshed when the start time of the first bookmark in the list is reached
-				if((cursor != null) && cursor.moveToFirst()) {
-					long startTime = DatabaseManager.toEventStartTimeMillis(cursor);
-					if(startTime != -1L) {
-						long delay = startTime - (System.currentTimeMillis() - TIME_OFFSET);
-						if(delay > 0L) {
-							handler.postDelayed(timeoutRunnable, delay);
-						} else {
-							onContentChanged();
-						}
-					}
+				preDeliverResult(events);
+			}
+
+			super.deliverResult(events);
+		}
+
+		private void preDeliverResult(List<Event> events)
+		{
+			handler.removeCallbacks(timeoutRunnable);
+			// The loader will be refreshed when the start time of the first bookmark in the list is reached
+			if(CollectionUtils.isEmpty(events)) {
+				return;
+			}
+
+			Event firstEvent = events.get(0);
+			long startTime = firstEvent.getStartDate().getTime();
+			if(startTime != -1L) {
+				long delay = startTime - (System.currentTimeMillis() - TIME_OFFSET);
+				if(delay > 0L) {
+					handler.postDelayed(timeoutRunnable, delay);
+				} else {
+					onContentChanged();
 				}
 			}
-			super.deliverResult(cursor);
 		}
 
 		@Override
@@ -183,24 +218,36 @@ public class BookmarksListFragment extends ListFragment implements LoaderCallbac
 		}
 
 		@Override
-		protected Cursor getCursor()
+		protected List<Event> getObject()
 		{
-			return DatabaseManager.getInstance()
-				.getBookmarks(upcomingOnly ? System.currentTimeMillis() - TIME_OFFSET : -1L);
+			Date minStartDate = null;
+			if(upcomingOnly) {
+				Calendar calendar = GregorianCalendar.getInstance();
+				calendar.add(Calendar.MINUTE, -TIME_OFFSET_IN_MINUTES);
+				minStartDate = calendar.getTime();
+			}
+
+			try {
+				return eventManager.getBookmarkedEvents(minStartDate);
+			} catch(SQLException e) {
+				return Collections.emptyList();
+			}
 		}
 	}
 
 	@Override
-	public Loader<Cursor> onCreateLoader(int id, Bundle args)
+	public Loader<List<Event>> onCreateLoader(int id, Bundle args)
 	{
 		return new BookmarksLoader(getActivity(), upcomingOnly);
 	}
 
 	@Override
-	public void onLoadFinished(Loader<Cursor> loader, Cursor data)
+	public void onLoadFinished(Loader<List<Event>> loader, List<Event> data)
 	{
 		if(data != null) {
-			adapter.swapCursor(data);
+			events.clear();
+			events.addAll(data);
+			adapter.notifyDataSetChanged();
 		}
 
 		// The list should now be shown.
@@ -212,9 +259,10 @@ public class BookmarksListFragment extends ListFragment implements LoaderCallbac
 	}
 
 	@Override
-	public void onLoaderReset(Loader<Cursor> loader)
+	public void onLoaderReset(Loader<List<Event>> loader)
 	{
-		adapter.swapCursor(null);
+		events.clear();
+		adapter.notifyDataSetChanged();
 	}
 
 	@Override
@@ -222,7 +270,8 @@ public class BookmarksListFragment extends ListFragment implements LoaderCallbac
 	{
 		Event event = adapter.getItem(position);
 		Intent intent =
-			new Intent(getActivity(), EventDetailsActivity.class).putExtra(EventDetailsActivity.EXTRA_EVENT, event);
+				new Intent(getActivity(), EventDetailsActivity.class).putExtra(EventDetailsActivity.EXTRA_EVENT,
+																			   event);
 		startActivity(intent);
 	}
 }
