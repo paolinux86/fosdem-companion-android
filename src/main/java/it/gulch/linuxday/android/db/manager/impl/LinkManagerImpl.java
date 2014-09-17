@@ -5,29 +5,34 @@ import android.util.Log;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedDelete;
 
-import org.androidannotations.annotations.EBean;
-import org.androidannotations.annotations.OrmLiteDao;
-
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
 import it.gulch.linuxday.android.db.OrmLiteDatabaseHelper;
-import it.gulch.linuxday.android.db.manager.DayManager;
 import it.gulch.linuxday.android.db.manager.LinkManager;
-import it.gulch.linuxday.android.model.db.Day;
 import it.gulch.linuxday.android.model.db.Link;
 
 /**
  * Created by paolo on 07/09/14.
  */
-@EBean(scope = EBean.Scope.Singleton)
 public class LinkManagerImpl implements LinkManager
 {
 	private static final String TAG = LinkManagerImpl.class.getSimpleName();
 
-	@OrmLiteDao(helper = OrmLiteDatabaseHelper.class, model = Link.class)
-	Dao<Link, Long> dao;
+	private Dao<Link, Long> dao;
+
+	private LinkManagerImpl()
+	{
+	}
+
+	public static LinkManager newInstance(OrmLiteDatabaseHelper helper) throws SQLException
+	{
+		LinkManagerImpl linkManager = new LinkManagerImpl();
+		linkManager.dao = helper.getDao(Link.class);
+
+		return linkManager;
+	}
 
 	@Override
 	public Link get(Long id)

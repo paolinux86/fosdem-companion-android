@@ -1,5 +1,7 @@
 package it.gulch.linuxday.android.services;
 
+import android.content.Context;
+
 import java.util.Date;
 
 /**
@@ -7,9 +9,9 @@ import java.util.Date;
  */
 public interface PreferencesService
 {
-	void updateLastUpdateTime();
+	void updateLastUpdateTime(Context context);
 
-	void resetLastUpdateTime();
+	void resetLastUpdateTime(Context context);
 
-	Long getLastUpdateTime();
+	Long getLastUpdateTime(Context context);
 }

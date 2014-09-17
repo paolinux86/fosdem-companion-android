@@ -25,8 +25,6 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.view.MenuItem;
 
-import org.androidannotations.annotations.EActivity;
-
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.fragments.EventDetailsFragment;
 import it.gulch.linuxday.android.fragments.RoomImageDialogFragment;
@@ -41,7 +39,6 @@ import it.gulch.linuxday.android.utils.NfcUtils;
  *
  * @author Christophe Beyls
  */
-@EActivity
 public class TrackScheduleActivity extends ActionBarActivity
 	implements TrackScheduleListFragment.Callbacks, NfcUtils.CreateNfcAppDataCallback
 {

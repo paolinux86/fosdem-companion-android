@@ -4,11 +4,13 @@ import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
+import java.io.Serializable;
+
 /**
  * Created by paolo on 06/09/14.
  */
 @DatabaseTable(tableName = "event_type")
-public class EventType
+public class EventType implements Serializable
 {
 	@DatabaseField(id = true)
 	private String code;

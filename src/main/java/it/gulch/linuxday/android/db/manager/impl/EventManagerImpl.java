@@ -9,9 +9,6 @@ import com.j256.ormlite.stmt.PreparedQuery;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
 
-import org.androidannotations.annotations.EBean;
-import org.androidannotations.annotations.OrmLiteDao;
-
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,22 +28,32 @@ import it.gulch.linuxday.android.model.db.Track;
 /**
  * Created by paolo on 07/09/14.
  */
-@EBean(scope = EBean.Scope.Singleton)
 public class EventManagerImpl implements EventManager
 {
 	private static final String TAG = EventManagerImpl.class.getSimpleName();
 
-	@OrmLiteDao(helper = OrmLiteDatabaseHelper.class, model = Event.class)
-	Dao<Event, Long> dao;
+	private Dao<Event, Long> dao;
 
-	@OrmLiteDao(helper = OrmLiteDatabaseHelper.class, model = PersonPresentsEvent.class)
-	Dao<PersonPresentsEvent, Long> personPresentsEventDao;
+	private Dao<PersonPresentsEvent, Long> personPresentsEventDao;
 
-	@OrmLiteDao(helper = OrmLiteDatabaseHelper.class, model = Bookmark.class)
-	Dao<Bookmark, Long> bookmarkDao;
+	private Dao<Bookmark, Long> bookmarkDao;
 
-	@OrmLiteDao(helper = OrmLiteDatabaseHelper.class, model = Link.class)
-	Dao<Link, Long> linkDao;
+	private Dao<Link, Long> linkDao;
+
+	private EventManagerImpl()
+	{
+	}
+
+	public static EventManager newInstance(OrmLiteDatabaseHelper helper) throws SQLException
+	{
+		EventManagerImpl eventManager = new EventManagerImpl();
+		eventManager.dao = helper.getDao(Event.class);
+		eventManager.personPresentsEventDao = helper.getDao(PersonPresentsEvent.class);
+		eventManager.bookmarkDao = helper.getDao(Bookmark.class);
+		eventManager.linkDao = helper.getDao(Link.class);
+
+		return eventManager;
+	}
 
 	@Override
 	public Event get(Long id)
@@ -193,6 +200,7 @@ public class EventManagerImpl implements EventManager
 	public long countEvents() throws SQLException
 	{
 		QueryBuilder<Event, Long> queryBuilder = dao.queryBuilder();
+		queryBuilder.setCountOf(true);
 		PreparedQuery<Event> preparedQuery = queryBuilder.prepare();
 
 		return dao.countOf(preparedQuery);

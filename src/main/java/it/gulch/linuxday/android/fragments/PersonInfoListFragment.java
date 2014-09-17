@@ -15,22 +15,20 @@
  */
 package it.gulch.linuxday.android.fragments;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.Loader;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.TextView;
-
-import org.androidannotations.annotations.Bean;
-import org.androidannotations.annotations.EFragment;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -41,17 +39,18 @@ import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.activities.EventDetailsActivity;
 import it.gulch.linuxday.android.adapters.EventsAdapter;
 import it.gulch.linuxday.android.db.manager.EventManager;
-import it.gulch.linuxday.android.db.manager.impl.EventManagerImpl;
+import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
 import it.gulch.linuxday.android.loaders.SimpleDatabaseLoader;
 import it.gulch.linuxday.android.model.db.Event;
 import it.gulch.linuxday.android.model.db.Person;
 
-@EFragment
 public class PersonInfoListFragment extends ListFragment implements LoaderCallbacks<List<Event>>
 {
 	private static final int PERSON_EVENTS_LOADER_ID = 1;
 
 	private static final String ARG_PERSON = "person";
+
+	private static final String TAG = PersonsListFragment.class.getSimpleName();
 
 	private Person person;
 
@@ -59,8 +58,7 @@ public class PersonInfoListFragment extends ListFragment implements LoaderCallba
 
 	private List<Event> events;
 
-	@Bean(EventManagerImpl.class)
-	EventManager eventManager;
+	private EventManager eventManager;
 
 	public static PersonInfoListFragment newInstance(Person person)
 	{
@@ -123,6 +121,22 @@ public class PersonInfoListFragment extends ListFragment implements LoaderCallba
 		setListShown(false);
 
 		getLoaderManager().initLoader(PERSON_EVENTS_LOADER_ID, null, this);
+	}
+
+	@Override
+	public void onAttach(Activity activity)
+	{
+		super.onAttach(activity);
+		setupServices(activity);
+	}
+
+	private void setupServices(Activity activity)
+	{
+		try {
+			eventManager = DatabaseManagerFactory.getEventManager(activity);
+		} catch(SQLException e) {
+			Log.e(TAG, e.getMessage(), e);
+		}
 	}
 
 	private class PersonEventsLoader extends SimpleDatabaseLoader<List<Event>>

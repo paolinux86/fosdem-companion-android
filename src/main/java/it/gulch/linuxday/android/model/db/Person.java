@@ -13,7 +13,7 @@ import java.text.MessageFormat;
 @DatabaseTable(tableName = "person")
 public class Person implements Serializable
 {
-	@DatabaseField(generatedId = true)
+	@DatabaseField(id = true)
 	private Long id;
 
 	@DatabaseField(canBeNull = false)

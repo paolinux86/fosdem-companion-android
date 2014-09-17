@@ -16,7 +16,7 @@ import java.util.List;
 @DatabaseTable(tableName = "event")
 public class Event implements Serializable
 {
-	@DatabaseField(generatedId = true)
+	@DatabaseField(id = true)
 	private Long id;
 
 	@DatabaseField(canBeNull = false, index = true)

@@ -17,18 +17,15 @@ package it.gulch.linuxday.android.fragments;
 
 import android.app.Activity;
 import android.content.Context;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.Loader;
+import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
-
-import org.androidannotations.annotations.Bean;
-import org.androidannotations.annotations.EFragment;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -38,17 +35,17 @@ import java.util.List;
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.adapters.TrackScheduleAdapter;
 import it.gulch.linuxday.android.db.manager.EventManager;
-import it.gulch.linuxday.android.db.manager.impl.EventManagerImpl;
+import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
 import it.gulch.linuxday.android.loaders.SimpleDatabaseLoader;
 import it.gulch.linuxday.android.model.db.Day;
 import it.gulch.linuxday.android.model.db.Event;
 import it.gulch.linuxday.android.model.db.Track;
 
-@EFragment
 public class TrackScheduleListFragment extends ListFragment implements Handler.Callback, LoaderCallbacks<List<Event>>
 {
-	@Bean(EventManagerImpl.class)
-	EventManager eventManager;
+	private static final String TAG = TrackScheduleListFragment.class.getSimpleName();
+
+	private EventManager eventManager;
 
 	private static final int EVENTS_LOADER_ID = 1;
 
@@ -128,8 +125,18 @@ public class TrackScheduleListFragment extends ListFragment implements Handler.C
 	public void onAttach(Activity activity)
 	{
 		super.onAttach(activity);
+		setupServices(activity);
 		if(activity instanceof Callbacks) {
 			listener = (Callbacks) activity;
+		}
+	}
+
+	private void setupServices(Activity activity)
+	{
+		try {
+			eventManager = DatabaseManagerFactory.getEventManager(activity);
+		} catch(SQLException e) {
+			Log.e(TAG, e.getMessage(), e);
 		}
 	}
 
@@ -208,7 +215,6 @@ public class TrackScheduleListFragment extends ListFragment implements Handler.C
 	@Override
 	public Loader<List<Event>> onCreateLoader(int id, Bundle args)
 	{
-		Day day = (Day) getArguments().getSerializable(ARG_DAY);
 		Track track = (Track) getArguments().getSerializable(ARG_TRACK);
 		return new TrackScheduleLoader(getActivity(), track);
 	}

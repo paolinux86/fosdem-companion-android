@@ -15,12 +15,11 @@
  */
 package it.gulch.linuxday.android.fragments;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
-
-import org.androidannotations.annotations.Bean;
-import org.androidannotations.annotations.EFragment;
+import android.util.Log;
 
 import java.sql.SQLException;
 import java.util.Collections;
@@ -30,16 +29,16 @@ import java.util.List;
 
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.db.manager.EventManager;
-import it.gulch.linuxday.android.db.manager.impl.EventManagerImpl;
+import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
 import it.gulch.linuxday.android.enums.DatabaseOrder;
 import it.gulch.linuxday.android.loaders.BaseLiveLoader;
 import it.gulch.linuxday.android.model.db.Event;
 
-@EFragment
 public class NowLiveListFragment extends BaseLiveListFragment
 {
-	@Bean(EventManagerImpl.class)
-	EventManager eventManager;
+	private static final String TAG = NextLiveListFragment.class.getSimpleName();
+
+	private EventManager eventManager;
 
 	@Override
 	protected String getEmptyText()
@@ -51,6 +50,22 @@ public class NowLiveListFragment extends BaseLiveListFragment
 	public Loader<List<Event>> onCreateLoader(int id, Bundle args)
 	{
 		return new NowLiveLoader(getActivity());
+	}
+
+	@Override
+	public void onAttach(Activity activity)
+	{
+		super.onAttach(activity);
+		setupServices(activity);
+	}
+
+	private void setupServices(Activity activity)
+	{
+		try {
+			eventManager = DatabaseManagerFactory.getEventManager(activity);
+		} catch(SQLException e) {
+			Log.e(TAG, e.getMessage(), e);
+		}
 	}
 
 	private class NowLiveLoader extends BaseLiveLoader

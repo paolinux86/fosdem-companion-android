@@ -25,7 +25,7 @@
 		android:label="@string/app_name"
 		android:theme="@style/AppTheme">
 		<activity
-			android:name=".activities.MainActivity_"
+			android:name=".activities.MainActivity"
 			android:label="@string/app_name">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
@@ -37,22 +37,22 @@
 				android:name="android.app.default_searchable"
 				android:value=".activities.SearchResultActivity_" />
 		</activity>
-		<activity android:name=".activities.TrackScheduleActivity_">
+		<activity android:name=".activities.TrackScheduleActivity">
 			<meta-data
 				android:name="android.support.PARENT_ACTIVITY"
 				android:value=".activities.MainActivity_" />
 		</activity>
-		<activity android:name=".activities.TrackScheduleEventActivity_" />
-		<activity android:name=".activities.EventDetailsActivity_">
+		<activity android:name=".activities.TrackScheduleEventActivity" />
+		<activity android:name=".activities.EventDetailsActivity">
 			<intent-filter>
 				<action android:name="android.nfc.action.NDEF_DISCOVERED" />
 				<category android:name="android.intent.category.DEFAULT" />
 				<data android:mimeType="application/it.gulch.linuxday.android" />
 			</intent-filter>
 		</activity>
-		<activity android:name=".activities.PersonInfoActivity_" />
+		<activity android:name=".activities.PersonInfoActivity" />
 		<activity
-			android:name=".activities.SearchResultActivity_"
+			android:name=".activities.SearchResultActivity"
 			android:launchMode="singleTop">
 			<intent-filter>
 				<action android:name="android.intent.action.SEARCH" />
@@ -64,12 +64,12 @@
 		</activity>
 		<!-- Clearing the Task Affinity allows this dialog activity to be displayed without bringing to front the main application with it. -->
 		<activity
-			android:name=".activities.RoomImageDialogActivity_"
+			android:name=".activities.RoomImageDialogActivity"
 			android:excludeFromRecents="true"
 			android:taskAffinity=""
 			android:theme="@style/DialogTheme" />
 		<activity
-			android:name=".activities.SettingsActivity_"
+			android:name=".activities.SettingsActivity"
 			android:label="@string/settings" />
 
 		<receiver
@@ -81,7 +81,7 @@
 		</receiver>
 
 		<service
-			android:name=".services.AlarmIntentService_"
+			android:name=".services.AlarmIntentService"
 			android:exported="false" />
 
 		<provider

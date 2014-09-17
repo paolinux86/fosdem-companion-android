@@ -5,9 +5,6 @@ import android.util.Log;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedDelete;
 
-import org.androidannotations.annotations.EBean;
-import org.androidannotations.annotations.OrmLiteDao;
-
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
@@ -19,15 +16,25 @@ import it.gulch.linuxday.android.model.db.Day;
 /**
  * Created by paolo on 07/09/14.
  */
-@EBean(scope = EBean.Scope.Singleton)
 public class DayManagerImpl implements DayManager
 {
 	private static final String TAG = DayManagerImpl.class.getSimpleName();
 
-	@OrmLiteDao(helper = OrmLiteDatabaseHelper.class, model = Day.class)
-	Dao<Day, Long> dao;
+	private Dao<Day, Long> dao;
 
-	List<Day> cachedDays;
+	private List<Day> cachedDays;
+
+	private DayManagerImpl()
+	{
+	}
+
+	public static DayManager newInstance(OrmLiteDatabaseHelper helper) throws SQLException
+	{
+		DayManagerImpl dayManager = new DayManagerImpl();
+		dayManager.dao = helper.getDao(Day.class);
+
+		return dayManager;
+	}
 
 	@Override
 	public Day get(Long id)

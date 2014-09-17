@@ -12,7 +12,7 @@ import java.util.Date;
 @DatabaseTable(tableName = "day")
 public class Day implements Serializable
 {
-	@DatabaseField(generatedId = true)
+	@DatabaseField(id = true)
 	private Long id;
 
 	@DatabaseField(canBeNull = false)
@@ -67,5 +67,11 @@ public class Day implements Serializable
 	public void setDayDate(Date dayDate)
 	{
 		this.dayDate = dayDate;
+	}
+
+	@Override
+	public String toString()
+	{
+		return this.name;
 	}
 }

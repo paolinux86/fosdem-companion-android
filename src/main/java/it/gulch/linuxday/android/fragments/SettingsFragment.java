@@ -23,11 +23,8 @@ import android.preference.ListPreference;
 import android.preference.PreferenceManager;
 import android.support.v4.preference.PreferenceFragment;
 
-import org.androidannotations.annotations.EFragment;
-
 import it.gulch.linuxday.android.R;
 
-@EFragment
 public class SettingsFragment extends PreferenceFragment implements OnSharedPreferenceChangeListener
 {
 	public static final String KEY_PREF_NOTIFICATIONS_ENABLED = "notifications_enabled";

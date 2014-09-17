@@ -48,9 +48,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.androidannotations.annotations.Bean;
-import org.androidannotations.annotations.EActivity;
-
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -62,7 +59,7 @@ import it.gulch.linuxday.android.enums.Section;
 import it.gulch.linuxday.android.fragments.dialogs.AboutDialogFragment;
 import it.gulch.linuxday.android.fragments.dialogs.DownloadScheduleReminderDialogFragment;
 import it.gulch.linuxday.android.services.PreferencesService;
-import it.gulch.linuxday.android.services.impl.PreferencesServiceImpl;
+import it.gulch.linuxday.android.services.impl.ManagerFactory;
 import it.gulch.linuxday.android.tasks.DownloadScheduleAsyncTask;
 
 /**
@@ -71,7 +68,6 @@ import it.gulch.linuxday.android.tasks.DownloadScheduleAsyncTask;
  * @author Christophe Beyls
  * @author Paolo Cortis
  */
-@EActivity
 public class MainActivity extends ActionBarActivity implements ListView.OnItemClickListener
 {
 	private static final long DATABASE_VALIDITY_DURATION = 24L * 60L * 60L * 1000L; // 24h
@@ -83,7 +79,7 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 	private static final String STATE_CURRENT_SECTION = "current_section";
 
 	private static final DateFormat LAST_UPDATE_DATE_FORMAT =
-		DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, Locale.getDefault());
+			DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, Locale.getDefault());
 
 	private Section currentSection;
 
@@ -97,8 +93,7 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 
 	private MainMenuAdapter menuAdapter;
 
-	@Bean(PreferencesServiceImpl.class)
-	PreferencesService preferencesService;
+	private PreferencesService preferencesService;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -107,11 +102,18 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 		supportRequestWindowFeature(Window.FEATURE_PROGRESS);
 		setContentView(R.layout.main);
 
+		setupServices();
+
 		setupDrawer();
 
 		restoreCurrentSection(savedInstanceState);
 		setupMainMenu();
 		updateActionBar();
+	}
+
+	private void setupServices()
+	{
+		preferencesService = ManagerFactory.getPreferencesService();
 	}
 
 	private void setupDrawer()
@@ -148,8 +150,8 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 		View menuHeaderView = inflater.inflate(R.layout.header_main_menu, null);
 		menuListView.addHeaderView(menuHeaderView, null, false);
 
-		LocalBroadcastManager.getInstance(this)
-			.registerReceiver(scheduleRefreshedReceiver, new IntentFilter(ActionConstants.ACTION_SCHEDULE_REFRESHED));
+		LocalBroadcastManager.getInstance(this).registerReceiver(scheduleRefreshedReceiver, new IntentFilter(
+				ActionConstants.ACTION_SCHEDULE_REFRESHED));
 
 		menuAdapter = new MainMenuAdapter(inflater);
 		menuListView.setAdapter(menuAdapter);
@@ -165,15 +167,22 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 
 	private void updateLastUpdateTime()
 	{
-		long lastUpdateTime = preferencesService.getLastUpdateTime();
-		lastUpdateTextView.setText(getString(R.string.last_update, (lastUpdateTime == -1L) ? getString(R.string.never) :
-			LAST_UPDATE_DATE_FORMAT.format(new Date(lastUpdateTime))));
+		long lastUpdateTime = preferencesService.getLastUpdateTime(this);
+
+		String lastUpdateTimeAsString;
+		if(lastUpdateTime == -1L) {
+			lastUpdateTimeAsString = getString(R.string.never);
+		} else {
+			lastUpdateTimeAsString = LAST_UPDATE_DATE_FORMAT.format(new Date(lastUpdateTime));
+		}
+
+		lastUpdateTextView.setText(getString(R.string.last_update, lastUpdateTimeAsString));
 	}
 
 	private void updateActionBar()
 	{
 		getSupportActionBar()
-			.setTitle(drawerLayout.isDrawerOpen(mainMenu) ? R.string.app_name : currentSection.getTitleResId());
+				.setTitle(drawerLayout.isDrawerOpen(mainMenu) ? R.string.app_name : currentSection.getTitleResId());
 	}
 
 	@Override
@@ -221,7 +230,7 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 
 		// Download reminder
 		long now = System.currentTimeMillis();
-		long time = preferencesService.getLastUpdateTime();
+		long time = preferencesService.getLastUpdateTime(this);
 		if((time == -1L) || (time < (now - DATABASE_VALIDITY_DURATION))) {
 			SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
 			time = prefs.getLong(PREF_LAST_DOWNLOAD_REMINDER_TIME, -1L);
@@ -347,14 +356,11 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 		setSupportProgressBarIndeterminate(true);
 		setSupportProgressBarVisibility(true);
 
-		// FIXME
-		//DownloadScheduleAsyncTask_ instance = DownloadScheduleAsyncTask_.getInstance_(this);
+		DownloadScheduleAsyncTask instance = new DownloadScheduleAsyncTask(this);
 		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-			//instance.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-			new DownloadScheduleAsyncTask(this).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+			instance.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
 		} else {
-			//instance.execute();
-			new DownloadScheduleAsyncTask(this).execute();
+			instance.execute();
 		}
 	}
 
@@ -448,7 +454,7 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 		@Override
 		public void onReceive(Context context, Intent intent)
 		{
-			setSupportProgressBarIndeterminate(false);
+			//			setSupportProgressBarIndeterminate(false);
 			setSupportProgress(intent.getIntExtra(LinuxDayApi.EXTRA_PROGRESS, 0) * 100);
 		}
 	};

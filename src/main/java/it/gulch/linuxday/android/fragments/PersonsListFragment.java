@@ -15,18 +15,18 @@
  */
 package it.gulch.linuxday.android.fragments;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.Loader;
+import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
 
-import org.androidannotations.annotations.Bean;
-import org.androidannotations.annotations.EFragment;
-
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,21 +34,21 @@ import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.activities.PersonInfoActivity;
 import it.gulch.linuxday.android.adapters.PeopleAdapter;
 import it.gulch.linuxday.android.db.manager.PersonManager;
-import it.gulch.linuxday.android.db.manager.impl.PersonManagerImpl;
+import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
 import it.gulch.linuxday.android.loaders.SimpleDatabaseLoader;
 import it.gulch.linuxday.android.model.db.Person;
 
-@EFragment
 public class PersonsListFragment extends ListFragment implements LoaderCallbacks<List<Person>>
 {
 	private static final int PERSONS_LOADER_ID = 1;
+
+	private static final String TAG = PersonsListFragment.class.getSimpleName();
 
 	private PeopleAdapter adapter;
 
 	private List<Person> people;
 
-	@Bean(PersonManagerImpl.class)
-	PersonManager personManager;
+	private PersonManager personManager;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -71,6 +71,22 @@ public class PersonsListFragment extends ListFragment implements LoaderCallbacks
 		setListShown(false);
 
 		getLoaderManager().initLoader(PERSONS_LOADER_ID, null, this);
+	}
+
+	@Override
+	public void onAttach(Activity activity)
+	{
+		super.onAttach(activity);
+		setupServices(activity);
+	}
+
+	private void setupServices(Activity activity)
+	{
+		try {
+			personManager = DatabaseManagerFactory.getPersonManager(activity);
+		} catch(SQLException e) {
+			Log.e(TAG, e.getMessage(), e);
+		}
 	}
 
 	private class PersonsLoader extends SimpleDatabaseLoader<List<Person>>

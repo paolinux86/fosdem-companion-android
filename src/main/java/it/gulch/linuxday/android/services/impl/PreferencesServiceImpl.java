@@ -4,43 +4,40 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
-import org.androidannotations.annotations.EBean;
-import org.androidannotations.annotations.RootContext;
-
 import it.gulch.linuxday.android.constants.SharedPreferencesConstants;
 import it.gulch.linuxday.android.services.PreferencesService;
 
 /**
  * Created by paolo on 15/09/14.
  */
-@EBean(scope = EBean.Scope.Singleton)
 public class PreferencesServiceImpl implements PreferencesService
 {
-	@RootContext
-	Context context;
+	PreferencesServiceImpl()
+	{
+	}
 
 	@Override
-	public void updateLastUpdateTime()
+	public void updateLastUpdateTime(Context context)
 	{
-		SharedPreferences sharedPreferences = getSharedPreferences();
+		SharedPreferences sharedPreferences = getSharedPreferences(context);
 		SharedPreferences.Editor editor = sharedPreferences.edit();
 		editor.putLong(SharedPreferencesConstants.LAST_UPDATE_TIME_PREF, System.currentTimeMillis());
 		editor.commit();
 	}
 
 	@Override
-	public void resetLastUpdateTime()
+	public void resetLastUpdateTime(Context context)
 	{
-		getSharedPreferences().edit().remove(SharedPreferencesConstants.LAST_UPDATE_TIME_PREF).commit();
+		getSharedPreferences(context).edit().remove(SharedPreferencesConstants.LAST_UPDATE_TIME_PREF).commit();
 	}
 
 	@Override
-	public Long getLastUpdateTime()
+	public Long getLastUpdateTime(Context context)
 	{
-		return getSharedPreferences().getLong(SharedPreferencesConstants.LAST_UPDATE_TIME_PREF, 0);
+		return getSharedPreferences(context).getLong(SharedPreferencesConstants.LAST_UPDATE_TIME_PREF, 0);
 	}
 
-	private SharedPreferences getSharedPreferences()
+	private SharedPreferences getSharedPreferences(Context context)
 	{
 		return PreferenceManager.getDefaultSharedPreferences(context);
 	}

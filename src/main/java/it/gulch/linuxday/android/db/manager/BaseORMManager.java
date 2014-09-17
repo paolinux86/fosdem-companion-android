@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.List;
 
+import it.gulch.linuxday.android.db.OrmLiteDatabaseHelper;
+
 /**
  * Created by paolo on 07/09/14.
  */

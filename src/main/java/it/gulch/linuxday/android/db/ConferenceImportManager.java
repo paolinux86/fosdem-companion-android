@@ -2,19 +2,12 @@ package it.gulch.linuxday.android.db;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-
-import org.androidannotations.annotations.Bean;
-import org.androidannotations.annotations.EBean;
-import org.androidannotations.annotations.RootContext;
 
 import java.sql.SQLException;
 
 import it.gulch.linuxday.android.constants.ActionConstants;
-import it.gulch.linuxday.android.constants.SharedPreferencesConstants;
 import it.gulch.linuxday.android.constants.UriConstants;
 import it.gulch.linuxday.android.db.manager.BookmarkManager;
 import it.gulch.linuxday.android.db.manager.DayManager;
@@ -24,14 +17,7 @@ import it.gulch.linuxday.android.db.manager.LinkManager;
 import it.gulch.linuxday.android.db.manager.PersonManager;
 import it.gulch.linuxday.android.db.manager.RoomManager;
 import it.gulch.linuxday.android.db.manager.TrackManager;
-import it.gulch.linuxday.android.db.manager.impl.BookmarkManagerImpl;
-import it.gulch.linuxday.android.db.manager.impl.DayManagerImpl;
-import it.gulch.linuxday.android.db.manager.impl.EventManagerImpl;
-import it.gulch.linuxday.android.db.manager.impl.EventTypeManagerImpl;
-import it.gulch.linuxday.android.db.manager.impl.LinkManagerImpl;
-import it.gulch.linuxday.android.db.manager.impl.PersonManagerImpl;
-import it.gulch.linuxday.android.db.manager.impl.RoomManagerImpl;
-import it.gulch.linuxday.android.db.manager.impl.TrackManagerImpl;
+import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
 import it.gulch.linuxday.android.exceptions.ImportException;
 import it.gulch.linuxday.android.model.json.Conference;
 import it.gulch.linuxday.android.model.json.Day;
@@ -42,47 +28,55 @@ import it.gulch.linuxday.android.model.json.Person;
 import it.gulch.linuxday.android.model.json.Room;
 import it.gulch.linuxday.android.model.json.Track;
 import it.gulch.linuxday.android.services.PreferencesService;
-import it.gulch.linuxday.android.services.impl.PreferencesServiceImpl;
+import it.gulch.linuxday.android.services.impl.ManagerFactory;
 
 /**
  * Created by paolo on 13/09/14.
  */
-@EBean(scope = EBean.Scope.Singleton)
 public class ConferenceImportManager
 {
 	private static final String TAG = ConferenceImportManager.class.getSimpleName();
 
-	@Bean(BookmarkManagerImpl.class)
-	BookmarkManager bookmarkManager;
+	private BookmarkManager bookmarkManager;
 
-	@Bean(DayManagerImpl.class)
-	DayManager dayManager;
+	private DayManager dayManager;
 
-	@Bean(EventManagerImpl.class)
-	EventManager eventManager;
+	private EventManager eventManager;
 
-	@Bean(EventTypeManagerImpl.class)
-	EventTypeManager eventTypeManager;
+	private EventTypeManager eventTypeManager;
 
-	@Bean(LinkManagerImpl.class)
-	LinkManager linkManager;
+	private LinkManager linkManager;
 
-	@Bean(PersonManagerImpl.class)
-	PersonManager personManager;
+	private PersonManager personManager;
 
-	@Bean(RoomManagerImpl.class)
-	RoomManager roomManager;
+	private RoomManager roomManager;
 
-	@Bean(TrackManagerImpl.class)
-	TrackManager trackManager;
+	private TrackManager trackManager;
 
-	@Bean(PreferencesServiceImpl.class)
-	PreferencesService preferencesService;
-
-	@RootContext
-	Context context;
+	private PreferencesService preferencesService;
 
 	private Long minEventId;
+
+	private Context context;
+
+	public ConferenceImportManager(Context context)
+	{
+		try {
+			bookmarkManager = DatabaseManagerFactory.getBookmarkManager(context);
+			dayManager = DatabaseManagerFactory.getDayManager(context);
+			eventManager = DatabaseManagerFactory.getEventManager(context);
+			eventTypeManager = DatabaseManagerFactory.getEventTypeManager(context);
+			linkManager = DatabaseManagerFactory.getLinkManager(context);
+			personManager = DatabaseManagerFactory.getPersonManager(context);
+			roomManager = DatabaseManagerFactory.getRoomManager(context);
+			trackManager = DatabaseManagerFactory.getTrackManager(context);
+			preferencesService = ManagerFactory.getPreferencesService();
+
+			this.context = context;
+		} catch(SQLException e) {
+			Log.e(TAG, e.getMessage(), e);
+		}
+	}
 
 	public long importConference(Conference conference) throws ImportException
 	{
@@ -212,6 +206,10 @@ public class ConferenceImportManager
 		}
 
 		for(Person person : event.getPeople()) {
+			if(personManager.exists(person.getId())) {
+				continue;
+			}
+
 			it.gulch.linuxday.android.model.db.Person dbPerson = person.toDatabasePerson();
 			personManager.save(dbPerson);
 			dbEvent.addPerson(dbPerson);
@@ -220,7 +218,7 @@ public class ConferenceImportManager
 
 	private void notifyCompletion()
 	{
-		preferencesService.updateLastUpdateTime();
+		preferencesService.updateLastUpdateTime(context);
 
 		context.getContentResolver().notifyChange(UriConstants.URI_TRACKS, null);
 		context.getContentResolver().notifyChange(UriConstants.URI_EVENTS, null);
@@ -238,7 +236,7 @@ public class ConferenceImportManager
 		roomManager.truncate();
 		dayManager.truncate();
 
-		preferencesService.resetLastUpdateTime();
+		preferencesService.resetLastUpdateTime(context);
 
 		context.getContentResolver().notifyChange(UriConstants.URI_TRACKS, null);
 		context.getContentResolver().notifyChange(UriConstants.URI_EVENTS, null);

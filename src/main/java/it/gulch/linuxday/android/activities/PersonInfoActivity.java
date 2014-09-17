@@ -21,13 +21,10 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.view.MenuItem;
 
-import org.androidannotations.annotations.EActivity;
-
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.fragments.PersonInfoListFragment;
 import it.gulch.linuxday.android.model.db.Person;
 
-@EActivity
 public class PersonInfoActivity extends ActionBarActivity
 {
 	public static final String EXTRA_PERSON = "person";

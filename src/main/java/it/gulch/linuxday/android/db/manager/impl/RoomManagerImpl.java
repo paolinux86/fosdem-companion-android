@@ -5,9 +5,6 @@ import android.util.Log;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedDelete;
 
-import org.androidannotations.annotations.EBean;
-import org.androidannotations.annotations.OrmLiteDao;
-
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
@@ -19,13 +16,23 @@ import it.gulch.linuxday.android.model.db.Room;
 /**
  * Created by paolo on 07/09/14.
  */
-@EBean(scope = EBean.Scope.Singleton)
 public class RoomManagerImpl implements RoomManager
 {
 	private static final String TAG = RoomManagerImpl.class.getSimpleName();
 
-	@OrmLiteDao(helper = OrmLiteDatabaseHelper.class, model = Room.class)
-	Dao<Room, String> dao;
+	private Dao<Room, String> dao;
+
+	private RoomManagerImpl()
+	{
+	}
+
+	public static RoomManager newInstance(OrmLiteDatabaseHelper helper) throws SQLException
+	{
+		RoomManagerImpl roomManager = new RoomManagerImpl();
+		roomManager.dao = helper.getDao(Room.class);
+
+		return roomManager;
+	}
 
 	@Override
 	public Room get(String id)

@@ -27,11 +27,8 @@ import android.view.ViewGroup;
 
 import com.example.android.common.view.SlidingTabLayout;
 
-import org.androidannotations.annotations.EFragment;
-
 import it.gulch.linuxday.android.R;
 
-@EFragment
 public class LiveFragment extends Fragment
 {
 	private LivePagerAdapter livePagerAdapter;

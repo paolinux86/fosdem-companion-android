@@ -22,8 +22,6 @@ import android.util.Log;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.androidannotations.annotations.Bean;
-import org.androidannotations.annotations.EBean;
 import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
@@ -41,7 +39,6 @@ import it.gulch.linuxday.android.utils.HttpUtils;
  * @author Christophe Beyls
  * @author paolo
  */
-@EBean
 public class LinuxDayApi
 {
 	private static final String TAG = LinuxDayApi.class.getSimpleName();
@@ -61,8 +58,12 @@ public class LinuxDayApi
 
 	private static final Lock scheduleLock = new ReentrantLock();
 
-	@Bean
-	ConferenceImportManager conferenceImportManager;
+	private ConferenceImportManager conferenceImportManager;
+
+	public LinuxDayApi(Context context)
+	{
+		conferenceImportManager = new ConferenceImportManager(context);
+	}
 
 	/**
 	 * Download & store the schedule to the database. Only one thread at a time will perform the actual action,
@@ -116,7 +117,7 @@ public class LinuxDayApi
 	private void sendResult(Context context, long result)
 	{
 		Intent intent = new Intent(ACTION_DOWNLOAD_SCHEDULE_RESULT);
-		intent.putExtra(EXTRA_RESULT, result);
+		intent.putExtra(EXTRA_RESULT, (int) result);
 
 		LocalBroadcastManager broadcastManager = LocalBroadcastManager.getInstance(context);
 		broadcastManager.sendBroadcast(intent);

@@ -16,9 +16,7 @@
 package it.gulch.linuxday.android.activities;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.os.Bundle;
-import android.provider.BaseColumns;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
@@ -27,13 +25,12 @@ import android.support.v4.content.Loader;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 
 import com.viewpagerindicator.PageIndicator;
 
-import org.androidannotations.annotations.Bean;
-import org.androidannotations.annotations.EActivity;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.sql.SQLException;
@@ -43,10 +40,10 @@ import java.util.List;
 
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.db.manager.EventManager;
+import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
 import it.gulch.linuxday.android.db.manager.impl.EventManagerImpl;
 import it.gulch.linuxday.android.fragments.EventDetailsFragment;
 import it.gulch.linuxday.android.loaders.SimpleDatabaseLoader;
-import it.gulch.linuxday.android.model.db.Day;
 import it.gulch.linuxday.android.model.db.Event;
 import it.gulch.linuxday.android.model.db.Track;
 import it.gulch.linuxday.android.utils.NfcUtils;
@@ -56,7 +53,6 @@ import it.gulch.linuxday.android.utils.NfcUtils;
  *
  * @author Christophe Beyls
  */
-@EActivity
 public class TrackScheduleEventActivity extends ActionBarActivity
 	implements LoaderCallbacks<List<Event>>, NfcUtils.CreateNfcAppDataCallback
 {
@@ -67,6 +63,8 @@ public class TrackScheduleEventActivity extends ActionBarActivity
 	public static final String EXTRA_POSITION = "position";
 
 	private static final int EVENTS_LOADER_ID = 1;
+
+	private static final String TAG = TrackScheduleEventActivity.class.getSimpleName();
 
 	private Track track;
 
@@ -82,8 +80,7 @@ public class TrackScheduleEventActivity extends ActionBarActivity
 
 	private List<Event> events;
 
-	@Bean(EventManagerImpl.class)
-	EventManager eventManager;
+	private EventManager eventManager;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -91,6 +88,7 @@ public class TrackScheduleEventActivity extends ActionBarActivity
 		super.onCreate(savedInstanceState);
 
 		events = new ArrayList<Event>();
+		setupServices();
 
 		setContentView(R.layout.track_schedule_event);
 
@@ -118,6 +116,15 @@ public class TrackScheduleEventActivity extends ActionBarActivity
 
 		setCustomProgressVisibility(true);
 		getSupportLoaderManager().initLoader(EVENTS_LOADER_ID, null, this);
+	}
+
+	private void setupServices()
+	{
+		try {
+			eventManager = DatabaseManagerFactory.getEventManager(this);
+		} catch(SQLException e) {
+			Log.e(TAG, e.getMessage(), e);
+		}
 	}
 
 	private void setCustomProgressVisibility(boolean isVisible)

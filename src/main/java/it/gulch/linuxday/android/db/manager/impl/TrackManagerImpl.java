@@ -6,9 +6,6 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedDelete;
 import com.j256.ormlite.stmt.QueryBuilder;
 
-import org.androidannotations.annotations.EBean;
-import org.androidannotations.annotations.OrmLiteDao;
-
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
@@ -16,19 +13,28 @@ import java.util.List;
 import it.gulch.linuxday.android.db.OrmLiteDatabaseHelper;
 import it.gulch.linuxday.android.db.manager.TrackManager;
 import it.gulch.linuxday.android.model.db.Day;
-import it.gulch.linuxday.android.model.db.Room;
 import it.gulch.linuxday.android.model.db.Track;
 
 /**
  * Created by paolo on 07/09/14.
  */
-@EBean(scope = EBean.Scope.Singleton)
 public class TrackManagerImpl implements TrackManager
 {
 	private static final String TAG = TrackManagerImpl.class.getSimpleName();
 
-	@OrmLiteDao(helper = OrmLiteDatabaseHelper.class, model = Track.class)
-	Dao<Track, Long> dao;
+	private Dao<Track, Long> dao;
+
+	private TrackManagerImpl()
+	{
+	}
+
+	public static TrackManager newInstance(OrmLiteDatabaseHelper helper) throws SQLException
+	{
+		TrackManagerImpl trackManager = new TrackManagerImpl();
+		trackManager.dao = helper.getDao(Track.class);
+
+		return trackManager;
+	}
 
 	@Override
 	public Track get(Long id)

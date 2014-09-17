@@ -15,19 +15,18 @@
  */
 package it.gulch.linuxday.android.fragments;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.Loader;
+import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
 
-import org.androidannotations.annotations.Bean;
-import org.androidannotations.annotations.EFragment;
-
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,23 +34,23 @@ import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.activities.EventDetailsActivity;
 import it.gulch.linuxday.android.adapters.EventsAdapter;
 import it.gulch.linuxday.android.db.manager.EventManager;
-import it.gulch.linuxday.android.db.manager.impl.EventManagerImpl;
+import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
 import it.gulch.linuxday.android.loaders.SimpleDatabaseLoader;
 import it.gulch.linuxday.android.model.db.Event;
 
-@EFragment
 public class SearchResultListFragment extends ListFragment implements LoaderCallbacks<List<Event>>
 {
 	private static final int EVENTS_LOADER_ID = 1;
 
 	private static final String ARG_QUERY = "query";
 
+	private static final String TAG = SearchResultListFragment.class.getSimpleName();
+
 	private List<Event> events;
 
 	private EventsAdapter adapter;
 
-	@Bean(EventManagerImpl.class)
-	EventManager eventManager;
+	private EventManager eventManager;
 
 	public static SearchResultListFragment newInstance(String query)
 	{
@@ -82,6 +81,22 @@ public class SearchResultListFragment extends ListFragment implements LoaderCall
 		setListShown(false);
 
 		getLoaderManager().initLoader(EVENTS_LOADER_ID, null, this);
+	}
+
+	@Override
+	public void onAttach(Activity activity)
+	{
+		super.onAttach(activity);
+		setupServices(activity);
+	}
+
+	private void setupServices(Activity activity)
+	{
+		try {
+			eventManager = DatabaseManagerFactory.getEventManager(activity);
+		} catch(SQLException e) {
+			Log.e(TAG, e.getMessage(), e);
+		}
 	}
 
 	private class TextSearchLoader extends SimpleDatabaseLoader<List<Event>>

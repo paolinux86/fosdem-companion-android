@@ -15,6 +15,7 @@
  */
 package it.gulch.linuxday.android.fragments;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -23,14 +24,13 @@ import android.os.Handler;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.Loader;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 
-import org.androidannotations.annotations.Bean;
-import org.androidannotations.annotations.EFragment;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.sql.SQLException;
@@ -47,6 +47,7 @@ import it.gulch.linuxday.android.adapters.EventsAdapter;
 import it.gulch.linuxday.android.db.manager.BookmarkManager;
 import it.gulch.linuxday.android.db.manager.EventManager;
 import it.gulch.linuxday.android.db.manager.impl.BookmarkManagerImpl;
+import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
 import it.gulch.linuxday.android.db.manager.impl.EventManagerImpl;
 import it.gulch.linuxday.android.loaders.SimpleDatabaseLoader;
 import it.gulch.linuxday.android.model.db.Event;
@@ -57,12 +58,13 @@ import it.gulch.linuxday.android.widgets.BookmarksMultiChoiceModeListener;
  *
  * @author Christophe Beyls
  */
-@EFragment
 public class BookmarksListFragment extends ListFragment implements LoaderCallbacks<List<Event>>
 {
 	private static final int BOOKMARKS_LOADER_ID = 1;
 
 	private static final String PREF_UPCOMING_ONLY = "bookmarks_upcoming_only";
+
+	private static final String TAG = BookmarksListFragment.class.getSimpleName();
 
 	private EventsAdapter adapter;
 
@@ -74,11 +76,9 @@ public class BookmarksListFragment extends ListFragment implements LoaderCallbac
 
 	private List<Event> events;
 
-	@Bean(EventManagerImpl.class)
-	EventManager eventManager;
+	private EventManager eventManager;
 
-	@Bean(BookmarkManagerImpl.class)
-	BookmarkManager bookmarkManager;
+	private BookmarkManager bookmarkManager;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -108,6 +108,23 @@ public class BookmarksListFragment extends ListFragment implements LoaderCallbac
 		setListShown(false);
 
 		getLoaderManager().initLoader(BOOKMARKS_LOADER_ID, null, this);
+	}
+
+	@Override
+	public void onAttach(Activity activity)
+	{
+		super.onAttach(activity);
+		setupServices(activity);
+	}
+
+	private void setupServices(Activity activity)
+	{
+		try {
+			eventManager = DatabaseManagerFactory.getEventManager(activity);
+			bookmarkManager = DatabaseManagerFactory.getBookmarkManager(activity);
+		} catch(SQLException e) {
+			Log.e(TAG, e.getMessage(), e);
+		}
 	}
 
 	@Override

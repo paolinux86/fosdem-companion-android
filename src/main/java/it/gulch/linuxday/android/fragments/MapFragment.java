@@ -28,14 +28,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
-import org.androidannotations.annotations.EFragment;
-
 import java.util.List;
 import java.util.Locale;
 
 import it.gulch.linuxday.android.R;
 
-@EFragment
 public class MapFragment extends Fragment
 {
 	private static final double DESTINATION_LATITUDE = 50.812375;

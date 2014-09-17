@@ -15,6 +15,7 @@
  */
 package it.gulch.linuxday.android.services;
 
+import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.IntentService;
 import android.app.Notification;
@@ -32,12 +33,12 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 
-import org.androidannotations.annotations.Bean;
-import org.androidannotations.annotations.EService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.sql.SQLException;
 import java.util.List;
 
 import it.gulch.linuxday.android.R;
@@ -48,6 +49,7 @@ import it.gulch.linuxday.android.constants.ExtraConstants;
 import it.gulch.linuxday.android.db.manager.BookmarkManager;
 import it.gulch.linuxday.android.db.manager.EventManager;
 import it.gulch.linuxday.android.db.manager.impl.BookmarkManagerImpl;
+import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
 import it.gulch.linuxday.android.db.manager.impl.EventManagerImpl;
 import it.gulch.linuxday.android.fragments.SettingsFragment;
 import it.gulch.linuxday.android.model.db.Bookmark;
@@ -59,9 +61,10 @@ import it.gulch.linuxday.android.receivers.AlarmReceiver;
  *
  * @author Christophe Beyls
  */
-@EService
 public class AlarmIntentService extends IntentService
 {
+	private static final String TAG = AlarmIntentService.class.getSimpleName();
+
 	public static final String ACTION_UPDATE_ALARMS = "it.gulch.linuxday.android.action.UPDATE_ALARMS";
 
 	public static final String ACTION_DISABLE_ALARMS = "it.gulch.linuxday.android.action.DISABLE_ALARMS";
@@ -70,11 +73,9 @@ public class AlarmIntentService extends IntentService
 
 	private AlarmManager alarmManager;
 
-	@Bean(BookmarkManagerImpl.class)
-	BookmarkManager bookmarkManager;
+	private BookmarkManager bookmarkManager;
 
-	@Bean(EventManagerImpl.class)
-	EventManager eventManager;
+	private EventManager eventManager;
 
 	public AlarmIntentService()
 	{
@@ -85,11 +86,24 @@ public class AlarmIntentService extends IntentService
 	public void onCreate()
 	{
 		super.onCreate();
+
+		setupServices();
+
 		// Ask for the last unhandled intents to be redelivered if the service dies early.
 		// This ensures we handle all events, in order.
 		setIntentRedelivery(true);
 
 		alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+	}
+
+	private void setupServices()
+	{
+		try {
+			eventManager = DatabaseManagerFactory.getEventManager(this);
+			bookmarkManager = DatabaseManagerFactory.getBookmarkManager(this);
+		} catch(SQLException e) {
+			Log.e(TAG, e.getMessage(), e);
+		}
 	}
 
 	private PendingIntent getAlarmPendingIntent(long eventId)

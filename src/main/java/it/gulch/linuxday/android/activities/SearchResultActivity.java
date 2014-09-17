@@ -28,13 +28,10 @@ import android.support.v7.widget.SearchView;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import org.androidannotations.annotations.EActivity;
-
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.fragments.MessageDialogFragment;
 import it.gulch.linuxday.android.fragments.SearchResultListFragment;
 
-@EActivity
 public class SearchResultActivity extends ActionBarActivity
 {
 	public static final int MIN_SEARCH_LENGTH = 3;

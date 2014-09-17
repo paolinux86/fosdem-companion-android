@@ -15,10 +15,8 @@
  */
 package it.gulch.linuxday.android.fragments;
 
-import android.content.BroadcastReceiver;
+import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -26,29 +24,27 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.Loader;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.android.common.view.SlidingTabLayout;
 
-import org.androidannotations.annotations.Bean;
-import org.androidannotations.annotations.EFragment;
-
+import java.sql.SQLException;
 import java.util.List;
 
 import it.gulch.linuxday.android.R;
-import it.gulch.linuxday.android.constants.ActionConstants;
 import it.gulch.linuxday.android.db.manager.DayManager;
-import it.gulch.linuxday.android.db.manager.impl.DayManagerImpl;
-import it.gulch.linuxday.android.loaders.GlobalCacheLoader;
+import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
+import it.gulch.linuxday.android.loaders.DaysLoader;
 import it.gulch.linuxday.android.model.db.Day;
 
-@EFragment
-public class TracksFragment extends Fragment implements LoaderCallbacks<List<Day>>
+public class TracksFragment extends Fragment
 {
+	private static final String TAG = TracksFragment.class.getSimpleName();
+
 	private static class ViewHolder
 	{
 		View contentView;
@@ -70,8 +66,9 @@ public class TracksFragment extends Fragment implements LoaderCallbacks<List<Day
 
 	private int savedCurrentPage = -1;
 
-	@Bean(DayManagerImpl.class)
-	DayManager dayManager;
+	private LoaderCallbacks<List<Day>> loaderCallbacks;
+
+	private DayManager dayManager;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -112,7 +109,68 @@ public class TracksFragment extends Fragment implements LoaderCallbacks<List<Day
 	{
 		super.onActivityCreated(savedInstanceState);
 
-		getLoaderManager().initLoader(DAYS_LOADER_ID, null, this);
+		loaderCallbacks = new LoaderCallbacks<List<Day>>()
+		{
+			@Override
+			public Loader<List<Day>> onCreateLoader(int i, Bundle bundle)
+			{
+				return new DaysLoader(getActivity(), dayManager);
+			}
+
+			@Override
+			public void onLoadFinished(Loader<List<Day>> listLoader, List<Day> data)
+			{
+				daysAdapter.setDays(data);
+
+				final int totalPages = daysAdapter.getCount();
+				if(totalPages == 0) {
+					holder.contentView.setVisibility(View.GONE);
+					holder.emptyView.setVisibility(View.VISIBLE);
+					holder.pager.setOnPageChangeListener(null);
+				} else {
+					holder.contentView.setVisibility(View.VISIBLE);
+					holder.emptyView.setVisibility(View.GONE);
+					if(holder.pager.getAdapter() == null) {
+						holder.pager.setAdapter(daysAdapter);
+					}
+					holder.slidingTabs.setViewPager(holder.pager);
+					if(savedCurrentPage != -1) {
+						holder.pager.setCurrentItem(Math.min(savedCurrentPage, totalPages - 1), false);
+						savedCurrentPage = -1;
+					}
+				}
+			}
+
+			@Override
+			public void onLoaderReset(Loader<List<Day>> listLoader)
+			{
+			}
+		};
+
+		getLoaderManager().restartLoader(DAYS_LOADER_ID, null, loaderCallbacks);
+	}
+
+	@Override
+	public void onAttach(Activity activity)
+	{
+		super.onAttach(activity);
+		setupServices(activity);
+	}
+
+	private void setupServices(Activity activity)
+	{
+		try {
+			dayManager = DatabaseManagerFactory.getDayManager(activity);
+		} catch(SQLException e) {
+			Log.e(TAG, e.getMessage(), e);
+		}
+	}
+
+	@Override
+	public void onDestroy()
+	{
+		getLoaderManager().destroyLoader(DAYS_LOADER_ID);
+		super.onDestroy();
 	}
 
 	@Override
@@ -127,81 +185,6 @@ public class TracksFragment extends Fragment implements LoaderCallbacks<List<Day
 		}
 	}
 
-	private class DaysLoader extends GlobalCacheLoader<List<Day>>
-	{
-
-		private final BroadcastReceiver scheduleRefreshedReceiver = new BroadcastReceiver()
-		{
-
-			@Override
-			public void onReceive(Context context, Intent intent)
-			{
-				onContentChanged();
-			}
-		};
-
-		public DaysLoader(Context context)
-		{
-			super(context);
-			// Reload days list when the schedule has been refreshed
-			LocalBroadcastManager.getInstance(context).registerReceiver(scheduleRefreshedReceiver, new IntentFilter(
-					ActionConstants.ACTION_SCHEDULE_REFRESHED));
-		}
-
-		@Override
-		protected void onReset()
-		{
-			super.onReset();
-			LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(scheduleRefreshedReceiver);
-		}
-
-		@Override
-		protected List<Day> getCachedResult()
-		{
-			return dayManager.getCachedDays();
-		}
-
-		@Override
-		public List<Day> loadInBackground()
-		{
-			return dayManager.getAll();
-		}
-	}
-
-	@Override
-	public Loader<List<Day>> onCreateLoader(int id, Bundle args)
-	{
-		return new DaysLoader(getActivity());
-	}
-
-	@Override
-	public void onLoadFinished(Loader<List<Day>> loader, List<Day> data)
-	{
-		daysAdapter.setDays(data);
-
-		final int totalPages = daysAdapter.getCount();
-		if(totalPages == 0) {
-			holder.contentView.setVisibility(View.GONE);
-			holder.emptyView.setVisibility(View.VISIBLE);
-			holder.pager.setOnPageChangeListener(null);
-		} else {
-			holder.contentView.setVisibility(View.VISIBLE);
-			holder.emptyView.setVisibility(View.GONE);
-			if(holder.pager.getAdapter() == null) {
-				holder.pager.setAdapter(daysAdapter);
-			}
-			holder.slidingTabs.setViewPager(holder.pager);
-			if(savedCurrentPage != -1) {
-				holder.pager.setCurrentItem(Math.min(savedCurrentPage, totalPages - 1), false);
-				savedCurrentPage = -1;
-			}
-		}
-	}
-
-	@Override
-	public void onLoaderReset(Loader<List<Day>> loader)
-	{
-	}
 
 	private static class DaysAdapter extends FragmentStatePagerAdapter
 	{

@@ -16,6 +16,7 @@
 package it.gulch.linuxday.android.fragments;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -44,8 +45,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import org.androidannotations.annotations.Bean;
-import org.androidannotations.annotations.EFragment;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -58,6 +57,7 @@ import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.activities.PersonInfoActivity;
 import it.gulch.linuxday.android.db.manager.BookmarkManager;
 import it.gulch.linuxday.android.db.manager.impl.BookmarkManagerImpl;
+import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
 import it.gulch.linuxday.android.loaders.BookmarkStatusLoader;
 import it.gulch.linuxday.android.loaders.LocalCacheLoader;
 import it.gulch.linuxday.android.model.db.Event;
@@ -65,7 +65,6 @@ import it.gulch.linuxday.android.model.db.Link;
 import it.gulch.linuxday.android.model.db.Person;
 import it.gulch.linuxday.android.utils.DateUtils;
 
-@EFragment
 public class EventDetailsFragment extends Fragment
 {
 	private static final int BOOKMARK_STATUS_LOADER_ID = 1;
@@ -75,6 +74,8 @@ public class EventDetailsFragment extends Fragment
 	private static final String ARG_EVENT = "event";
 
 	private static final DateFormat TIME_DATE_FORMAT = DateUtils.getTimeDateFormat();
+
+	private static final String TAG = EventDetailsFragment.class.getSimpleName();
 
 	private Event event;
 
@@ -86,8 +87,7 @@ public class EventDetailsFragment extends Fragment
 
 	private MenuItem bookmarkMenuItem;
 
-	@Bean(BookmarkManagerImpl.class)
-	BookmarkManager bookmarkManager;
+	private BookmarkManager bookmarkManager;
 
 	public static EventDetailsFragment newInstance(Event event)
 	{
@@ -207,6 +207,22 @@ public class EventDetailsFragment extends Fragment
 		LoaderManager loaderManager = getLoaderManager();
 		loaderManager.initLoader(BOOKMARK_STATUS_LOADER_ID, null, bookmarkStatusLoaderCallbacks);
 		loaderManager.initLoader(EVENT_DETAILS_LOADER_ID, null, eventDetailsLoaderCallbacks);
+	}
+
+	@Override
+	public void onAttach(Activity activity)
+	{
+		super.onAttach(activity);
+		setupServices(activity);
+	}
+
+	private void setupServices(Activity activity)
+	{
+		try {
+			bookmarkManager = DatabaseManagerFactory.getBookmarkManager(activity);
+		} catch(SQLException e) {
+			Log.e(TAG, e.getMessage(), e);
+		}
 	}
 
 	@Override

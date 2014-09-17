@@ -11,7 +11,7 @@ import java.io.Serializable;
 @DatabaseTable(tableName = "track")
 public class Track implements Serializable
 {
-	@DatabaseField(generatedId = true)
+	@DatabaseField(id = true)
 	private Long id;
 
 	@DatabaseField(canBeNull = false)

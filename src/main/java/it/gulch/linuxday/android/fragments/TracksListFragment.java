@@ -15,38 +15,36 @@
  */
 package it.gulch.linuxday.android.fragments;
 
-import android.content.Context;
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.Loader;
+import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
 
-import org.androidannotations.annotations.Bean;
-import org.androidannotations.annotations.EFragment;
-
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.activities.TrackScheduleActivity;
 import it.gulch.linuxday.android.adapters.TracksAdapter;
 import it.gulch.linuxday.android.db.manager.TrackManager;
-import it.gulch.linuxday.android.db.manager.impl.TrackManagerImpl;
-import it.gulch.linuxday.android.loaders.SimpleDatabaseLoader;
+import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
+import it.gulch.linuxday.android.loaders.TracksLoader;
 import it.gulch.linuxday.android.model.db.Day;
 import it.gulch.linuxday.android.model.db.Track;
 
-@EFragment
-public class TracksListFragment extends ListFragment implements LoaderCallbacks<List<Track>>
+public class TracksListFragment extends ListFragment
 {
 	private static final int TRACKS_LOADER_ID = 1;
 
 	private static final String ARG_DAY = "day";
+
+	private static final String TAG = TracksListFragment.class.getSimpleName();
 
 	private Day day;
 
@@ -54,8 +52,9 @@ public class TracksListFragment extends ListFragment implements LoaderCallbacks<
 
 	private List<Track> tracks;
 
-	@Bean(TrackManagerImpl.class)
-	TrackManager trackManager;
+	private LoaderCallbacks<List<Track>> loaderCallbacks;
+
+	private TrackManager trackManager;
 
 	public static TracksListFragment newInstance(Day day)
 	{
@@ -86,58 +85,61 @@ public class TracksListFragment extends ListFragment implements LoaderCallbacks<
 		setEmptyText(getString(R.string.no_data));
 		setListShown(false);
 
-		getLoaderManager().initLoader(TRACKS_LOADER_ID, null, this);
+		setupLoaderCallbacks();
 	}
 
-	private class TracksLoader extends SimpleDatabaseLoader<List<Track>>
+	@Override
+	public void onAttach(Activity activity)
 	{
-		private final Day day;
+		super.onAttach(activity);
+		setupServices(activity);
+	}
 
-		public TracksLoader(Context context, Day day)
-		{
-			super(context);
-			this.day = day;
+	private void setupServices(Activity activity)
+	{
+		try {
+			trackManager = DatabaseManagerFactory.getTrackManager(activity);
+		} catch(SQLException e) {
+			Log.e(TAG, e.getMessage(), e);
 		}
+	}
 
-		@Override
-		protected List<Track> getObject()
+	private void setupLoaderCallbacks()
+	{
+		loaderCallbacks = new LoaderCallbacks<List<Track>>()
 		{
-			try {
-				return trackManager.findByDay(day);
-			} catch(SQLException e) {
-				return Collections.emptyList();
+			@Override
+			public Loader<List<Track>> onCreateLoader(int i, Bundle bundle)
+			{
+				return new TracksLoader(getActivity(), trackManager, day);
 			}
-		}
-	}
 
-	@Override
-	public Loader<List<Track>> onCreateLoader(int id, Bundle args)
-	{
-		return new TracksLoader(getActivity(), day);
-	}
+			@Override
+			public void onLoadFinished(Loader<List<Track>> listLoader, List<Track> data)
+			{
+				if(data != null) {
+					tracks.clear();
+					tracks.addAll(data);
+					adapter.notifyDataSetChanged();
+				}
 
-	@Override
-	public void onLoadFinished(Loader<List<Track>> loader, List<Track> data)
-	{
-		if(data != null) {
-			tracks.clear();
-			tracks.addAll(data);
-			adapter.notifyDataSetChanged();
-		}
+				// The list should now be shown.
+				if(isResumed()) {
+					setListShown(true);
+				} else {
+					setListShownNoAnimation(true);
+				}
+			}
 
-		// The list should now be shown.
-		if(isResumed()) {
-			setListShown(true);
-		} else {
-			setListShownNoAnimation(true);
-		}
-	}
+			@Override
+			public void onLoaderReset(Loader<List<Track>> listLoader)
+			{
+				tracks.clear();
+				adapter.notifyDataSetChanged();
+			}
+		};
 
-	@Override
-	public void onLoaderReset(Loader<List<Track>> loader)
-	{
-		tracks.clear();
-		adapter.notifyDataSetChanged();
+		getLoaderManager().restartLoader(TRACKS_LOADER_ID, null, loaderCallbacks);
 	}
 
 	@Override

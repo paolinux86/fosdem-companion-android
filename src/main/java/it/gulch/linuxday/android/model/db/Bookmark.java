@@ -3,13 +3,15 @@ package it.gulch.linuxday.android.model.db;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
+import java.io.Serializable;
+
 /**
  * Created by paolo on 07/09/14.
  */
 @DatabaseTable(tableName = "bookmark")
-public class Bookmark
+public class Bookmark implements Serializable
 {
-	@DatabaseField(generatedId = true)
+	@DatabaseField(id = true)
 	private Long id;
 
 	@DatabaseField(canBeNull = false, foreign = true)

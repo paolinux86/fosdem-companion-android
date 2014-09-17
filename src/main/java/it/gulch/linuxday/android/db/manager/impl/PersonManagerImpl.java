@@ -5,30 +5,34 @@ import android.util.Log;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedDelete;
 
-import org.androidannotations.annotations.EBean;
-import org.androidannotations.annotations.OrmLiteDao;
-
-import java.sql.SQLDataException;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 
 import it.gulch.linuxday.android.db.OrmLiteDatabaseHelper;
 import it.gulch.linuxday.android.db.manager.PersonManager;
-import it.gulch.linuxday.android.model.db.Event;
 import it.gulch.linuxday.android.model.db.Person;
-import it.gulch.linuxday.android.model.db.Room;
 
 /**
  * Created by paolo on 07/09/14.
  */
-@EBean(scope = EBean.Scope.Singleton)
 public class PersonManagerImpl implements PersonManager
 {
 	private static final String TAG = PersonManagerImpl.class.getSimpleName();
 
-	@OrmLiteDao(helper = OrmLiteDatabaseHelper.class, model = Person.class)
-	Dao<Person, Long> dao;
+	private Dao<Person, Long> dao;
+
+	private PersonManagerImpl()
+	{
+	}
+
+	public static PersonManager newInstance(OrmLiteDatabaseHelper helper) throws SQLException
+	{
+		PersonManagerImpl personManager = new PersonManagerImpl();
+		personManager.dao = helper.getDao(Person.class);
+
+		return personManager;
+	}
 
 	@Override
 	public Person get(Long id)

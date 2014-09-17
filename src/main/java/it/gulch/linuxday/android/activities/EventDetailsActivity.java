@@ -25,15 +25,15 @@ import android.support.v4.app.NavUtils;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.content.Loader;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import org.androidannotations.annotations.Bean;
-import org.androidannotations.annotations.EActivity;
+import java.sql.SQLException;
 
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.db.manager.EventManager;
-import it.gulch.linuxday.android.db.manager.impl.EventManagerImpl;
+import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
 import it.gulch.linuxday.android.fragments.EventDetailsFragment;
 import it.gulch.linuxday.android.loaders.LocalCacheLoader;
 import it.gulch.linuxday.android.model.db.Event;
@@ -44,24 +44,26 @@ import it.gulch.linuxday.android.utils.NfcUtils;
  *
  * @author Christophe Beyls
  */
-@EActivity
 public class EventDetailsActivity extends ActionBarActivity
-	implements LoaderCallbacks<Event>, NfcUtils.CreateNfcAppDataCallback
+		implements LoaderCallbacks<Event>, NfcUtils.CreateNfcAppDataCallback
 {
+	private static final String TAG = EventDetailsActivity.class.getSimpleName();
+
 	public static final String EXTRA_EVENT = "event";
 
 	private static final int EVENT_LOADER_ID = 1;
 
 	private Event event;
 
-	@Bean(EventManagerImpl.class)
-	EventManager eventManager;
+	private EventManager eventManager;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.content);
+
+		setupServices();
 
 		getSupportActionBar().setTitle(R.string.event_details);
 
@@ -76,6 +78,15 @@ public class EventDetailsActivity extends ActionBarActivity
 		} else {
 			// Load the event from the DB using its id
 			getSupportLoaderManager().initLoader(EVENT_LOADER_ID, null, this);
+		}
+	}
+
+	private void setupServices()
+	{
+		try {
+			eventManager = DatabaseManagerFactory.getEventManager(this);
+		} catch(SQLException e) {
+			Log.e(TAG, e.getMessage(), e);
 		}
 	}
 
@@ -107,7 +118,7 @@ public class EventDetailsActivity extends ActionBarActivity
 				finish();
 				if(NavUtils.shouldUpRecreateTask(this, upIntent)) {
 					TaskStackBuilder.create(this).addNextIntent(new Intent(this, MainActivity.class))
-						.addNextIntent(upIntent).startActivities();
+							.addNextIntent(upIntent).startActivities();
 				} else {
 					startActivity(upIntent);
 				}
