@@ -206,12 +206,10 @@ public class ConferenceImportManager
 		}
 
 		for(Person person : event.getPeople()) {
-			if(personManager.exists(person.getId())) {
-				continue;
-			}
-
 			it.gulch.linuxday.android.model.db.Person dbPerson = person.toDatabasePerson();
-			personManager.save(dbPerson);
+			if(!personManager.exists(person.getId())) {
+				personManager.save(dbPerson);
+			}
 			dbEvent.addPerson(dbPerson);
 		}
 	}

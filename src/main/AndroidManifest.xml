@@ -35,12 +35,12 @@
 
 			<meta-data
 				android:name="android.app.default_searchable"
-				android:value=".activities.SearchResultActivity_" />
+				android:value=".activities.SearchResultActivity" />
 		</activity>
 		<activity android:name=".activities.TrackScheduleActivity">
 			<meta-data
 				android:name="android.support.PARENT_ACTIVITY"
-				android:value=".activities.MainActivity_" />
+				android:value=".activities.MainActivity" />
 		</activity>
 		<activity android:name=".activities.TrackScheduleEventActivity" />
 		<activity android:name=".activities.EventDetailsActivity">

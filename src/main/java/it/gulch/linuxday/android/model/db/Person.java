@@ -118,6 +118,9 @@ public class Person implements Serializable
 	@Override
 	public String toString()
 	{
+		if(middleName == null) {
+			return MessageFormat.format("{0} {1}", surname, name);
+		}
 		return MessageFormat.format("{0} {1} {2}", surname, middleName, name);
 	}
 }

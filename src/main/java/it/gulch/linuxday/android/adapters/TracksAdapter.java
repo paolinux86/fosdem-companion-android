@@ -50,7 +50,11 @@ public class TracksAdapter extends BaseAdapter
 	@Override
 	public long getItemId(int i)
 	{
-		return i;
+		if(tracks == null || tracks.size() < 1 || i > tracks.size()) {
+			return 0;
+		}
+
+		return tracks.get(i).getId();
 	}
 
 	@Override

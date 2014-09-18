@@ -16,7 +16,6 @@
 package it.gulch.linuxday.android.fragments;
 
 import android.app.Activity;
-import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -29,19 +28,18 @@ import android.widget.ListView;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.adapters.TrackScheduleAdapter;
 import it.gulch.linuxday.android.db.manager.EventManager;
 import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
-import it.gulch.linuxday.android.loaders.SimpleDatabaseLoader;
+import it.gulch.linuxday.android.loaders.TrackScheduleLoader;
 import it.gulch.linuxday.android.model.db.Day;
 import it.gulch.linuxday.android.model.db.Event;
 import it.gulch.linuxday.android.model.db.Track;
 
-public class TrackScheduleListFragment extends ListFragment implements Handler.Callback, LoaderCallbacks<List<Event>>
+public class TrackScheduleListFragment extends ListFragment implements Handler.Callback
 {
 	private static final String TAG = TrackScheduleListFragment.class.getSimpleName();
 
@@ -72,6 +70,8 @@ public class TrackScheduleListFragment extends ListFragment implements Handler.C
 	private boolean isListAlreadyShown = false;
 
 	private List<Event> events;
+
+	private LoaderCallbacks<List<Event>> loaderCallbacks;
 
 	public static TrackScheduleListFragment newInstance(Day day, Track track)
 	{
@@ -169,7 +169,72 @@ public class TrackScheduleListFragment extends ListFragment implements Handler.C
 		setEmptyText(getString(R.string.no_data));
 		setListShown(false);
 
-		getLoaderManager().initLoader(EVENTS_LOADER_ID, null, this);
+		setupLoaderCallbacks();
+	}
+
+	private void setupLoaderCallbacks()
+	{
+		loaderCallbacks = new LoaderCallbacks<List<Event>>()
+		{
+
+			@Override
+			public Loader<List<Event>> onCreateLoader(int i, Bundle bundle)
+			{
+				Track track = (Track) getArguments().getSerializable(ARG_TRACK);
+				return new TrackScheduleLoader(getActivity(), eventManager, track);
+			}
+
+			@Override
+			public void onLoadFinished(Loader<List<Event>> listLoader, List<Event> data)
+			{
+				if(data != null) {
+					events.clear();
+					events.addAll(data);
+					adapter.notifyDataSetChanged();
+					adapter.getCount();
+
+					if(selectionEnabled) {
+						final int count = adapter.getCount();
+						int checkedPosition = getListView().getCheckedItemPosition();
+						if((checkedPosition == ListView.INVALID_POSITION) || (checkedPosition >= count)) {
+							// There is no current valid selection, use the default one
+							checkedPosition = getDefaultPosition();
+							if(checkedPosition != ListView.INVALID_POSITION) {
+								getListView().setItemChecked(checkedPosition, true);
+							}
+						}
+
+						// Ensure the current selection is visible
+						if(checkedPosition != ListView.INVALID_POSITION) {
+							setSelection(checkedPosition);
+						}
+						// Notify the parent of the current selection to synchronize its state
+						notifyEventSelected(checkedPosition);
+					} else if(!isListAlreadyShown) {
+						int position = getDefaultPosition();
+						if(position != ListView.INVALID_POSITION) {
+							setSelection(position);
+						}
+					}
+				}
+
+				// The list should now be shown.
+				if(isResumed()) {
+					setListShown(true);
+				} else {
+					setListShownNoAnimation(true);
+				}
+			}
+
+			@Override
+			public void onLoaderReset(Loader<List<Event>> listLoader)
+			{
+				events.clear();
+				adapter.notifyDataSetChanged();
+			}
+		};
+
+		getLoaderManager().initLoader(EVENTS_LOADER_ID, null, loaderCallbacks);
 	}
 
 	@Override
@@ -212,54 +277,6 @@ public class TrackScheduleListFragment extends ListFragment implements Handler.C
 		return false;
 	}
 
-	@Override
-	public Loader<List<Event>> onCreateLoader(int id, Bundle args)
-	{
-		Track track = (Track) getArguments().getSerializable(ARG_TRACK);
-		return new TrackScheduleLoader(getActivity(), track);
-	}
-
-	@Override
-	public void onLoadFinished(Loader<List<Event>> loader, List<Event> data)
-	{
-		if(data != null) {
-			events.clear();
-			events.addAll(data);
-			adapter.notifyDataSetChanged();
-
-			if(selectionEnabled) {
-				final int count = adapter.getCount();
-				int checkedPosition = getListView().getCheckedItemPosition();
-				if((checkedPosition == ListView.INVALID_POSITION) || (checkedPosition >= count)) {
-					// There is no current valid selection, use the default one
-					checkedPosition = getDefaultPosition();
-					if(checkedPosition != ListView.INVALID_POSITION) {
-						getListView().setItemChecked(checkedPosition, true);
-					}
-				}
-
-				// Ensure the current selection is visible
-				if(checkedPosition != ListView.INVALID_POSITION) {
-					setSelection(checkedPosition);
-				}
-				// Notify the parent of the current selection to synchronize its state
-				notifyEventSelected(checkedPosition);
-			} else if(!isListAlreadyShown) {
-				int position = getDefaultPosition();
-				if(position != ListView.INVALID_POSITION) {
-					setSelection(position);
-				}
-			}
-		}
-
-		// The list should now be shown.
-		if(isResumed()) {
-			setListShown(true);
-		} else {
-			setListShownNoAnimation(true);
-		}
-	}
-
 	/**
 	 * @return The default position in the list, or -1 if the list is empty
 	 */
@@ -283,39 +300,10 @@ public class TrackScheduleListFragment extends ListFragment implements Handler.C
 		return 0;
 	}
 
-
-	@Override
-	public void onLoaderReset(Loader<List<Event>> loader)
-	{
-		events.clear();
-		adapter.notifyDataSetChanged();
-	}
-
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id)
 	{
 		notifyEventSelected(position);
-	}
-
-	private class TrackScheduleLoader extends SimpleDatabaseLoader<List<Event>>
-	{
-		private final Track track;
-
-		public TrackScheduleLoader(Context context, Track track)
-		{
-			super(context);
-			this.track = track;
-		}
-
-		@Override
-		protected List<Event> getObject()
-		{
-			try {
-				return eventManager.searchEventsByTrack(track);
-			} catch(SQLException e) {
-				return Collections.emptyList();
-			}
-		}
 	}
 
 	/**

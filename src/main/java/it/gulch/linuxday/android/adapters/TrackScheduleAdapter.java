@@ -78,7 +78,7 @@ public class TrackScheduleAdapter extends BaseAdapter
 			return 0;
 		}
 
-		return 0;
+		return events.size();
 	}
 
 	@Override
@@ -94,7 +94,11 @@ public class TrackScheduleAdapter extends BaseAdapter
 	@Override
 	public long getItemId(int i)
 	{
-		return i;
+		if(events == null || events.size() < 1 || i > events.size()) {
+			return 0;
+		}
+
+		return events.get(i).getId();
 	}
 
 	@Override

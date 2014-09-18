@@ -16,7 +16,6 @@
 package it.gulch.linuxday.android.fragments;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
@@ -32,7 +31,6 @@ import android.widget.TextView;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import it.gulch.linuxday.android.R;
@@ -40,11 +38,11 @@ import it.gulch.linuxday.android.activities.EventDetailsActivity;
 import it.gulch.linuxday.android.adapters.EventsAdapter;
 import it.gulch.linuxday.android.db.manager.EventManager;
 import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
-import it.gulch.linuxday.android.loaders.SimpleDatabaseLoader;
+import it.gulch.linuxday.android.loaders.PersonEventsLoader;
 import it.gulch.linuxday.android.model.db.Event;
 import it.gulch.linuxday.android.model.db.Person;
 
-public class PersonInfoListFragment extends ListFragment implements LoaderCallbacks<List<Event>>
+public class PersonInfoListFragment extends ListFragment
 {
 	private static final int PERSON_EVENTS_LOADER_ID = 1;
 
@@ -59,6 +57,8 @@ public class PersonInfoListFragment extends ListFragment implements LoaderCallba
 	private List<Event> events;
 
 	private EventManager eventManager;
+
+	LoaderCallbacks<List<Event>> loaderCallbacks;
 
 	public static PersonInfoListFragment newInstance(Person person)
 	{
@@ -88,17 +88,17 @@ public class PersonInfoListFragment extends ListFragment implements LoaderCallba
 	}
 
 	// FIXME
-//	@Override
-//	public boolean onOptionsItemSelected(MenuItem item)
-//	{
-//		switch(item.getItemId()) {
-//			case R.id.more_info:
-//				Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(person.getUrl()));
-//				startActivity(intent);
-//				return true;
-//		}
-//		return false;
-//	}
+	//	@Override
+	//	public boolean onOptionsItemSelected(MenuItem item)
+	//	{
+	//		switch(item.getItemId()) {
+	//			case R.id.more_info:
+	//				Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(person.getUrl()));
+	//				startActivity(intent);
+	//				return true;
+	//		}
+	//		return false;
+	//	}
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState)
@@ -120,7 +120,44 @@ public class PersonInfoListFragment extends ListFragment implements LoaderCallba
 		setListAdapter(adapter);
 		setListShown(false);
 
-		getLoaderManager().initLoader(PERSON_EVENTS_LOADER_ID, null, this);
+		setupLoaderCallbacks();
+	}
+
+	private void setupLoaderCallbacks()
+	{
+		loaderCallbacks = new LoaderCallbacks<List<Event>>()
+		{
+			@Override
+			public Loader<List<Event>> onCreateLoader(int i, Bundle bundle)
+			{
+				return new PersonEventsLoader(getActivity(), eventManager, person);
+			}
+
+			@Override
+			public void onLoadFinished(Loader<List<Event>> listLoader, List<Event> data)
+			{
+				if(data != null) {
+					events.clear();
+					events.addAll(data);
+					adapter.notifyDataSetChanged();
+				}
+
+				// The list should now be shown.
+				if(isResumed()) {
+					setListShown(true);
+				} else {
+					setListShownNoAnimation(true);
+				}
+			}
+
+			@Override
+			public void onLoaderReset(Loader<List<Event>> listLoader)
+			{
+				events.clear();
+				adapter.notifyDataSetChanged();
+			}
+		};
+		getLoaderManager().initLoader(PERSON_EVENTS_LOADER_ID, null, loaderCallbacks);
 	}
 
 	@Override
@@ -139,63 +176,13 @@ public class PersonInfoListFragment extends ListFragment implements LoaderCallba
 		}
 	}
 
-	private class PersonEventsLoader extends SimpleDatabaseLoader<List<Event>>
-	{
-		private final Person person;
-
-		public PersonEventsLoader(Context context, Person person)
-		{
-			super(context);
-			this.person = person;
-		}
-
-		@Override
-		protected List<Event> getObject()
-		{
-			try {
-				return eventManager.searchEventsByPerson(person);
-			} catch(SQLException e) {
-				return Collections.emptyList();
-			}
-		}
-	}
-
-	@Override
-	public Loader<List<Event>> onCreateLoader(int id, Bundle args)
-	{
-		return new PersonEventsLoader(getActivity(), person);
-	}
-
-	@Override
-	public void onLoadFinished(Loader<List<Event>> loader, List<Event> data)
-	{
-		if(data != null) {
-			events.clear();
-			events.addAll(data);
-			adapter.notifyDataSetChanged();
-		}
-
-		// The list should now be shown.
-		if(isResumed()) {
-			setListShown(true);
-		} else {
-			setListShownNoAnimation(true);
-		}
-	}
-
-	@Override
-	public void onLoaderReset(Loader<List<Event>> loader)
-	{
-		events.clear();
-		adapter.notifyDataSetChanged();
-	}
-
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id)
 	{
 		Event event = adapter.getItem(position - 1);
 		Intent intent =
-			new Intent(getActivity(), EventDetailsActivity.class).putExtra(EventDetailsActivity.EXTRA_EVENT, event);
+				new Intent(getActivity(), EventDetailsActivity.class).putExtra(EventDetailsActivity.EXTRA_EVENT,
+																			   event);
 		startActivity(intent);
 	}
 }

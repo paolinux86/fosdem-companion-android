@@ -40,7 +40,7 @@ public class Event implements Serializable
 	@DatabaseField(canBeNull = false, foreign = true)
 	private EventType eventType;
 
-	@DatabaseField(canBeNull = false, foreign = true, index = true)
+	@DatabaseField(canBeNull = false, foreign = true, index = true, foreignAutoRefresh = true)
 	private Track track;
 
 	private Boolean bookmarked;

@@ -56,7 +56,11 @@ public class PeopleAdapter extends BaseAdapter// implements SectionIndexer
 	@Override
 	public long getItemId(int i)
 	{
-		return i;
+		if(people == null || people.size() < 1 || i > people.size()) {
+			return 0;
+		}
+
+		return people.get(i).getId();
 	}
 
 	@Override

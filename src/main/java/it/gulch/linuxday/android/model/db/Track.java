@@ -96,4 +96,10 @@ public class Track implements Serializable
 	{
 		this.day = day;
 	}
+
+	@Override
+	public String toString()
+	{
+		return title;
+	}
 }

@@ -23,6 +23,7 @@ import it.gulch.linuxday.android.model.db.Event;
 import it.gulch.linuxday.android.model.db.Link;
 import it.gulch.linuxday.android.model.db.Person;
 import it.gulch.linuxday.android.model.db.PersonPresentsEvent;
+import it.gulch.linuxday.android.model.db.Room;
 import it.gulch.linuxday.android.model.db.Track;
 
 /**
@@ -32,13 +33,15 @@ public class EventManagerImpl implements EventManager
 {
 	private static final String TAG = EventManagerImpl.class.getSimpleName();
 
-	private Dao<Event, Long> dao;
+	private Dao<Event, Long> eventDao;
 
 	private Dao<PersonPresentsEvent, Long> personPresentsEventDao;
 
 	private Dao<Bookmark, Long> bookmarkDao;
 
 	private Dao<Link, Long> linkDao;
+
+	private Dao<Track, Long> trackDao;
 
 	private EventManagerImpl()
 	{
@@ -47,10 +50,11 @@ public class EventManagerImpl implements EventManager
 	public static EventManager newInstance(OrmLiteDatabaseHelper helper) throws SQLException
 	{
 		EventManagerImpl eventManager = new EventManagerImpl();
-		eventManager.dao = helper.getDao(Event.class);
+		eventManager.eventDao = helper.getDao(Event.class);
 		eventManager.personPresentsEventDao = helper.getDao(PersonPresentsEvent.class);
 		eventManager.bookmarkDao = helper.getDao(Bookmark.class);
 		eventManager.linkDao = helper.getDao(Link.class);
+		eventManager.trackDao = helper.getDao(Track.class);
 
 		return eventManager;
 	}
@@ -59,7 +63,7 @@ public class EventManagerImpl implements EventManager
 	public Event get(Long id)
 	{
 		try {
-			Event event = dao.queryForId(id);
+			Event event = eventDao.queryForId(id);
 			addPeople(event);
 			addLinks(event);
 			checkBookmark(event);
@@ -99,6 +103,7 @@ public class EventManagerImpl implements EventManager
 	private void checkBookmark(Event event) throws SQLException
 	{
 		QueryBuilder<Bookmark, Long> queryBuilder = bookmarkDao.queryBuilder();
+		queryBuilder.setCountOf(true);
 		PreparedQuery<Bookmark> preparedQuery = queryBuilder.where().eq("event_id", event.getId()).prepare();
 
 		Boolean hasBookmark = bookmarkDao.countOf(preparedQuery) > 0;
@@ -109,9 +114,10 @@ public class EventManagerImpl implements EventManager
 	public List<Event> getAll()
 	{
 		try {
-			List<Event> events = dao.queryForAll();
+			List<Event> events = eventDao.queryForAll();
 			for(Event event : events) {
 				addPeople(event);
+				addLinks(event);
 				checkBookmark(event);
 			}
 
@@ -125,7 +131,7 @@ public class EventManagerImpl implements EventManager
 	@Override
 	public void save(Event object) throws SQLException
 	{
-		dao.create(object);
+		eventDao.create(object);
 
 		insertPeopleInEvent(object);
 	}
@@ -148,7 +154,7 @@ public class EventManagerImpl implements EventManager
 	@Override
 	public void saveOrUpdate(Event object) throws SQLException
 	{
-		Dao.CreateOrUpdateStatus status = dao.createOrUpdate(object);
+		Dao.CreateOrUpdateStatus status = eventDao.createOrUpdate(object);
 
 		if(status.isUpdated()) {
 			removePeopleInEvent(object);
@@ -168,7 +174,7 @@ public class EventManagerImpl implements EventManager
 	@Override
 	public void update(Event object) throws SQLException
 	{
-		dao.update(object);
+		eventDao.update(object);
 		removePeopleInEvent(object);
 		insertPeopleInEvent(object);
 	}
@@ -177,7 +183,7 @@ public class EventManagerImpl implements EventManager
 	public void delete(Event object) throws SQLException
 	{
 		removePeopleInEvent(object);
-		dao.delete(object);
+		eventDao.delete(object);
 	}
 
 	@Override
@@ -186,31 +192,31 @@ public class EventManagerImpl implements EventManager
 		PreparedDelete<PersonPresentsEvent> preparedDelete = personPresentsEventDao.deleteBuilder().prepare();
 		personPresentsEventDao.delete(preparedDelete);
 
-		PreparedDelete<Event> eventPreparedDelete = dao.deleteBuilder().prepare();
-		dao.delete(eventPreparedDelete);
+		PreparedDelete<Event> eventPreparedDelete = eventDao.deleteBuilder().prepare();
+		eventDao.delete(eventPreparedDelete);
 	}
 
 	@Override
 	public boolean exists(Long objectId) throws SQLException
 	{
-		return dao.idExists(objectId);
+		return eventDao.idExists(objectId);
 	}
 
 	@Override
 	public long countEvents() throws SQLException
 	{
-		QueryBuilder<Event, Long> queryBuilder = dao.queryBuilder();
+		QueryBuilder<Event, Long> queryBuilder = eventDao.queryBuilder();
 		queryBuilder.setCountOf(true);
 		PreparedQuery<Event> preparedQuery = queryBuilder.prepare();
 
-		return dao.countOf(preparedQuery);
+		return eventDao.countOf(preparedQuery);
 	}
 
 	@Override
 	public List<Event> search(Date minStartTime, Date maxStartTime, Date minEndTime, DatabaseOrder databaseOrder)
 			throws SQLException
 	{
-		QueryBuilder<Event, Long> queryBuilder = dao.queryBuilder();
+		QueryBuilder<Event, Long> queryBuilder = eventDao.queryBuilder();
 		Where<Event, Long> where = queryBuilder.where();
 
 		int conditions = 0;
@@ -233,7 +239,14 @@ public class EventManagerImpl implements EventManager
 
 		queryBuilder.orderBy("start_date", databaseOrder == DatabaseOrder.ASCENDING);
 
-		return dao.query(queryBuilder.prepare());
+		List<Event> events = eventDao.query(queryBuilder.prepare());
+		for(Event event : events) {
+			addPeople(event);
+			addLinks(event);
+			checkBookmark(event);
+		}
+
+		return events;
 	}
 
 	@Override
@@ -243,41 +256,67 @@ public class EventManagerImpl implements EventManager
 			return Collections.emptyList();
 		}
 
-		QueryBuilder<Event, Long> queryBuilder = dao.queryBuilder();
+		QueryBuilder<Event, Long> queryBuilder = eventDao.queryBuilder();
 		queryBuilder.where().eq("track_id", track.getId());
 
-		return dao.query(queryBuilder.prepare());
+		List<Event> events = eventDao.query(queryBuilder.prepare());
+		for(Event event : events) {
+			addPeople(event);
+			addLinks(event);
+			checkBookmark(event);
+		}
+
+		return events;
 	}
 
 	// TODO: verificare che funzioni xD
 	@Override
 	public List<Event> getBookmarkedEvents(Date minStartTime) throws SQLException
 	{
-		QueryBuilder<Event, Long> queryBuilder = dao.queryBuilder();
+		QueryBuilder<Event, Long> queryBuilder = eventDao.queryBuilder();
 		queryBuilder.join(bookmarkDao.queryBuilder());
 		if(minStartTime != null) {
 			queryBuilder.where().gt("start_date", minStartTime);
 		}
 
-		return dao.query(queryBuilder.prepare());
+		List<Event> events = eventDao.query(queryBuilder.prepare());
+		for(Event event : events) {
+			addPeople(event);
+			addLinks(event);
+			checkBookmark(event);
+		}
+
+		return events;
 	}
 
 	// TODO: verificare che funzioni xD
 	@Override
 	public List<Event> searchEventsByPerson(Person person) throws SQLException
 	{
-		QueryBuilder<Event, Long> queryBuilder = dao.queryBuilder();
+		QueryBuilder<Event, Long> queryBuilder = eventDao.queryBuilder();
 		QueryBuilder<PersonPresentsEvent, Long> qb = personPresentsEventDao.queryBuilder();
 		qb.where().eq("person_id", person.getId());
 		queryBuilder.join(qb);
 
-		return dao.query(queryBuilder.prepare());
+		List<Event> events = eventDao.query(queryBuilder.prepare());
+		for(Event event : events) {
+			addPeople(event);
+			addLinks(event);
+			checkBookmark(event);
+		}
+
+		return events;
 	}
 
 	@Override
 	public List<Event> search(String query)
 	{
 		// TODO implementare
+//		for(Event event : events) {
+//			addPeople(event);
+//			addLinks(event);
+//			checkBookmark(event);
+//		}
 		return Collections.emptyList();
 	}
 }

@@ -15,7 +15,7 @@ public class PersonPresentsEvent implements Serializable
 	@DatabaseField(generatedId = true)
 	private Long id;
 
-	@DatabaseField(uniqueIndexName = "unique_person_event_ids", foreign = true, canBeNull = false)
+	@DatabaseField(uniqueIndexName = "unique_person_event_ids", foreign = true, canBeNull = false, foreignAutoRefresh = true)
 	private Person person;
 
 	@DatabaseField(uniqueIndexName = "unique_person_event_ids", foreign = true, canBeNull = false)

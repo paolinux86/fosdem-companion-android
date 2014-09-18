@@ -77,6 +77,10 @@ public class EventsAdapter extends BaseAdapter
 	@Override
 	public long getItemId(int i)
 	{
+		if(events == null || events.size() < 1 || i > events.size()) {
+			return 0;
+		}
+
 		return events.get(i).getId();
 	}
 

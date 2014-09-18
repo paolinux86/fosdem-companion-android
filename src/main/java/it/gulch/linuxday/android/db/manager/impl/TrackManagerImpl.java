@@ -100,6 +100,7 @@ public class TrackManagerImpl implements TrackManager
 	{
 		QueryBuilder<Track, Long> queryBuilder = dao.queryBuilder();
 		queryBuilder.where().eq("day_id", day.getId());
+		queryBuilder.orderBy("id", false);
 
 		return dao.query(queryBuilder.prepare());
 	}

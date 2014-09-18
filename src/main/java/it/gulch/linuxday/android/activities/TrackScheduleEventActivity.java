@@ -15,7 +15,6 @@
  */
 package it.gulch.linuxday.android.activities;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -35,15 +34,13 @@ import org.apache.commons.collections4.CollectionUtils;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.db.manager.EventManager;
 import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
-import it.gulch.linuxday.android.db.manager.impl.EventManagerImpl;
 import it.gulch.linuxday.android.fragments.EventDetailsFragment;
-import it.gulch.linuxday.android.loaders.SimpleDatabaseLoader;
+import it.gulch.linuxday.android.loaders.TrackScheduleLoader;
 import it.gulch.linuxday.android.model.db.Event;
 import it.gulch.linuxday.android.model.db.Track;
 import it.gulch.linuxday.android.utils.NfcUtils;
@@ -53,8 +50,7 @@ import it.gulch.linuxday.android.utils.NfcUtils;
  *
  * @author Christophe Beyls
  */
-public class TrackScheduleEventActivity extends ActionBarActivity
-	implements LoaderCallbacks<List<Event>>, NfcUtils.CreateNfcAppDataCallback
+public class TrackScheduleEventActivity extends ActionBarActivity implements NfcUtils.CreateNfcAppDataCallback
 {
 	public static final String EXTRA_DAY = "day";
 
@@ -81,6 +77,8 @@ public class TrackScheduleEventActivity extends ActionBarActivity
 	private List<Event> events;
 
 	private EventManager eventManager;
+
+	LoaderCallbacks<List<Event>> loaderCallbacks;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -115,7 +113,55 @@ public class TrackScheduleEventActivity extends ActionBarActivity
 		NfcUtils.setAppDataPushMessageCallbackIfAvailable(this, this);
 
 		setCustomProgressVisibility(true);
-		getSupportLoaderManager().initLoader(EVENTS_LOADER_ID, null, this);
+
+		setupLoaderCallbacks();
+	}
+
+	private void setupLoaderCallbacks()
+	{
+		loaderCallbacks = new LoaderCallbacks<List<Event>>()
+		{
+			@Override
+			public Loader<List<Event>> onCreateLoader(int i, Bundle bundle)
+			{
+				return new TrackScheduleLoader(TrackScheduleEventActivity.this, eventManager, track);
+			}
+
+			@Override
+			public void onLoadFinished(Loader<List<Event>> listLoader, List<Event> data)
+			{
+				setCustomProgressVisibility(false);
+
+				if(data == null) {
+					return;
+				}
+
+				events.clear();
+				events.addAll(data);
+				adapter.notifyDataSetChanged();
+
+				// Delay setting the adapter when the instance state is restored
+				// to ensure the current position is restored properly
+				if(pager.getAdapter() == null) {
+					pager.setAdapter(adapter);
+					pageIndicator.setViewPager(pager);
+				}
+
+				if(initialPosition != -1) {
+					pager.setCurrentItem(initialPosition, false);
+					initialPosition = -1;
+				}
+			}
+
+			@Override
+			public void onLoaderReset(Loader<List<Event>> listLoader)
+			{
+				events.clear();
+				adapter.notifyDataSetChanged();
+			}
+		};
+
+		getSupportLoaderManager().initLoader(EVENTS_LOADER_ID, null, loaderCallbacks);
 	}
 
 	private void setupServices()
@@ -158,43 +204,6 @@ public class TrackScheduleEventActivity extends ActionBarActivity
 		return false;
 	}
 
-	@Override
-	public Loader<List<Event>> onCreateLoader(int id, Bundle args)
-	{
-		return new TrackScheduleLoader(this, track);
-	}
-
-	@Override
-	public void onLoadFinished(Loader<List<Event>> loader, List<Event> data)
-	{
-		setCustomProgressVisibility(false);
-
-		if(data != null) {
-			events.clear();
-			events.addAll(data);
-			adapter.notifyDataSetChanged();
-
-			// Delay setting the adapter when the instance state is restored
-			// to ensure the current position is restored properly
-			if(pager.getAdapter() == null) {
-				pager.setAdapter(adapter);
-				pageIndicator.setViewPager(pager);
-			}
-
-			if(initialPosition != -1) {
-				pager.setCurrentItem(initialPosition, false);
-				initialPosition = -1;
-			}
-		}
-	}
-
-	@Override
-	public void onLoaderReset(Loader<List<Event>> loader)
-	{
-		events.clear();
-		adapter.notifyDataSetChanged();
-	}
-
 	public class TrackScheduleEventAdapter extends FragmentStatePagerAdapter
 	{
 		public TrackScheduleEventAdapter(FragmentManager fm)
@@ -225,27 +234,6 @@ public class TrackScheduleEventActivity extends ActionBarActivity
 		public long getItemId(int id)
 		{
 			return id;
-		}
-	}
-
-	private class TrackScheduleLoader extends SimpleDatabaseLoader<List<Event>>
-	{
-		private final Track track;
-
-		public TrackScheduleLoader(Context context, Track track)
-		{
-			super(context);
-			this.track = track;
-		}
-
-		@Override
-		protected List<Event> getObject()
-		{
-			try {
-				return eventManager.searchEventsByTrack(track);
-			} catch(SQLException e) {
-				return Collections.emptyList();
-			}
 		}
 	}
 }

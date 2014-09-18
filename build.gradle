@@ -14,6 +14,7 @@ apply plugin: "com.android.application"
 //apply plugin: "android-apt"
 
 repositories {
+	maven { url "http://dl.bintray.com/populov/maven" }
 	mavenLocal()
 	mavenCentral()
 }
@@ -32,6 +33,8 @@ dependencies {
 	compile "com.fasterxml.jackson.core:jackson-annotations:2.4.2"
 
 	compile "com.j256.ormlite:ormlite-android:4.48"
+
+	compile 'com.viewpagerindicator:library:2.4.1@aar'
 
 	//apt "org.androidannotations:androidannotations:$AAVersion"
 	//compile "org.androidannotations:androidannotations-api:$AAVersion"
