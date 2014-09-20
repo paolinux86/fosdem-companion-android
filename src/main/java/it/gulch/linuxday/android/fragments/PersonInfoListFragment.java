@@ -114,7 +114,7 @@ public class PersonInfoListFragment extends ListFragment
 		listView.setScrollBarStyle(ListView.SCROLLBARS_OUTSIDE_OVERLAY);
 
 		View headerView = LayoutInflater.from(getActivity()).inflate(R.layout.header_person_info, null);
-		((TextView) headerView.findViewById(R.id.title)).setText(person.getName());
+		((TextView) headerView.findViewById(R.id.title)).setText(person.getCompleteName(Person.CompleteNameEnum.NAME_FIRST));
 		listView.addHeaderView(headerView, null, false);
 
 		setListAdapter(adapter);

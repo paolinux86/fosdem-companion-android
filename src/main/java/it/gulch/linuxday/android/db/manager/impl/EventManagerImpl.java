@@ -221,15 +221,21 @@ public class EventManagerImpl implements EventManager
 
 		int conditions = 0;
 		if(minStartTime != null) {
-			where.gt("start_date", minStartTime);
+			where.gt("startdate", minStartTime);
 			conditions++;
 		}
 		if(maxStartTime != null) {
-			where.lt("start_date", maxStartTime);
+			if(conditions > 0) {
+				where.and();
+			}
+			where.lt("startdate", maxStartTime);
 			conditions++;
 		}
 		if(minEndTime != null) {
-			where.gt("end_date", minEndTime);
+			if(conditions > 0) {
+				where.and();
+			}
+			where.gt("enddate", minEndTime);
 			conditions++;
 		}
 
@@ -237,7 +243,7 @@ public class EventManagerImpl implements EventManager
 			throw new IllegalArgumentException("At least one filter must be provided");
 		}
 
-		queryBuilder.orderBy("start_date", databaseOrder == DatabaseOrder.ASCENDING);
+		queryBuilder.orderBy("startdate", databaseOrder == DatabaseOrder.ASCENDING);
 
 		List<Event> events = eventDao.query(queryBuilder.prepare());
 		for(Event event : events) {
@@ -276,7 +282,7 @@ public class EventManagerImpl implements EventManager
 		QueryBuilder<Event, Long> queryBuilder = eventDao.queryBuilder();
 		queryBuilder.join(bookmarkDao.queryBuilder());
 		if(minStartTime != null) {
-			queryBuilder.where().gt("start_date", minStartTime);
+			queryBuilder.where().gt("startdate", minStartTime.getTime());
 		}
 
 		List<Event> events = eventDao.query(queryBuilder.prepare());

@@ -119,8 +119,29 @@ public class Person implements Serializable
 	public String toString()
 	{
 		if(middleName == null) {
-			return MessageFormat.format("{0} {1}", surname, name);
+			return MessageFormat.format("{0} {1}", name, surname);
 		}
-		return MessageFormat.format("{0} {1} {2}", surname, middleName, name);
+		return MessageFormat.format("{0} {1} {2}", name, middleName, surname);
+	}
+
+	public String getCompleteName(CompleteNameEnum completeNameEnum)
+	{
+		String format = "{0} {2} {1}";
+
+		if(middleName == null) {
+			format = "{0} {1}";
+		}
+
+		if(completeNameEnum == CompleteNameEnum.NAME_FIRST) {
+			return MessageFormat.format(format, name, surname, middleName);
+		} else {
+			return MessageFormat.format(format, surname, name, middleName);
+		}
+	}
+
+	public enum CompleteNameEnum
+	{
+		NAME_FIRST,
+		SURNAME_FIRST
 	}
 }

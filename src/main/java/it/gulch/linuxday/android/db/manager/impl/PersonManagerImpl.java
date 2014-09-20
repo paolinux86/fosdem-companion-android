@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.PreparedDelete;
+import com.j256.ormlite.stmt.PreparedQuery;
 
 import java.sql.SQLException;
 import java.util.Collections;
@@ -49,7 +50,10 @@ public class PersonManagerImpl implements PersonManager
 	public List<Person> getAll()
 	{
 		try {
-			return dao.queryForAll();
+			PreparedQuery<Person> preparedQuery =
+					dao.queryBuilder().orderBy("surname", true).orderBy("name", true).prepare();
+
+			return dao.query(preparedQuery);
 		} catch(SQLException e) {
 			Log.e(TAG, e.getMessage(), e);
 			return Collections.emptyList();

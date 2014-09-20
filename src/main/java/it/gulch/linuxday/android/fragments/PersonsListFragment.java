@@ -16,7 +16,6 @@
 package it.gulch.linuxday.android.fragments;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
@@ -35,10 +34,10 @@ import it.gulch.linuxday.android.activities.PersonInfoActivity;
 import it.gulch.linuxday.android.adapters.PeopleAdapter;
 import it.gulch.linuxday.android.db.manager.PersonManager;
 import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
-import it.gulch.linuxday.android.loaders.SimpleDatabaseLoader;
+import it.gulch.linuxday.android.loaders.PeopleLoader;
 import it.gulch.linuxday.android.model.db.Person;
 
-public class PersonsListFragment extends ListFragment implements LoaderCallbacks<List<Person>>
+public class PersonsListFragment extends ListFragment
 {
 	private static final int PERSONS_LOADER_ID = 1;
 
@@ -49,6 +48,8 @@ public class PersonsListFragment extends ListFragment implements LoaderCallbacks
 	private List<Person> people;
 
 	private PersonManager personManager;
+
+	private LoaderCallbacks<List<Person>> loaderCallbacks;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -70,7 +71,44 @@ public class PersonsListFragment extends ListFragment implements LoaderCallbacks
 		setEmptyText(getString(R.string.no_data));
 		setListShown(false);
 
-		getLoaderManager().initLoader(PERSONS_LOADER_ID, null, this);
+		setupLoaderCallbacks();
+	}
+
+	private void setupLoaderCallbacks()
+	{
+		loaderCallbacks = new LoaderCallbacks<List<Person>>()
+		{
+			@Override
+			public Loader<List<Person>> onCreateLoader(int i, Bundle bundle)
+			{
+				return new PeopleLoader(getActivity(), personManager);
+			}
+
+			@Override
+			public void onLoadFinished(Loader<List<Person>> listLoader, List<Person> data)
+			{
+				if(data != null) {
+					people.clear();
+					people.addAll(data);
+					adapter.notifyDataSetChanged();
+				}
+
+				// The list should now be shown.
+				if(isResumed()) {
+					setListShown(true);
+				} else {
+					setListShownNoAnimation(true);
+				}
+			}
+
+			@Override
+			public void onLoaderReset(Loader<List<Person>> listLoader)
+			{
+				people.clear();
+				adapter.notifyDataSetChanged();
+			}
+		};
+		getLoaderManager().initLoader(PERSONS_LOADER_ID, null, loaderCallbacks);
 	}
 
 	@Override
@@ -87,50 +125,6 @@ public class PersonsListFragment extends ListFragment implements LoaderCallbacks
 		} catch(SQLException e) {
 			Log.e(TAG, e.getMessage(), e);
 		}
-	}
-
-	private class PersonsLoader extends SimpleDatabaseLoader<List<Person>>
-	{
-		public PersonsLoader(Context context)
-		{
-			super(context);
-		}
-
-		@Override
-		protected List<Person> getObject()
-		{
-			return personManager.getAll();
-		}
-	}
-
-	@Override
-	public Loader<List<Person>> onCreateLoader(int id, Bundle args)
-	{
-		return new PersonsLoader(getActivity());
-	}
-
-	@Override
-	public void onLoadFinished(Loader<List<Person>> loader, List<Person> data)
-	{
-		if(data != null) {
-			people.clear();
-			people.addAll(data);
-			adapter.notifyDataSetChanged();
-		}
-
-		// The list should now be shown.
-		if(isResumed()) {
-			setListShown(true);
-		} else {
-			setListShownNoAnimation(true);
-		}
-	}
-
-	@Override
-	public void onLoaderReset(Loader<List<Person>> loader)
-	{
-		people.clear();
-		adapter.notifyDataSetChanged();
 	}
 
 	@Override

@@ -409,7 +409,7 @@ public class EventDetailsFragment extends Fragment
 						if(length != 0) {
 							sb.append(", ");
 						}
-						String name = person.getName();
+						String name = person.getCompleteName(Person.CompleteNameEnum.NAME_FIRST);
 						sb.append(name);
 						length = sb.length();
 						sb.setSpan(new PersonClickableSpan(person), length - name.length(), length,

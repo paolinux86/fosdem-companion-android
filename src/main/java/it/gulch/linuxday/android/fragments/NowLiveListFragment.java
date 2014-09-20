@@ -16,22 +16,17 @@
 package it.gulch.linuxday.android.fragments;
 
 import android.app.Activity;
-import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
 import android.util.Log;
 
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
 
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.db.manager.EventManager;
 import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
-import it.gulch.linuxday.android.enums.DatabaseOrder;
-import it.gulch.linuxday.android.loaders.BaseLiveLoader;
+import it.gulch.linuxday.android.loaders.NowLiveLoader;
 import it.gulch.linuxday.android.model.db.Event;
 
 public class NowLiveListFragment extends BaseLiveListFragment
@@ -49,7 +44,7 @@ public class NowLiveListFragment extends BaseLiveListFragment
 	@Override
 	public Loader<List<Event>> onCreateLoader(int id, Bundle args)
 	{
-		return new NowLiveLoader(getActivity());
+		return new NowLiveLoader(getActivity(), eventManager);
 	}
 
 	@Override
@@ -65,26 +60,6 @@ public class NowLiveListFragment extends BaseLiveListFragment
 			eventManager = DatabaseManagerFactory.getEventManager(activity);
 		} catch(SQLException e) {
 			Log.e(TAG, e.getMessage(), e);
-		}
-	}
-
-	private class NowLiveLoader extends BaseLiveLoader
-	{
-		public NowLiveLoader(Context context)
-		{
-			super(context);
-		}
-
-		@Override
-		protected List<Event> getObject()
-		{
-			Date now = GregorianCalendar.getInstance().getTime();
-
-			try {
-				return eventManager.search(null, now, now, DatabaseOrder.DESCENDING);
-			} catch(SQLException e) {
-				return Collections.emptyList();
-			}
 		}
 	}
 }

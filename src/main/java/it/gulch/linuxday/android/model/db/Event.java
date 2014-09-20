@@ -1,5 +1,6 @@
 package it.gulch.linuxday.android.model.db;
 
+import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -19,10 +20,10 @@ public class Event implements Serializable
 	@DatabaseField(id = true)
 	private Long id;
 
-	@DatabaseField(canBeNull = false, index = true)
+	@DatabaseField(canBeNull = false, index = true, dataType = DataType.DATE_LONG)
 	private Date startDate;
 
-	@DatabaseField(canBeNull = false)
+	@DatabaseField(canBeNull = false, dataType = DataType.DATE_LONG)
 	private Date endDate;
 
 	@DatabaseField(canBeNull = false)

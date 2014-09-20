@@ -86,7 +86,7 @@ public class PeopleAdapter extends BaseAdapter// implements SectionIndexer
 	public void bindView(ViewHolder viewHolder, Person person)
 	{
 		viewHolder.person = person;
-		viewHolder.textView.setText(viewHolder.person.getName());
+		viewHolder.textView.setText(viewHolder.person.getCompleteName(Person.CompleteNameEnum.SURNAME_FIRST));
 	}
 
 //	@Override

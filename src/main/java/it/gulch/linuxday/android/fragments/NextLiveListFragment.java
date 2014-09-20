@@ -16,22 +16,17 @@
 package it.gulch.linuxday.android.fragments;
 
 import android.app.Activity;
-import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.content.Loader;
 import android.util.Log;
 
 import java.sql.SQLException;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.GregorianCalendar;
 import java.util.List;
 
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.db.manager.EventManager;
 import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
-import it.gulch.linuxday.android.enums.DatabaseOrder;
-import it.gulch.linuxday.android.loaders.BaseLiveLoader;
+import it.gulch.linuxday.android.loaders.NextLiveLoader;
 import it.gulch.linuxday.android.model.db.Event;
 
 public class NextLiveListFragment extends BaseLiveListFragment
@@ -49,7 +44,7 @@ public class NextLiveListFragment extends BaseLiveListFragment
 	@Override
 	public Loader<List<Event>> onCreateLoader(int id, Bundle args)
 	{
-		return new NextLiveLoader(getActivity());
+		return new NextLiveLoader(getActivity(), eventManager);
 	}
 
 	@Override
@@ -65,30 +60,6 @@ public class NextLiveListFragment extends BaseLiveListFragment
 			eventManager = DatabaseManagerFactory.getEventManager(activity);
 		} catch(SQLException e) {
 			Log.e(TAG, e.getMessage(), e);
-		}
-	}
-
-	private class NextLiveLoader extends BaseLiveLoader
-	{
-		private static final int INTERVAL_IN_MINUTES = 30;
-
-		public NextLiveLoader(Context context)
-		{
-			super(context);
-		}
-
-		@Override
-		protected List<Event> getObject()
-		{
-			Calendar minStart = GregorianCalendar.getInstance();
-			Calendar maxStart = (Calendar) minStart.clone();
-			maxStart.add(Calendar.MINUTE, INTERVAL_IN_MINUTES);
-
-			try {
-				return eventManager.search(minStart.getTime(), maxStart.getTime(), null, DatabaseOrder.ASCENDING);
-			} catch(SQLException e) {
-				return Collections.emptyList();
-			}
 		}
 	}
 }

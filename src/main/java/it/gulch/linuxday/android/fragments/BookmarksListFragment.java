@@ -20,7 +20,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.Loader;
@@ -31,14 +30,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 
-import org.apache.commons.collections4.CollectionUtils;
-
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
 
 import it.gulch.linuxday.android.R;
@@ -46,10 +39,8 @@ import it.gulch.linuxday.android.activities.EventDetailsActivity;
 import it.gulch.linuxday.android.adapters.EventsAdapter;
 import it.gulch.linuxday.android.db.manager.BookmarkManager;
 import it.gulch.linuxday.android.db.manager.EventManager;
-import it.gulch.linuxday.android.db.manager.impl.BookmarkManagerImpl;
 import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
-import it.gulch.linuxday.android.db.manager.impl.EventManagerImpl;
-import it.gulch.linuxday.android.loaders.SimpleDatabaseLoader;
+import it.gulch.linuxday.android.loaders.BookmarksLoader;
 import it.gulch.linuxday.android.model.db.Event;
 import it.gulch.linuxday.android.widgets.BookmarksMultiChoiceModeListener;
 
@@ -58,7 +49,7 @@ import it.gulch.linuxday.android.widgets.BookmarksMultiChoiceModeListener;
  *
  * @author Christophe Beyls
  */
-public class BookmarksListFragment extends ListFragment implements LoaderCallbacks<List<Event>>
+public class BookmarksListFragment extends ListFragment
 {
 	private static final int BOOKMARKS_LOADER_ID = 1;
 
@@ -79,6 +70,8 @@ public class BookmarksListFragment extends ListFragment implements LoaderCallbac
 	private EventManager eventManager;
 
 	private BookmarkManager bookmarkManager;
+
+	private LoaderCallbacks<List<Event>> loaderCallbacks;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -107,7 +100,44 @@ public class BookmarksListFragment extends ListFragment implements LoaderCallbac
 		setEmptyText(getString(R.string.no_bookmark));
 		setListShown(false);
 
-		getLoaderManager().initLoader(BOOKMARKS_LOADER_ID, null, this);
+		setupLoaderCallbacks();
+	}
+
+	private void setupLoaderCallbacks()
+	{
+		loaderCallbacks = new LoaderCallbacks<List<Event>>()
+		{
+			@Override
+			public Loader<List<Event>> onCreateLoader(int i, Bundle bundle)
+			{
+				return new BookmarksLoader(getActivity(), eventManager, upcomingOnly);
+			}
+
+			@Override
+			public void onLoadFinished(Loader<List<Event>> listLoader, List<Event> data)
+			{
+				if(data != null) {
+					events.clear();
+					events.addAll(data);
+					adapter.notifyDataSetChanged();
+				}
+
+				// The list should now be shown.
+				if(isResumed()) {
+					setListShown(true);
+				} else {
+					setListShownNoAnimation(true);
+				}
+			}
+
+			@Override
+			public void onLoaderReset(Loader<List<Event>> listLoader)
+			{
+				events.clear();
+				adapter.notifyDataSetChanged();
+			}
+		};
+		getLoaderManager().initLoader(BOOKMARKS_LOADER_ID, null, loaderCallbacks);
 	}
 
 	@Override
@@ -161,125 +191,10 @@ public class BookmarksListFragment extends ListFragment implements LoaderCallbac
 				updateOptionsMenu();
 				getActivity().getPreferences(Context.MODE_PRIVATE).edit().putBoolean(PREF_UPCOMING_ONLY, upcomingOnly)
 						.commit();
-				getLoaderManager().restartLoader(BOOKMARKS_LOADER_ID, null, this);
+				getLoaderManager().restartLoader(BOOKMARKS_LOADER_ID, null, loaderCallbacks);
 				return true;
 		}
 		return false;
-	}
-
-	private class BookmarksLoader extends SimpleDatabaseLoader<List<Event>>
-	{
-		// Events that just started are still shown for 5 minutes
-		private static final long TIME_OFFSET = 5L * 60L * 1000L;
-
-		private static final int TIME_OFFSET_IN_MINUTES = 5;
-
-		private final boolean upcomingOnly;
-
-		private final Handler handler;
-
-		private final Runnable timeoutRunnable = new Runnable()
-		{
-
-			@Override
-			public void run()
-			{
-				onContentChanged();
-			}
-		};
-
-		public BookmarksLoader(Context context, boolean upcomingOnly)
-		{
-			super(context);
-			this.upcomingOnly = upcomingOnly;
-			this.handler = new Handler();
-		}
-
-		@Override
-		public void deliverResult(List<Event> events)
-		{
-			if(upcomingOnly && !isReset()) {
-				preDeliverResult(events);
-			}
-
-			super.deliverResult(events);
-		}
-
-		private void preDeliverResult(List<Event> events)
-		{
-			handler.removeCallbacks(timeoutRunnable);
-			// The loader will be refreshed when the start time of the first bookmark in the list is reached
-			if(CollectionUtils.isEmpty(events)) {
-				return;
-			}
-
-			Event firstEvent = events.get(0);
-			long startTime = firstEvent.getStartDate().getTime();
-			if(startTime != -1L) {
-				long delay = startTime - (System.currentTimeMillis() - TIME_OFFSET);
-				if(delay > 0L) {
-					handler.postDelayed(timeoutRunnable, delay);
-				} else {
-					onContentChanged();
-				}
-			}
-		}
-
-		@Override
-		protected void onReset()
-		{
-			super.onReset();
-			if(upcomingOnly) {
-				handler.removeCallbacks(timeoutRunnable);
-			}
-		}
-
-		@Override
-		protected List<Event> getObject()
-		{
-			Date minStartDate = null;
-			if(upcomingOnly) {
-				Calendar calendar = GregorianCalendar.getInstance();
-				calendar.add(Calendar.MINUTE, -TIME_OFFSET_IN_MINUTES);
-				minStartDate = calendar.getTime();
-			}
-
-			try {
-				return eventManager.getBookmarkedEvents(minStartDate);
-			} catch(SQLException e) {
-				return Collections.emptyList();
-			}
-		}
-	}
-
-	@Override
-	public Loader<List<Event>> onCreateLoader(int id, Bundle args)
-	{
-		return new BookmarksLoader(getActivity(), upcomingOnly);
-	}
-
-	@Override
-	public void onLoadFinished(Loader<List<Event>> loader, List<Event> data)
-	{
-		if(data != null) {
-			events.clear();
-			events.addAll(data);
-			adapter.notifyDataSetChanged();
-		}
-
-		// The list should now be shown.
-		if(isResumed()) {
-			setListShown(true);
-		} else {
-			setListShownNoAnimation(true);
-		}
-	}
-
-	@Override
-	public void onLoaderReset(Loader<List<Event>> loader)
-	{
-		events.clear();
-		adapter.notifyDataSetChanged();
 	}
 
 	@Override
