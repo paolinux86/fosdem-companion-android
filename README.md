@@ -46,6 +46,11 @@ Il progetto è rilasciato sotto licenza [Apache License, Versione 2.0](http://ww
 * [ViewPagerIndicator](http://viewpagerindicator.com/) di **Jake Wharton**
 * [PhotoView](https://github.com/chrisbanes/PhotoView) by **Chris Banes**
 * [PreferenceFragment Support](https://gist.github.com/cbeyls/7475726) di **Christophe Beyls**
+* [Apache Commons IO](http://commons.apache.org/proper/commons-io/) di **The Apache Software Foundation**
+* [Apache Commons Lang](http://commons.apache.org/proper/commons-lang/) di **The Apache Software Foundation**
+* [Apache Commons Collections](http://commons.apache.org/proper/commons-collections/) di **The Apache Software Foundation**
+* [FasterXML Jackson](http://wiki.fasterxml.com/JacksonHome) di **FasterXML, LLC**
+* [ORMLite](http://ormlite.com/) di **Gray Watson**
 
 ## Contributors
 

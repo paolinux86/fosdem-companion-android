@@ -79,7 +79,7 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 	private static final String STATE_CURRENT_SECTION = "current_section";
 
 	private static final DateFormat LAST_UPDATE_DATE_FORMAT =
-			DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, Locale.getDefault());
+			DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, Locale.getDefault());
 
 	private Section currentSection;
 
