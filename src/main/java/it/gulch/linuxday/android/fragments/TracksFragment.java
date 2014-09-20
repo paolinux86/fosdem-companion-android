@@ -92,7 +92,7 @@ public class TracksFragment extends Fragment
 		holder.emptyView = view.findViewById(android.R.id.empty);
 		holder.pager = (ViewPager) view.findViewById(R.id.pager);
 		holder.slidingTabs = (SlidingTabLayout) view.findViewById(R.id.sliding_tabs);
-		holder.slidingTabs.setSelectedIndicatorColors(getResources().getColor(R.color.fosdem_purple));
+		holder.slidingTabs.setSelectedIndicatorColors(getResources().getColor(R.color.maincolor));
 
 		return view;
 	}

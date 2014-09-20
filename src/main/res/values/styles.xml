@@ -35,7 +35,7 @@
     </style>
 
     <style name="TextView.Fosdem" parent="android:Widget.TextView">
-        <item name="android:textColorLink">#3679c4</item>
+        <item name="android:textColorLink">@color/link_textcolor</item>
     </style>
 
     <style name="ListView.Fosdem" parent="@android:style/Widget.ListView.White">
@@ -49,13 +49,13 @@
         <item name="android:paddingLeft">@dimen/list_item_padding</item>
         <item name="android:textSize">14sp</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:textColor">@color/fosdem_purple</item>
+        <item name="android:textColor">@color/maincolor</item>
     </style>
 
     <style name="HeaderLineStyle">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">2dp</item>
-        <item name="android:background">@color/fosdem_purple</item>
+        <item name="android:background">@color/maincolor</item>
     </style>
 
     <style name="RoomImageDialogAnimations">
