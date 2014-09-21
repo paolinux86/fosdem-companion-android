@@ -11,10 +11,10 @@ import java.io.Serializable;
 @DatabaseTable(tableName = "bookmark")
 public class Bookmark implements Serializable
 {
-	@DatabaseField(id = true)
+	@DatabaseField(generatedId = true)
 	private Long id;
 
-	@DatabaseField(canBeNull = false, foreign = true)
+	@DatabaseField(canBeNull = false, unique = true, foreign = true, foreignAutoRefresh = true)
 	private Event event;
 
 	public Bookmark()

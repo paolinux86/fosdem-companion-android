@@ -24,11 +24,15 @@ import android.view.MenuItem;
 import android.widget.AbsListView;
 import android.widget.AbsListView.MultiChoiceModeListener;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
+
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
 
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.db.manager.BookmarkManager;
-import it.gulch.linuxday.android.db.manager.EventManager;
 
 /**
  * Context menu for the bookmarks list items, available for API 11+ only.
@@ -81,7 +85,9 @@ public class BookmarksMultiChoiceModeListener implements MultiChoiceModeListener
 		switch(item.getItemId()) {
 			case R.id.delete:
 				// Remove multiple bookmarks at once
-				new RemoveBookmarksAsyncTask().execute(listView.getCheckedItemIds());
+				long[] checkedItemIds = listView.getCheckedItemIds();
+				List<Long> checkedItemIdsList = Arrays.asList(ArrayUtils.toObject(checkedItemIds));
+				new RemoveBookmarksAsyncTask().execute(checkedItemIdsList);
 				mode.finish();
 				return true;
 		}
@@ -100,10 +106,10 @@ public class BookmarksMultiChoiceModeListener implements MultiChoiceModeListener
 	{
 	}
 
-	private class RemoveBookmarksAsyncTask extends AsyncTask<long[], Void, Void>
+	private class RemoveBookmarksAsyncTask extends AsyncTask<List<Long>, Void, Void>
 	{
 		@Override
-		protected Void doInBackground(long[]... params)
+		protected Void doInBackground(List<Long>... params)
 		{
 			try {
 				bookmarkManager.removeBookmarksByEventId(params[0]);

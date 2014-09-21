@@ -1,6 +1,7 @@
 package it.gulch.linuxday.android.db.manager;
 
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.List;
 
 import it.gulch.linuxday.android.model.db.Bookmark;
@@ -17,7 +18,7 @@ public interface BookmarkManager extends BaseORMManager<Bookmark, Long>
 
 	void removeBookmark(Event event) throws SQLException;
 
-	void removeBookmarksByEventId(long[] eventIds) throws SQLException;
+	void removeBookmarksByEventId(List<Long> eventIds) throws SQLException;
 
-	List<Bookmark> getBookmarks(long minStartTime);
+	List<Bookmark> getBookmarks(Date minStartTime) throws SQLException;
 }

@@ -5,13 +5,14 @@ import android.util.Log;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.PreparedDelete;
+import com.j256.ormlite.stmt.QueryBuilder;
 
 import java.sql.SQLException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import it.gulch.linuxday.android.db.OrmLiteDatabaseHelper;
-import it.gulch.linuxday.android.db.manager.BaseORMManager;
 import it.gulch.linuxday.android.db.manager.BookmarkManager;
 import it.gulch.linuxday.android.model.db.Bookmark;
 import it.gulch.linuxday.android.model.db.Event;
@@ -25,6 +26,8 @@ public class BookmarkManagerImpl implements BookmarkManager
 
 	private Dao<Bookmark, Long> dao;
 
+	private Dao<Event, Long> eventDao;
+
 	private BookmarkManagerImpl()
 	{
 	}
@@ -33,6 +36,7 @@ public class BookmarkManagerImpl implements BookmarkManager
 	{
 		BookmarkManagerImpl bookmarkManager = new BookmarkManagerImpl();
 		bookmarkManager.dao = helper.getDao(Bookmark.class);
+		bookmarkManager.eventDao = helper.getDao(Event.class);
 
 		return bookmarkManager;
 	}
@@ -124,7 +128,7 @@ public class BookmarkManagerImpl implements BookmarkManager
 	}
 
 	@Override
-	public void removeBookmarksByEventId(long[] eventIds) throws SQLException
+	public void removeBookmarksByEventId(List<Long> eventIds) throws SQLException
 	{
 		DeleteBuilder<Bookmark, Long> deleteBuilder = dao.deleteBuilder();
 		deleteBuilder.where().in("event_id", eventIds);
@@ -133,9 +137,16 @@ public class BookmarkManagerImpl implements BookmarkManager
 	}
 
 	@Override
-	public List<Bookmark> getBookmarks(long minStartTime)
+	public List<Bookmark> getBookmarks(Date minStartTime) throws SQLException
 	{
-		// TODO: implementare
-		return Collections.emptyList();
+		QueryBuilder<Bookmark, Long> queryBuilder = dao.queryBuilder();
+
+		if(minStartTime != null) {
+			QueryBuilder<Event, Long> eventQueryBuilder = eventDao.queryBuilder();
+			eventQueryBuilder.where().gt("startdate", minStartTime);
+			queryBuilder.join(eventQueryBuilder);
+		}
+
+		return dao.query(queryBuilder.prepare());
 	}
 }

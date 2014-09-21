@@ -39,6 +39,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.List;
 
 import it.gulch.linuxday.android.R;
@@ -139,36 +140,45 @@ public class AlarmIntentService extends IntentService
 	private void updateAlarms(Intent intent)
 	{
 		// Create/update all alarms
-		long delay = getDelay();
-		long now = System.currentTimeMillis();
+		try {
+			long delay = getDelay();
+			Date nowDate = new Date();
+			long now = nowDate.getTime();
 
-		List<Bookmark> bookmarks = bookmarkManager.getBookmarks(now);
-		for(Bookmark bookmark : bookmarks) {
-			Event event = bookmark.getEvent();
-			long notificationTime = event.getStartDate().getTime() - delay;
+			List<Bookmark> bookmarks = bookmarkManager.getBookmarks(nowDate);
+			for(Bookmark bookmark : bookmarks) {
+				Event event = bookmark.getEvent();
+				long notificationTime = event.getStartDate().getTime() - delay;
 
-			PendingIntent pendingIntent = getAlarmPendingIntent(event.getId());
-			if(notificationTime < now) {
-				// Cancel pending alarms that where scheduled between now and delay, if any
-				alarmManager.cancel(pendingIntent);
-			} else {
-				alarmManager.set(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent);
+				PendingIntent pendingIntent = getAlarmPendingIntent(event.getId());
+				if(notificationTime < now) {
+					// Cancel pending alarms that where scheduled between now and delay, if any
+					alarmManager.cancel(pendingIntent);
+				} else {
+					alarmManager.set(AlarmManager.RTC_WAKEUP, notificationTime, pendingIntent);
+				}
 			}
-		}
 
-		// Release the wake lock setup by AlarmReceiver, if any
-		if(intent.getBooleanExtra(EXTRA_WITH_WAKE_LOCK, false)) {
-			AlarmReceiver.completeWakefulIntent(intent);
+			// Release the wake lock setup by AlarmReceiver, if any
+			if(intent.getBooleanExtra(EXTRA_WITH_WAKE_LOCK, false)) {
+				AlarmReceiver.completeWakefulIntent(intent);
+			}
+		} catch(SQLException e) {
+			Log.e(TAG, e.getMessage(), e);
 		}
 	}
 
 	private void disableAlarms()
 	{
 		// Cancel alarms of every bookmark in the future
-		List<Bookmark> bookmarks = bookmarkManager.getBookmarks(System.currentTimeMillis());
-		for(Bookmark bookmark : bookmarks) {
-			long eventId = bookmark.getEvent().getId();
-			alarmManager.cancel(getAlarmPendingIntent(eventId));
+		try {
+			List<Bookmark> bookmarks = bookmarkManager.getBookmarks(new Date());
+			for(Bookmark bookmark : bookmarks) {
+				long eventId = bookmark.getEvent().getId();
+				alarmManager.cancel(getAlarmPendingIntent(eventId));
+			}
+		} catch(SQLException e) {
+			Log.e(TAG, e.getMessage(), e);
 		}
 	}
 
