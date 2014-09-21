@@ -3,15 +3,15 @@
 
     <item
         android:id="@android:id/background"
-        android:drawable="@drawable/progress_bg_fosdem"/>
+        android:drawable="@drawable/apptheme_progress_bg_holo_light"/>
     <item android:id="@android:id/secondaryProgress">
         <scale
-            android:drawable="@drawable/progress_secondary_fosdem"
+            android:drawable="@drawable/apptheme_progress_secondary_holo_light"
             android:scaleWidth="100%" />
     </item>
     <item android:id="@android:id/progress">
         <scale
-            android:drawable="@drawable/progress_primary_fosdem"
+            android:drawable="@drawable/apptheme_progress_primary_holo_light"
             android:scaleWidth="100%" />
     </item>
 

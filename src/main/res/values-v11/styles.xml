@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <style name="DialogTheme" parent="@android:style/Theme.Holo.Light.Dialog" />
+	<style name="DialogTheme" parent="@android:style/Theme.Holo.Light.Dialog" />
 
-    <style name="ListView.Fosdem" parent="@android:style/Widget.Holo.Light.ListView">
-        <item name="android:listSelector">@drawable/selectable_background</item>
-    </style>
+	<style name="ListView.AppTheme" parent="@android:style/Widget.Holo.Light.ListView">
+		<item name="android:listSelector">@drawable/selectable_background</item>
+	</style>
 
 </resources>

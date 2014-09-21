@@ -4,7 +4,6 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:drawablePadding="10dp"
-    android:fontFamily="sans-serif-light"
     android:gravity="left"
     android:padding="@dimen/main_menu_padding"
     android:textSize="21sp" />
