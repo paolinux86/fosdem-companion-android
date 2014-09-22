@@ -1,5 +1,6 @@
 package it.gulch.linuxday.android.model.db;
 
+import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -18,7 +19,7 @@ public class Day implements Serializable
 	@DatabaseField(canBeNull = false)
 	private String name;
 
-	@DatabaseField(canBeNull = false)
+	@DatabaseField(canBeNull = false, dataType = DataType.DATE_LONG)
 	private Date dayDate;
 
 	public Day()

@@ -29,11 +29,9 @@ public class OrmLiteDatabaseHelper extends OrmLiteSqliteOpenHelper
 
 	private static final String TAG = OrmLiteDatabaseHelper.class.getSimpleName();
 
-	private static boolean isRunningTest = false;
-
 	public OrmLiteDatabaseHelper(Context context)
 	{
-		super(context, isRunningTest ? null : DATABASE_NAME, null, DATABASE_VERSION);
+		super(context, DATABASE_NAME, null, DATABASE_VERSION);
 	}
 
 	@Override
@@ -63,10 +61,5 @@ public class OrmLiteDatabaseHelper extends OrmLiteSqliteOpenHelper
 	public void onUpgrade(SQLiteDatabase sqLiteDatabase, ConnectionSource connectionSource, int oldVersion,
 						  int newVersion)
 	{
-	}
-
-	public static void enableTestRunning()
-	{
-		OrmLiteDatabaseHelper.isRunningTest = true;
 	}
 }

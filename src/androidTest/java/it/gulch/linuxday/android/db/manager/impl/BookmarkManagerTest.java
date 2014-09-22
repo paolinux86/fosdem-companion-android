@@ -26,7 +26,6 @@ public class BookmarkManagerTest extends AndroidTestCase
 	{
 		super.setUp();
 
-		//OrmLiteDatabaseHelper.enableTestRunning();
 		bookmarkManager = DatabaseManagerFactory.getBookmarkManager(getContext());
 
 		setupDatabase();
@@ -44,7 +43,7 @@ public class BookmarkManagerTest extends AndroidTestCase
 		database.execSQL("DELETE FROM room");
 		database.execSQL("DELETE FROM day");
 
-		database.execSQL("INSERT INTO day (id, name, daydate) VALUES (101, 'Sabato', '2014-10-25 09:00:00')");
+		database.execSQL("INSERT INTO day (id, name, daydate) VALUES (101, 'Sabato', 1414220400000)");
 
 		database.execSQL("INSERT INTO room (name) VALUES ('B0')");
 
