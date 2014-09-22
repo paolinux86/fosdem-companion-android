@@ -7,6 +7,7 @@ import junit.framework.Assert;
 
 import org.apache.commons.lang3.time.DateUtils;
 
+import java.lang.reflect.Field;
 import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -239,4 +240,33 @@ public class DayManagerTest extends AndroidTestCase
 		Assert.assertEquals(days.size(), 0);
 	}
 
+	public void testExists() throws SQLException
+	{
+		boolean dayExists = dayManager.exists(101L);
+		Assert.assertTrue(dayExists);
+	}
+
+	public void testNotExists() throws SQLException
+	{
+		boolean dayExists = dayManager.exists(110L);
+		Assert.assertFalse(dayExists);
+	}
+
+	public void testGetCachedDays() throws NoSuchFieldException, IllegalAccessException
+	{
+		Field cachedDaysField = DayManagerImpl.class.getDeclaredField("cachedDays");
+		cachedDaysField.setAccessible(true);
+		cachedDaysField.set(dayManager, null);
+
+		Assert.assertNull(dayManager.getCachedDays());
+
+		List<Day> days = dayManager.getAll();
+
+		List<Day> cachedDays = dayManager.getCachedDays();
+		Assert.assertNotNull(cachedDays);
+
+		Assert.assertEquals(days.size(), cachedDays.size());
+
+		cachedDaysField.setAccessible(false);
+	}
 }
