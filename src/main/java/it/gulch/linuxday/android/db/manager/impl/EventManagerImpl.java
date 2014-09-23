@@ -64,9 +64,11 @@ public class EventManagerImpl implements EventManager
 	{
 		try {
 			Event event = eventDao.queryForId(id);
-			addPeople(event);
-			addLinks(event);
-			checkBookmark(event);
+			if(event != null) {
+				addPeople(event);
+				addLinks(event);
+				checkBookmark(event);
+			}
 
 			return event;
 		} catch(SQLException e) {
@@ -318,11 +320,11 @@ public class EventManagerImpl implements EventManager
 	public List<Event> search(String query)
 	{
 		// TODO implementare
-//		for(Event event : events) {
-//			addPeople(event);
-//			addLinks(event);
-//			checkBookmark(event);
-//		}
+		//		for(Event event : events) {
+		//			addPeople(event);
+		//			addLinks(event);
+		//			checkBookmark(event);
+		//		}
 		return Collections.emptyList();
 	}
 }
