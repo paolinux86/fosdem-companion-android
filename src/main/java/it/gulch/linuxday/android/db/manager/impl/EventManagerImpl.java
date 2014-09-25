@@ -329,7 +329,7 @@ public class EventManagerImpl implements EventManager
 	{
 		String queryInLike = "'%" + query + "%'";
 
-		GenericRawResults<Event> events = eventDao.queryRaw(
+		GenericRawResults<Event> rawEvents = eventDao.queryRaw(
 				"SELECT e.* FROM event e JOIN track t ON e.track_id = t.id LEFT JOIN person_present_event ep ON ep" +
 				".event_id = e.id LEFT JOIN person p ON p.id = ep.person_id WHERE e.id IN ( SELECT e.id FROM event e" +
 				" " +
@@ -340,6 +340,13 @@ public class EventManagerImpl implements EventManager
 				"WHERE p.name LIKE " + queryInLike + " OR p.middlename LIKE " + queryInLike + " OR p.surname LIKE " +
 				queryInLike + ") " + "GROUP BY e.id ORDER BY e.startdate ASC", eventDao.getRawRowMapper());
 
-		return events.getResults();
+		List<Event> events = rawEvents.getResults();
+		for(Event event : events) {
+			addPeople(event);
+			addLinks(event);
+			checkBookmark(event);
+		}
+
+		return events;
 	}
 }

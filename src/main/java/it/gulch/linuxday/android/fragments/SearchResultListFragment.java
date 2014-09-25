@@ -16,7 +16,6 @@
 package it.gulch.linuxday.android.fragments;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
@@ -28,7 +27,6 @@ import android.widget.ListView;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import it.gulch.linuxday.android.R;
@@ -36,7 +34,7 @@ import it.gulch.linuxday.android.activities.EventDetailsActivity;
 import it.gulch.linuxday.android.adapters.EventsAdapter;
 import it.gulch.linuxday.android.db.manager.EventManager;
 import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
-import it.gulch.linuxday.android.loaders.SimpleDatabaseLoader;
+import it.gulch.linuxday.android.loaders.TextSearchLoader;
 import it.gulch.linuxday.android.model.db.Event;
 
 public class SearchResultListFragment extends ListFragment implements LoaderCallbacks<List<Event>>
@@ -100,33 +98,11 @@ public class SearchResultListFragment extends ListFragment implements LoaderCall
 		}
 	}
 
-	private class TextSearchLoader extends SimpleDatabaseLoader<List<Event>>
-	{
-		private final String query;
-
-		public TextSearchLoader(Context context, String query)
-		{
-			super(context);
-			this.query = query;
-		}
-
-		@Override
-		protected List<Event> getObject()
-		{
-			try {
-				return eventManager.search(query);
-			} catch(SQLException e) {
-				Log.e(TAG, e.getMessage(), e);
-				return Collections.emptyList();
-			}
-		}
-	}
-
 	@Override
 	public Loader<List<Event>> onCreateLoader(int id, Bundle args)
 	{
 		String query = getArguments().getString(ARG_QUERY);
-		return new TextSearchLoader(getActivity(), query);
+		return new TextSearchLoader(getActivity(), eventManager, query);
 	}
 
 	@Override
@@ -158,7 +134,8 @@ public class SearchResultListFragment extends ListFragment implements LoaderCall
 	{
 		Event event = adapter.getItem(position);
 		Intent intent =
-			new Intent(getActivity(), EventDetailsActivity.class).putExtra(EventDetailsActivity.EXTRA_EVENT, event);
+				new Intent(getActivity(), EventDetailsActivity.class).putExtra(EventDetailsActivity.EXTRA_EVENT,
+																			   event);
 		startActivity(intent);
 	}
 }
