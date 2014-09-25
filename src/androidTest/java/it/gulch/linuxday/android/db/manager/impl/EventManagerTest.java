@@ -7,7 +7,6 @@ import junit.framework.Assert;
 
 import org.apache.commons.lang3.time.DateUtils;
 
-import java.lang.reflect.Field;
 import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -18,6 +17,7 @@ import it.gulch.linuxday.android.db.manager.EventManager;
 import it.gulch.linuxday.android.enums.DatabaseOrder;
 import it.gulch.linuxday.android.model.db.Event;
 import it.gulch.linuxday.android.model.db.EventType;
+import it.gulch.linuxday.android.model.db.Person;
 import it.gulch.linuxday.android.model.db.Track;
 
 /**
@@ -47,28 +47,51 @@ public class EventManagerTest extends AndroidTestCase
 		database.execSQL("DELETE FROM track");
 		database.execSQL("DELETE FROM room");
 		database.execSQL("DELETE FROM day");
+		database.execSQL("DELETE FROM bookmark");
+		database.execSQL("DELETE FROM person");
+		database.execSQL("DELETE FROM person_present_event");
 
 		database.execSQL("INSERT INTO day (id, name, daydate) VALUES (101, 'Sabato', 1414220400000)");
 
 		database.execSQL("INSERT INTO room (name) VALUES ('B0')");
 
 		database.execSQL("INSERT INTO track (id, title, room_id, day_id) VALUES (301, 'Test', 'B0', 101)");
+		database.execSQL("INSERT INTO track (id, title, room_id, day_id) VALUES (302, 'TracciaB', 'B1', 101)");
 
 		database.execSQL("INSERT INTO event_type (code, description) VALUES ('abc', 'ABC')");
 		database.execSQL("INSERT INTO event_type (code, description) VALUES ('def', 'DEF')");
 
 		database.execSQL(
-				"INSERT INTO event (id, startdate, enddate, title, eventtype_id, track_id) VALUES (401, 1414220400000," +
+				"INSERT INTO event (id, startdate, enddate, title, eventtype_id, track_id) VALUES (401, " +
+				"1414220400000," +
 				" 1414221600000, 'Evento 1', 'abc', 301)");  // 9:00 to 9:20
 		database.execSQL(
-				"INSERT INTO event (id, startdate, enddate, title, eventtype_id, track_id) VALUES (402, 1414221600000," +
-				" 1414224000000, 'Evento 2', 'def', 301)");  // 9:20 to 10:00
+				"INSERT INTO event (id, startdate, enddate, title, eventtype_id, track_id) VALUES (402, " +
+				"1414221600000," +
+				" 1414224000000, 'Evento 2', 'def', 302)");  // 9:20 to 10:00
 		database.execSQL(
-				"INSERT INTO event (id, startdate, enddate, title, eventtype_id, track_id) VALUES (403, 1414224000000," +
+				"INSERT INTO event (id, startdate, enddate, title, eventtype_id, track_id) VALUES (403, " +
+				"1414224000000," +
 				" 1414225800000, 'Evento 3', 'abc', 301)");  // 10:00 to 10:30
 		database.execSQL(
-				"INSERT INTO event (id, startdate, enddate, title, eventtype_id, track_id) VALUES (404, 1414225800000," +
-				" 1414227000000, 'Evento 4', 'abc', 301)");  // 10:30 to 10:50
+				"INSERT INTO event (id, startdate, enddate, title, eventtype_id, track_id) VALUES (404, " +
+				"1414225800000," +
+				" 1414227000000, 'Test 4', 'abc', 301)");  // 10:30 to 10:50
+
+		database.execSQL("INSERT INTO bookmark (id, event_id) VALUES (101, 401)");
+		database.execSQL("INSERT INTO bookmark (id, event_id) VALUES (102, 402)");
+		database.execSQL("INSERT INTO bookmark (id, event_id) VALUES (103, 403)");
+
+		database.execSQL("INSERT INTO person (id, name, middlename, surname, description) VALUES (501, 'Pinco', 'Test', 'Pallino', '')");
+		database.execSQL("INSERT INTO person (id, name, surname, description) VALUES (502, 'Tizio', 'Rossi', '')");
+		database.execSQL("INSERT INTO person (id, name, surname, description) VALUES (503, 'Caio', 'Neri', '')");
+		database.execSQL("INSERT INTO person (id, name, surname, description) VALUES (504, 'Sempronio', 'Verdi', '')");
+
+		database.execSQL("INSERT INTO person_present_event (event_id, person_id) VALUES (401, 501)");
+		database.execSQL("INSERT INTO person_present_event (event_id, person_id) VALUES (401, 502)");
+		database.execSQL("INSERT INTO person_present_event (event_id, person_id) VALUES (402, 502)");
+		database.execSQL("INSERT INTO person_present_event (event_id, person_id) VALUES (403, 503)");
+		database.execSQL("INSERT INTO person_present_event (event_id, person_id) VALUES (404, 504)");
 	}
 
 	public void testGet()
@@ -720,10 +743,88 @@ public class EventManagerTest extends AndroidTestCase
 		minEndDate.set(Calendar.SECOND, 0);
 
 		List<Event> result = eventManager
-				.search(minStartDate.getTime(), maxStartDate.getTime(), minEndDate.getTime(), DatabaseOrder.DESCENDING);
+				.search(minStartDate.getTime(), maxStartDate.getTime(), minEndDate.getTime(),
+						DatabaseOrder.DESCENDING);
 
 		Assert.assertNotNull(result);
 		Assert.assertEquals(1, result.size());
 		Assert.assertEquals(Long.valueOf(403L), result.get(0).getId());
+	}
+
+	public void testSearchEventsByTrack() throws SQLException
+	{
+		Track track = new Track();
+		track.setId(301L);
+
+		List<Event> events = eventManager.searchEventsByTrack(track);
+		Assert.assertNotNull(events);
+		Assert.assertEquals(3, events.size());
+
+		Assert.assertEquals(Long.valueOf(401), events.get(0).getId());
+		Assert.assertEquals(Long.valueOf(403), events.get(1).getId());
+		Assert.assertEquals(Long.valueOf(404), events.get(2).getId());
+	}
+
+	public void testSearchEventsByTrack2() throws SQLException
+	{
+		Track track = new Track();
+		track.setId(303L);
+
+		List<Event> events = eventManager.searchEventsByTrack(track);
+		Assert.assertNotNull(events);
+		Assert.assertEquals(0, events.size());
+	}
+
+	public void testGetBookmarkedEvents() throws SQLException
+	{
+		List<Event> bookmarkedEvents = eventManager.getBookmarkedEvents(null);
+		Assert.assertNotNull(bookmarkedEvents);
+		Assert.assertEquals(3, bookmarkedEvents.size());
+
+		Assert.assertEquals(Long.valueOf(401), bookmarkedEvents.get(0).getId());
+		Assert.assertEquals(Long.valueOf(402), bookmarkedEvents.get(1).getId());
+		Assert.assertEquals(Long.valueOf(403), bookmarkedEvents.get(2).getId());
+	}
+
+	public void testGetBookmarkedEventsWithMinStartDate() throws SQLException
+	{
+		Calendar minStartDate = GregorianCalendar.getInstance();
+		minStartDate.set(Calendar.YEAR, 2014);
+		minStartDate.set(Calendar.MONTH, Calendar.OCTOBER);
+		minStartDate.set(Calendar.DAY_OF_MONTH, 25);
+		minStartDate.set(Calendar.HOUR_OF_DAY, 9);
+		minStartDate.set(Calendar.MINUTE, 15);
+		minStartDate.set(Calendar.SECOND, 0);
+
+		List<Event> bookmarkedEvents = eventManager.getBookmarkedEvents(minStartDate.getTime());
+		Assert.assertNotNull(bookmarkedEvents);
+		Assert.assertEquals(2, bookmarkedEvents.size());
+
+		Assert.assertEquals(Long.valueOf(402), bookmarkedEvents.get(0).getId());
+		Assert.assertEquals(Long.valueOf(403), bookmarkedEvents.get(1).getId());
+	}
+
+	public void testSearchEventsByPerson() throws SQLException
+	{
+		Person person = new Person();
+		person.setId(502L);
+
+		List<Event> events = eventManager.searchEventsByPerson(person);
+		Assert.assertNotNull(events);
+		Assert.assertEquals(2, events.size());
+
+		Assert.assertEquals(Long.valueOf(401), events.get(0).getId());
+		Assert.assertEquals(Long.valueOf(402), events.get(1).getId());
+	}
+
+	public void testSearchQuery() throws SQLException
+	{
+		List<Event> events = eventManager.search("Test");
+		Assert.assertNotNull(events);
+		Assert.assertEquals(3, events.size());
+
+		Assert.assertEquals(Long.valueOf(401), events.get(0).getId());
+		Assert.assertEquals(Long.valueOf(403), events.get(1).getId());
+		Assert.assertEquals(Long.valueOf(404), events.get(2).getId());
 	}
 }

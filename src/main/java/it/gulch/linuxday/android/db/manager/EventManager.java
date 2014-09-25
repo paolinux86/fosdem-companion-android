@@ -25,5 +25,5 @@ public interface EventManager extends BaseORMManager<Event, Long>
 
 	List<Event> searchEventsByPerson(Person person) throws SQLException;
 
-	List<Event> search(String query);
+	List<Event> search(String query) throws SQLException;
 }

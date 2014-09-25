@@ -3,6 +3,7 @@ package it.gulch.linuxday.android.db.manager.impl;
 import android.util.Log;
 
 import com.j256.ormlite.dao.Dao;
+import com.j256.ormlite.dao.GenericRawResults;
 import com.j256.ormlite.stmt.DeleteBuilder;
 import com.j256.ormlite.stmt.PreparedDelete;
 import com.j256.ormlite.stmt.PreparedQuery;
@@ -43,6 +44,8 @@ public class EventManagerImpl implements EventManager
 
 	private Dao<Track, Long> trackDao;
 
+	private Dao<Person, Long> personDao;
+
 	private EventManagerImpl()
 	{
 	}
@@ -55,6 +58,7 @@ public class EventManagerImpl implements EventManager
 		eventManager.bookmarkDao = helper.getDao(Bookmark.class);
 		eventManager.linkDao = helper.getDao(Link.class);
 		eventManager.trackDao = helper.getDao(Track.class);
+		eventManager.personDao = helper.getDao(Person.class);
 
 		return eventManager;
 	}
@@ -277,15 +281,15 @@ public class EventManagerImpl implements EventManager
 		return events;
 	}
 
-	// TODO: verificare che funzioni xD
 	@Override
 	public List<Event> getBookmarkedEvents(Date minStartTime) throws SQLException
 	{
 		QueryBuilder<Event, Long> queryBuilder = eventDao.queryBuilder();
 		queryBuilder.join(bookmarkDao.queryBuilder());
 		if(minStartTime != null) {
-			queryBuilder.where().gt("startdate", minStartTime.getTime());
+			queryBuilder.where().gt("startdate", minStartTime);
 		}
+		queryBuilder.orderBy("startdate", true);
 
 		List<Event> events = eventDao.query(queryBuilder.prepare());
 		for(Event event : events) {
@@ -297,14 +301,18 @@ public class EventManagerImpl implements EventManager
 		return events;
 	}
 
-	// TODO: verificare che funzioni xD
 	@Override
 	public List<Event> searchEventsByPerson(Person person) throws SQLException
 	{
+		if(person == null) {
+			return Collections.emptyList();
+		}
+
 		QueryBuilder<Event, Long> queryBuilder = eventDao.queryBuilder();
 		QueryBuilder<PersonPresentsEvent, Long> qb = personPresentsEventDao.queryBuilder();
 		qb.where().eq("person_id", person.getId());
 		queryBuilder.join(qb);
+		queryBuilder.orderBy("startdate", true);
 
 		List<Event> events = eventDao.query(queryBuilder.prepare());
 		for(Event event : events) {
@@ -317,14 +325,21 @@ public class EventManagerImpl implements EventManager
 	}
 
 	@Override
-	public List<Event> search(String query)
+	public List<Event> search(String query) throws SQLException
 	{
-		// TODO implementare
-		//		for(Event event : events) {
-		//			addPeople(event);
-		//			addLinks(event);
-		//			checkBookmark(event);
-		//		}
-		return Collections.emptyList();
+		String queryInLike = "'%" + query + "%'";
+
+		GenericRawResults<Event> events = eventDao.queryRaw(
+				"SELECT e.* FROM event e JOIN track t ON e.track_id = t.id LEFT JOIN person_present_event ep ON ep" +
+				".event_id = e.id LEFT JOIN person p ON p.id = ep.person_id WHERE e.id IN ( SELECT e.id FROM event e" +
+				" " +
+				"WHERE e.title LIKE " + queryInLike + " OR e.subtitle LIKE " + queryInLike +
+				" UNION SELECT e.id FROM event e JOIN track t ON e.track_id = t.id WHERE t.title LIKE " + queryInLike +
+				" OR t.subtitle LIKE " + queryInLike + " " +
+				"UNION SELECT ep.event_id FROM person_present_event ep JOIN person p ON ep.person_id = p.id " +
+				"WHERE p.name LIKE " + queryInLike + " OR p.middlename LIKE " + queryInLike + " OR p.surname LIKE " +
+				queryInLike + ") " + "GROUP BY e.id ORDER BY e.startdate ASC", eventDao.getRawRowMapper());
+
+		return events.getResults();
 	}
 }

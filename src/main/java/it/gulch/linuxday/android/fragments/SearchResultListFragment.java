@@ -28,6 +28,7 @@ import android.widget.ListView;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import it.gulch.linuxday.android.R;
@@ -112,7 +113,12 @@ public class SearchResultListFragment extends ListFragment implements LoaderCall
 		@Override
 		protected List<Event> getObject()
 		{
-			return eventManager.search(query);
+			try {
+				return eventManager.search(query);
+			} catch(SQLException e) {
+				Log.e(TAG, e.getMessage(), e);
+				return Collections.emptyList();
+			}
 		}
 	}
 
@@ -129,7 +135,7 @@ public class SearchResultListFragment extends ListFragment implements LoaderCall
 		if(data != null) {
 			events.clear();
 			events.addAll(data);
-			adapter.notifyDataSetChanged();;
+			adapter.notifyDataSetChanged();
 		}
 
 		// The list should now be shown.
@@ -144,7 +150,7 @@ public class SearchResultListFragment extends ListFragment implements LoaderCall
 	public void onLoaderReset(Loader<List<Event>> loader)
 	{
 		events.clear();
-		adapter.notifyDataSetChanged();;
+		adapter.notifyDataSetChanged();
 	}
 
 	@Override
