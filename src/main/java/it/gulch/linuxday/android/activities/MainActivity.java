@@ -42,8 +42,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -95,12 +98,16 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 
 	private PreferencesService preferencesService;
 
+	private MenuItem refreshItem;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
 		supportRequestWindowFeature(Window.FEATURE_PROGRESS);
 		setContentView(R.layout.main);
+
+		refreshItem = null;
 
 		setupServices();
 
@@ -304,6 +311,14 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 			}
 		});
 
+		MenuItem refreshMenuItem = menu.findItem(R.id.refresh);
+
+		boolean isRefreshing = refreshItem != null;
+		refreshMenuItem.setEnabled(!isRefreshing);
+		if(isRefreshing) {
+			disableRefreshAnimation();
+		}
+
 		return true;
 	}
 
@@ -336,6 +351,7 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 			case R.id.search:
 				return false;
 			case R.id.refresh:
+				refreshItem = enableRefreshAnimation(item);
 				startDownloadSchedule();
 				return true;
 			case R.id.settings:
@@ -353,8 +369,8 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 	public void startDownloadSchedule()
 	{
 		// Start by displaying indeterminate progress, determinate will come later
-		setSupportProgressBarIndeterminate(true);
-		setSupportProgressBarVisibility(true);
+		//setSupportProgressBarIndeterminate(true);
+		//setSupportProgressBarVisibility(true);
 
 		DownloadScheduleAsyncTask instance = new DownloadScheduleAsyncTask(this);
 		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
@@ -395,6 +411,33 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 		}
 
 		drawerLayout.closeDrawer(mainMenu);
+	}
+
+	private MenuItem enableRefreshAnimation(MenuItem refreshItem)
+	{
+		LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		ImageView iv = (ImageView) inflater.inflate(R.layout.refresh_action_view, null);
+
+		Animation rotation = AnimationUtils.loadAnimation(this, R.anim.clockwise_refresh);
+		rotation.setRepeatCount(Animation.INFINITE);
+		iv.startAnimation(rotation);
+
+		return MenuItemCompat.setActionView(refreshItem, iv);
+	}
+
+	private void disableRefreshAnimation()
+	{
+		if(refreshItem == null) {
+			return;
+		}
+
+		View actionView = MenuItemCompat.getActionView(refreshItem);
+		if(actionView  != null) {
+			actionView.clearAnimation();
+		}
+
+		MenuItemCompat.setActionView(refreshItem, null);
+		refreshItem = null;
 	}
 
 	// MAIN MENU
@@ -465,8 +508,9 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 		public void onReceive(Context context, Intent intent)
 		{
 			// Hide the progress bar with a fill and fade out animation
-			setSupportProgressBarIndeterminate(false);
-			setSupportProgress(10000);
+			//setSupportProgressBarIndeterminate(false);
+			//setSupportProgress(10000);
+			invalidateOptionsMenu();
 
 			int result = intent.getIntExtra(LinuxDayApi.EXTRA_RESULT, LinuxDayApi.RESULT_ERROR);
 			if(result == LinuxDayApi.RESULT_ERROR) {
