@@ -5,7 +5,11 @@ import android.content.Intent;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.j256.ormlite.android.apptools.OpenHelperManager;
+import com.j256.ormlite.misc.TransactionManager;
+
 import java.sql.SQLException;
+import java.util.concurrent.Callable;
 
 import it.gulch.linuxday.android.constants.ActionConstants;
 import it.gulch.linuxday.android.constants.UriConstants;
@@ -78,13 +82,30 @@ public class ConferenceImportManager
 		}
 	}
 
-	public long importConference(Conference conference) throws ImportException
+	public long importConference(final Conference conference) throws ImportException
 	{
 		if(conference == null || conference.getDays() == null || conference.getDays().size() == 0) {
 			// FIXME
 			throw new RuntimeException();
 		}
 
+		try {
+			OrmLiteDatabaseHelper helper = OpenHelperManager.getHelper(context, OrmLiteDatabaseHelper.class);
+			return (Long) TransactionManager.callInTransaction(helper.getConnectionSource(), new Callable<Object>()
+			{
+				@Override
+				public Object call() throws Exception
+				{
+					return internalImportConference(conference);
+				}
+			});
+		} catch(SQLException e) {
+			throw new ImportException();
+		}
+	}
+
+	private long internalImportConference(Conference conference) throws ImportException
+	{
 		try {
 			minEventId = Long.MAX_VALUE;
 			clearDatabase();
@@ -226,6 +247,8 @@ public class ConferenceImportManager
 
 	private void clearDatabase() throws SQLException
 	{
+
+
 		eventManager.truncate();
 		eventTypeManager.truncate();
 		linkManager.truncate();

@@ -33,9 +33,11 @@ import android.view.ViewGroup;
 import com.example.android.common.view.SlidingTabLayout;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 import it.gulch.linuxday.android.R;
+import it.gulch.linuxday.android.adapters.DaysAdapter;
 import it.gulch.linuxday.android.db.manager.DayManager;
 import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
 import it.gulch.linuxday.android.loaders.DaysLoader;
@@ -70,11 +72,14 @@ public class TracksFragment extends Fragment
 
 	private DayManager dayManager;
 
+	private List<Day> days;
+
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		daysAdapter = new DaysAdapter(getChildFragmentManager());
+		days = new ArrayList<Day>();
+		daysAdapter = new DaysAdapter(getChildFragmentManager(), days);
 
 		if(savedInstanceState == null) {
 			// Restore the current page from preferences
@@ -120,7 +125,9 @@ public class TracksFragment extends Fragment
 			@Override
 			public void onLoadFinished(Loader<List<Day>> listLoader, List<Day> data)
 			{
-				daysAdapter.setDays(data);
+				days.clear();
+				days.addAll(data);
+				daysAdapter.notifyDataSetChanged();
 
 				final int totalPages = daysAdapter.getCount();
 				if(totalPages == 0) {
@@ -144,6 +151,8 @@ public class TracksFragment extends Fragment
 			@Override
 			public void onLoaderReset(Loader<List<Day>> listLoader)
 			{
+				days.clear();
+				daysAdapter.notifyDataSetChanged();
 			}
 		};
 
@@ -182,53 +191,6 @@ public class TracksFragment extends Fragment
 		SharedPreferences prefs = getActivity().getPreferences(Context.MODE_PRIVATE);
 		if(prefs.getInt(PREF_CURRENT_PAGE, -1) != page) {
 			prefs.edit().putInt(PREF_CURRENT_PAGE, page).commit();
-		}
-	}
-
-
-	private static class DaysAdapter extends FragmentStatePagerAdapter
-	{
-		private List<Day> days;
-
-		public DaysAdapter(FragmentManager fm)
-		{
-			super(fm);
-		}
-
-		public void setDays(List<Day> days)
-		{
-			if(this.days != days) {
-				this.days = days;
-				notifyDataSetChanged();
-			}
-		}
-
-		@Override
-		public int getCount()
-		{
-			return (days == null) ? 0 : days.size();
-		}
-
-		@Override
-		public Fragment getItem(int position)
-		{
-			return TracksListFragment.newInstance(days.get(position));
-		}
-
-		@Override
-		public CharSequence getPageTitle(int position)
-		{
-			return days.get(position).toString();
-		}
-
-		@Override
-		public void setPrimaryItem(ViewGroup container, int position, Object object)
-		{
-			super.setPrimaryItem(container, position, object);
-			// Hack to allow the non-primary fragments to start properly
-			if(object != null) {
-				((Fragment) object).setUserVisibleHint(false);
-			}
 		}
 	}
 }

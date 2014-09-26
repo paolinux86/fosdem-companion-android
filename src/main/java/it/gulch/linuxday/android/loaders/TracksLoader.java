@@ -30,7 +30,8 @@ public class TracksLoader extends SimpleDatabaseLoader<List<Track>>
 	protected List<Track> getObject()
 	{
 		try {
-			return trackManager.findByDay(day);
+			List<Track> tracks = trackManager.findByDay(day);
+			return tracks;
 		} catch(SQLException e) {
 			return Collections.emptyList();
 		}
