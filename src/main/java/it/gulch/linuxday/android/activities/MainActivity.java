@@ -510,7 +510,7 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 			// Hide the progress bar with a fill and fade out animation
 			//setSupportProgressBarIndeterminate(false);
 			//setSupportProgress(10000);
-			invalidateOptionsMenu();
+			supportInvalidateOptionsMenu();
 
 			int result = intent.getIntExtra(LinuxDayApi.EXTRA_RESULT, LinuxDayApi.RESULT_ERROR);
 			if(result == LinuxDayApi.RESULT_ERROR) {
