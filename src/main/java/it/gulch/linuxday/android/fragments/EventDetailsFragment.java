@@ -240,7 +240,7 @@ public class EventDetailsFragment extends Fragment
 		return ShareCompat.IntentBuilder.from(getActivity())
 				.setSubject(String.format("%1$s (FOSDEM)", event.getTitle())).setType("text/plain")
 						//.setText(String.format("%1$s %2$s #FOSDEM", event.getTitle(), event.getUrl()))
-				.setText(String.format("%1$s #FOSDEM", event.getTitle())).setChooserTitle(R.string.share)
+				.setText(String.format("%1$s #gulchLD #linuxday14", event.getTitle())).setChooserTitle(R.string.share)
 				.createChooserIntent();
 	}
 
@@ -322,13 +322,18 @@ public class EventDetailsFragment extends Fragment
 		Intent intent = new Intent(Intent.ACTION_EDIT);
 		intent.setType("vnd.android.cursor.item/event");
 		intent.putExtra(CalendarContract.Events.TITLE, event.getTitle());
-		intent.putExtra(CalendarContract.Events.EVENT_LOCATION, "ULB - " + event.getTrack().getRoom().getName());
+		intent.putExtra(CalendarContract.Events.EVENT_LOCATION, event.getTrack().getRoom().getName());
 		String description = event.getEventAbstract();
-		if(TextUtils.isEmpty(description)) {
+		if(StringUtils.isBlank(description)) {
 			description = event.getDescription();
 		}
+		if(StringUtils.isBlank(description)) {
+			description = StringUtils.EMPTY;
+		}
+
+		// FIXME
 		// Strip HTML
-		description = StringUtils.stripEnd(Html.fromHtml(description).toString(), " ");
+		//description = StringUtils.stripEnd(Html.fromHtml(description).toString(), " ");
 		// Add speaker info if available
 		if(personsCount > 0) {
 			String personsSummary = StringUtils.join(event.getPeople(), ", ");

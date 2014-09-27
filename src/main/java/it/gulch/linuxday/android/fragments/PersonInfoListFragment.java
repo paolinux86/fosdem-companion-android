@@ -78,14 +78,16 @@ public class PersonInfoListFragment extends ListFragment
 
 		adapter = new EventsAdapter(getActivity(), events);
 		person = (Person) getArguments().getSerializable(ARG_PERSON);
-		setHasOptionsMenu(true);
+		// FIXME
+		//setHasOptionsMenu(true);
 	}
 
-	@Override
-	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater)
-	{
-		inflater.inflate(R.menu.person, menu);
-	}
+	// FIXME
+	//	@Override
+	//	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater)
+	//	{
+	//		inflater.inflate(R.menu.person, menu);
+	//	}
 
 	// FIXME
 	//	@Override
@@ -114,7 +116,8 @@ public class PersonInfoListFragment extends ListFragment
 		listView.setScrollBarStyle(ListView.SCROLLBARS_OUTSIDE_OVERLAY);
 
 		View headerView = LayoutInflater.from(getActivity()).inflate(R.layout.header_person_info, null);
-		((TextView) headerView.findViewById(R.id.title)).setText(person.getCompleteName(Person.CompleteNameEnum.NAME_FIRST));
+		((TextView) headerView.findViewById(R.id.title))
+				.setText(person.getCompleteName(Person.CompleteNameEnum.NAME_FIRST));
 		listView.addHeaderView(headerView, null, false);
 
 		setListAdapter(adapter);

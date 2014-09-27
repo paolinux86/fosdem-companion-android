@@ -36,6 +36,8 @@ dependencies {
 
 	compile 'com.viewpagerindicator:library:2.4.1@aar'
 
+	compile "ch.acra:acra:4.5.0"
+
 	//apt "org.androidannotations:androidannotations:$AAVersion"
 	//compile "org.androidannotations:androidannotations-api:$AAVersion"
 

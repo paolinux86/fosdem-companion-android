@@ -78,10 +78,37 @@ public class LinuxDayApi
 		}
 
 		InputStream inputStream = doDownload(context);
-		//int result = parseXml(inputStream);
 		long result = parseJson(inputStream);
 		sendResult(context, result);
 	}
+
+	//	public void downloadSchedule(Context context, DownloadMode downloadMode)
+	//	{
+	//		if(downloadMode == DownloadMode.NORMAL) {
+	//			Long dbVersion = downloadDBVersion(context);
+	//
+	//		}
+	//
+	//		InputStream inputStream = doDownload(context);
+	//		//int result = parseXml(inputStream);
+	//		long result = parseJson(inputStream);
+	//		sendResult(context, result);
+	//	}
+
+	//	private Long downloadDBVersion(Context context)
+	//	{
+	//		try {
+	//			InputStream inputStream;
+	//			String dbVersionUrl = LinuxDayUrls.getDBVersion();
+	//			inputStream = HttpUtils.get(context, dbVersionUrl, null, null);
+	//
+	//			return Long.valueOf(IOUtils.toString(inputStream));
+	//		} catch(Exception e) {
+	//			Log.e(TAG, e.getMessage(), e);
+	//		}
+	//
+	//		return -1L;
+	//	}
 
 	private InputStream doDownload(Context context)
 	{
@@ -124,4 +151,10 @@ public class LinuxDayApi
 
 		scheduleLock.unlock();
 	}
+
+	//	public enum DownloadMode
+	//	{
+	//		NORMAL,
+	//		FORCED
+	//	}
 }
