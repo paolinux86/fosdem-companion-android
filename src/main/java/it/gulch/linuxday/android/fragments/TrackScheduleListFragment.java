@@ -26,8 +26,11 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
 
+import org.apache.commons.collections4.CollectionUtils;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import it.gulch.linuxday.android.R;
@@ -149,6 +152,11 @@ public class TrackScheduleListFragment extends ListFragment implements Handler.C
 
 	private void notifyEventSelected(int position)
 	{
+		if(CollectionUtils.isEmpty(events) || position < 0 ||
+		   (events.size() - 1 > position && CollectionUtils.isEmpty(events.get(position).getPeople()))) {
+			return;
+		}
+
 		if(listener != null) {
 			listener.onEventSelected(position,
 									 (position == ListView.INVALID_POSITION) ? null : adapter.getItem(position));
@@ -176,7 +184,6 @@ public class TrackScheduleListFragment extends ListFragment implements Handler.C
 	{
 		loaderCallbacks = new LoaderCallbacks<List<Event>>()
 		{
-
 			@Override
 			public Loader<List<Event>> onCreateLoader(int i, Bundle bundle)
 			{

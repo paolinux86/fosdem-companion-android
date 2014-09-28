@@ -56,7 +56,6 @@ import java.util.List;
 import it.gulch.linuxday.android.R;
 import it.gulch.linuxday.android.activities.PersonInfoActivity;
 import it.gulch.linuxday.android.db.manager.BookmarkManager;
-import it.gulch.linuxday.android.db.manager.impl.BookmarkManagerImpl;
 import it.gulch.linuxday.android.db.manager.impl.DatabaseManagerFactory;
 import it.gulch.linuxday.android.loaders.BookmarkStatusLoader;
 import it.gulch.linuxday.android.loaders.LocalCacheLoader;
@@ -176,7 +175,8 @@ public class EventDetailsFragment extends Fragment
 		if(TextUtils.isEmpty(text)) {
 			textView.setVisibility(View.GONE);
 		} else {
-			textView.setText(StringUtils.stripEnd(Html.fromHtml(text).toString(), " "));
+			String strippedText = StringUtils.stripEnd(Html.fromHtml(text).toString(), " \n");
+			textView.setText(strippedText);
 			textView.setMovementMethod(linkMovementMethod);
 		}
 		textView = (TextView) view.findViewById(R.id.description);
@@ -184,7 +184,8 @@ public class EventDetailsFragment extends Fragment
 		if(TextUtils.isEmpty(text)) {
 			textView.setVisibility(View.GONE);
 		} else {
-			textView.setText(StringUtils.stripEnd(Html.fromHtml(text).toString(), " "));
+			String strippedText = StringUtils.stripEnd(Html.fromHtml(text).toString(), " \n");
+			textView.setText(strippedText);
 			textView.setMovementMethod(linkMovementMethod);
 		}
 
@@ -238,7 +239,7 @@ public class EventDetailsFragment extends Fragment
 	private Intent getShareChooserIntent()
 	{
 		return ShareCompat.IntentBuilder.from(getActivity())
-				.setSubject(String.format("%1$s (FOSDEM)", event.getTitle())).setType("text/plain")
+				.setSubject(String.format("%1$s (LinuxDay GULCh)", event.getTitle())).setType("text/plain")
 						//.setText(String.format("%1$s %2$s #FOSDEM", event.getTitle(), event.getUrl()))
 				.setText(String.format("%1$s #gulchLD #linuxday14", event.getTitle())).setChooserTitle(R.string.share)
 				.createChooserIntent();
@@ -439,7 +440,7 @@ public class EventDetailsFragment extends Fragment
 					View view = holder.inflater.inflate(R.layout.item_link, holder.linksContainer, false);
 					TextView tv = (TextView) view.findViewById(R.id.description);
 					tv.setText(link.getDescription());
-					//view.setOnClickListener(new LinkClickListener(link));
+					view.setOnClickListener(new LinkClickListener(link));
 					holder.linksContainer.addView(view);
 					// Add a list divider
 					holder.inflater.inflate(R.layout.list_divider, holder.linksContainer, true);
@@ -474,24 +475,6 @@ public class EventDetailsFragment extends Fragment
 		}
 	}
 
-	// TODO
-//	private static class LinkClickListener implements View.OnClickListener
-//	{
-//		private final Link link;
-//
-//		public LinkClickListener(Link link)
-//		{
-//			this.link = link;
-//		}
-//
-//		@Override
-//		public void onClick(View v)
-//		{
-//			Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link.getUrl()));
-//			v.getContext().startActivity(intent);
-//		}
-//	}
-
 	private static class EventDetails
 	{
 		List<Person> people;
@@ -506,5 +489,22 @@ public class EventDetailsFragment extends Fragment
 		TextView personsTextView;
 
 		ViewGroup linksContainer;
+	}
+
+	private class LinkClickListener implements View.OnClickListener
+	{
+		private final Link link;
+
+		public LinkClickListener(Link link)
+		{
+			this.link = link;
+		}
+
+		@Override
+		public void onClick(View v)
+		{
+			Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link.getLink()));
+			v.getContext().startActivity(intent);
+		}
 	}
 }

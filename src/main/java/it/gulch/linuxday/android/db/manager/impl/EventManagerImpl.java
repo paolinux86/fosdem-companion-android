@@ -270,6 +270,7 @@ public class EventManagerImpl implements EventManager
 
 		QueryBuilder<Event, Long> queryBuilder = eventDao.queryBuilder();
 		queryBuilder.where().eq("track_id", track.getId());
+		queryBuilder.orderBy("startdate", true);
 
 		List<Event> events = eventDao.query(queryBuilder.prepare());
 		for(Event event : events) {

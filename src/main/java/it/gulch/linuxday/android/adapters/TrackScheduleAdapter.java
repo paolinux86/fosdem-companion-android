@@ -2,11 +2,9 @@ package it.gulch.linuxday.android.adapters;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.database.Cursor;
 import android.graphics.Typeface;
 import android.text.Spannable;
 import android.text.SpannableString;
-import android.text.TextUtils;
 import android.text.style.AbsoluteSizeSpan;
 import android.text.style.StyleSpan;
 import android.view.LayoutInflater;
@@ -126,6 +124,8 @@ public class TrackScheduleAdapter extends BaseAdapter
 
 	public void bindView(ViewHolder viewHolder, Event event)
 	{
+		boolean isBreakEvent = false;
+
 		viewHolder.event = event;
 
 		viewHolder.time.setText(TIME_DATE_FORMAT.format(event.getStartDate()));
@@ -145,19 +145,24 @@ public class TrackScheduleAdapter extends BaseAdapter
 
 		String personsSummary = "";
 		if(CollectionUtils.isEmpty(event.getPeople())) {
-			spannableString = new SpannableString(String.format("%1$s\n%2$s", eventTitle, roomName));
+			spannableString = new SpannableString(String.format("%1$s", eventTitle));
+			isBreakEvent = true;
 		} else {
 			personsSummary = StringUtils.join(event.getPeople(), ", ");
-			spannableString = new SpannableString(
-					String.format("%1$s\n%2$s\n%3$s", eventTitle, personsSummary, roomName));
+			spannableString = new SpannableString(String.format("%1$s\n%2$s", eventTitle, personsSummary));
 		}
 		spannableString.setSpan(viewHolder.titleSizeSpan, 0, eventTitle.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-		spannableString.setSpan(viewHolder.boldStyleSpan, 0, eventTitle.length() + personsSummary.length() + 1,
-								Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		if(!isBreakEvent) {
+			spannableString.setSpan(viewHolder.boldStyleSpan, 0, eventTitle.length() + personsSummary.length() + 1,
+									Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+		}
 
 		viewHolder.text.setText(spannableString);
 		int bookmarkDrawable = event.isBookmarked() ? R.drawable.ic_small_starred : 0;
 		viewHolder.text.setCompoundDrawablesWithIntrinsicBounds(0, 0, bookmarkDrawable, 0);
+
+		viewHolder.text.setBackgroundResource(
+				isBreakEvent ? R.color.schedule_time_background : android.R.color.background_light);
 	}
 
 	private static class ViewHolder

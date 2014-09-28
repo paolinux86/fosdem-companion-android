@@ -31,7 +31,7 @@
     </plurals>
 
     <!-- Live -->
-    <string name="next">Prossimamente</string>
+    <string name="next">A breve</string>
     <string name="next_empty">Durante il LinuxDay, gli eventi che iniziano nei successivi 30 minuti verranno mostrati qui.</string>
     <string name="now">Ora</string>
     <string name="now_empty">Durante il LinuxDay, gli eventi in corso verranno mostrati qui.</string>
