@@ -34,12 +34,8 @@ import static org.acra.ReportField.REPORT_ID;
 import static org.acra.ReportField.STACK_TRACE;
 
 @ReportsCrashes(formKey = "",
-				//formUri = "http://acra.slack-counter.org/acra-ldca/_design/acra-storage/_update/report",
-				formUri = "http://91.121.146.95:5984/acra-ldca/_design/acra-storage/_update/report",
-				reportType = org.acra.sender.HttpSender.Type.JSON,
-				httpMethod = org.acra.sender.HttpSender.Method.PUT,
-				formUriBasicAuthLogin="ldca",
-				formUriBasicAuthPassword="4lM0te_n,A5",
+				//formUri = "http://91.121.146.95:5984/acra-ldca/_design/acra-storage/_update/report",
+				formUri = "http://ldca.slack-counter.org/server/report.php",
 				customReportContent = { REPORT_ID, APP_VERSION_CODE, APP_VERSION_NAME, PHONE_MODEL, BRAND, PRODUCT,
 						ANDROID_VERSION, STACK_TRACE, PACKAGE_NAME })
 public class LinuxDayApplication extends Application

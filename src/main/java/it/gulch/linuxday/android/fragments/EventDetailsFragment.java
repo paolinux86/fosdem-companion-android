@@ -308,12 +308,19 @@ public class EventDetailsFragment extends Fragment
 					bookmarkManager.addBookmark(event);
 				}
 				isBookmarked = !isBookmarked;
-				getActivity().supportInvalidateOptionsMenu();
 			} catch(SQLException e) {
 				Log.e(TAG, e.getMessage(), e);
 			}
 
 			return null;
+		}
+
+		@Override
+		protected void onPostExecute(Void aVoid)
+		{
+			super.onPostExecute(aVoid);
+
+			getActivity().supportInvalidateOptionsMenu();
 		}
 	}
 

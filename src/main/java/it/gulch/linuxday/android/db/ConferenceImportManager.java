@@ -91,7 +91,7 @@ public class ConferenceImportManager
 
 		try {
 			OrmLiteDatabaseHelper helper = OpenHelperManager.getHelper(context, OrmLiteDatabaseHelper.class);
-			return (Long) TransactionManager.callInTransaction(helper.getConnectionSource(), new Callable<Object>()
+			long result = (Long) TransactionManager.callInTransaction(helper.getConnectionSource(), new Callable<Object>()
 			{
 				@Override
 				public Object call() throws Exception
@@ -99,6 +99,10 @@ public class ConferenceImportManager
 					return internalImportConference(conference);
 				}
 			});
+
+			notifyCompletion();
+
+			return result;
 		} catch(SQLException e) {
 			throw new ImportException();
 		}
@@ -119,8 +123,6 @@ public class ConferenceImportManager
 			if(minEventId < Long.MAX_VALUE) {
 				bookmarkManager.deleteOldBookmarks(minEventId);
 			}
-
-			notifyCompletion();
 
 			return eventManager.countEvents();
 		} catch(SQLException e) {

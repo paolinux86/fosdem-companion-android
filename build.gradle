@@ -5,13 +5,11 @@ buildscript {
 	}
 
 	dependencies {
-		classpath "com.android.tools.build:gradle:0.13.0"
-		//classpath "com.neenbedankt.gradle.plugins:android-apt:1.4"
+		classpath "com.android.tools.build:gradle:0.13.2"
 	}
 }
 
 apply plugin: "com.android.application"
-//apply plugin: "android-apt"
 
 repositories {
 	maven { url "http://dl.bintray.com/populov/maven" }
@@ -20,8 +18,6 @@ repositories {
 }
 
 dependencies {
-	def AAVersion = "3.0.1"
-
 	//compile "com.android.support:appcompat-v7:21.0.0-rc1"
 	compile "com.android.support:appcompat-v7:20.0.0"
 	compile "commons-io:commons-io:2.4"
@@ -38,20 +34,15 @@ dependencies {
 
 	compile "ch.acra:acra:4.5.0"
 
-	//apt "org.androidannotations:androidannotations:$AAVersion"
-	//compile "org.androidannotations:androidannotations-api:$AAVersion"
-
 	compile files("libs/photoview-1.2.2.jar")
 }
 
 android {
-//	compileSdkVersion "android-L"
 	compileSdkVersion 20
-	buildToolsVersion "20.0.0"
+	buildToolsVersion "21.0.1"
 
 	defaultConfig {
 		minSdkVersion 8
-//		targetSdkVersion "android-L"
 		targetSdkVersion 20
 		versionCode 1
 		versionName "0.1"
@@ -60,7 +51,6 @@ android {
 	sourceSets {
 		main {
 			manifest.srcFile "src/main/AndroidManifest.xml"
-			//java.srcDirs = ["src/main/java", "GENERATED_FOLDER"]
 			java.srcDirs = ["src/main/java"]
 			resources.srcDirs = ["src/main/resources"]
 			res.srcDirs = ["src/main/res"]
@@ -68,13 +58,13 @@ android {
 		}
 	}
 
-	buildTypes {
-		release {
-			runProguard true
+	//buildTypes {
+		//release {
+			//runProguard true
 			//proguardFile getDefaultProguardFile("src/main/proguard-android.txt")
 			//proguardFile "src/main/proguard-project.txt"
-		}
-	}
+		//}
+	//}
 
 	packagingOptions {
 		exclude "META-INF/LICENSE"
@@ -83,10 +73,3 @@ android {
 		exclude "META-INF/NOTICE.txt"
 	}
 }
-
-//apt {
-//	arguments {
-//		resourcePackageName "it.gulch.linuxday.android"
-//		androidManifestFile variant.processResources.manifestFile
-//	}
-//}

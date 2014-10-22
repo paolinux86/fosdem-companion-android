@@ -160,9 +160,9 @@ public class TrackScheduleAdapter extends BaseAdapter
 		viewHolder.text.setText(spannableString);
 		int bookmarkDrawable = event.isBookmarked() ? R.drawable.ic_small_starred : 0;
 		viewHolder.text.setCompoundDrawablesWithIntrinsicBounds(0, 0, bookmarkDrawable, 0);
-
-		viewHolder.text.setBackgroundResource(
-				isBreakEvent ? R.color.schedule_time_background : android.R.color.background_light);
+		if(isBreakEvent) {
+			viewHolder.text.setBackgroundResource(R.color.schedule_time_background);
+		}
 	}
 
 	private static class ViewHolder

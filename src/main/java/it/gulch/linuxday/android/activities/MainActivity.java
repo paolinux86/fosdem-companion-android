@@ -35,6 +35,7 @@ import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.SearchView;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -83,6 +84,8 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 
 	private static final DateFormat LAST_UPDATE_DATE_FORMAT =
 			DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, Locale.getDefault());
+
+	private static final String TAG = MainActivity.class.getSimpleName();
 
 	private Section currentSection;
 
@@ -311,14 +314,6 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 			}
 		});
 
-		MenuItem refreshMenuItem = menu.findItem(R.id.refresh);
-
-		boolean isRefreshing = refreshItem != null;
-		refreshMenuItem.setEnabled(!isRefreshing);
-		if(isRefreshing) {
-			disableRefreshAnimation();
-		}
-
 		return true;
 	}
 
@@ -335,6 +330,12 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 				}
 			}
 		}
+
+		MenuItem refreshMenuItem = menu.findItem(R.id.refresh);
+
+		boolean isRefreshing = refreshItem != null;
+		Log.d(TAG, "isRefreshing: " + Boolean.toString(isRefreshing));
+		refreshMenuItem.setEnabled(!isRefreshing);
 
 		return super.onPrepareOptionsMenu(menu);
 	}
@@ -510,6 +511,7 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 			// Hide the progress bar with a fill and fade out animation
 			//setSupportProgressBarIndeterminate(false);
 			//setSupportProgress(10000);
+			disableRefreshAnimation();
 			supportInvalidateOptionsMenu();
 
 			int result = intent.getIntExtra(LinuxDayApi.EXTRA_RESULT, LinuxDayApi.RESULT_ERROR);
@@ -543,6 +545,7 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 		public void onDrawerOpened(View drawerView)
 		{
 			updateActionBar();
+			disableRefreshAnimation();
 			supportInvalidateOptionsMenu();
 			// Make keypad navigation easier
 			mainMenu.requestFocus();
@@ -552,6 +555,7 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 		public void onDrawerClosed(View drawerView)
 		{
 			updateActionBar();
+			disableRefreshAnimation();
 			supportInvalidateOptionsMenu();
 		}
 	}
