@@ -24,6 +24,7 @@ import android.support.v4.app.DialogFragment;
 import android.text.method.LinkMovementMethod;
 import android.widget.TextView;
 
+import it.gulch.linuxday.android.BuildConfig;
 import it.gulch.linuxday.android.R;
 
 public class AboutDialogFragment extends DialogFragment
@@ -32,17 +33,12 @@ public class AboutDialogFragment extends DialogFragment
 	public Dialog onCreateDialog(Bundle savedInstanceState)
 	{
 		Context context = getActivity();
-		String title;
-		try {
-			String versionName = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
-			title = String.format("%1$s %2$s", getString(R.string.app_name), versionName);
-		} catch(PackageManager.NameNotFoundException e) {
-			title = getString(R.string.app_name);
-		}
+		String versionName = BuildConfig.VERSION_NAME;
+		String title = String.format("%1$s %2$s", getString(R.string.app_name), versionName);
 
 		return new AlertDialog.Builder(context).setTitle(title).setIcon(R.drawable.ic_launcher)
-			.setMessage(getResources().getText(R.string.about_text)).setPositiveButton(android.R.string.ok, null)
-			.create();
+				.setMessage(getResources().getText(R.string.about_text)).setPositiveButton(android.R.string.ok, null)
+				.create();
 	}
 
 	@Override
@@ -50,6 +46,7 @@ public class AboutDialogFragment extends DialogFragment
 	{
 		super.onStart();
 		// Make links clickable; must be called after the dialog is shown
-		((TextView) getDialog().findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
+		((TextView) getDialog().findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance
+				());
 	}
 }

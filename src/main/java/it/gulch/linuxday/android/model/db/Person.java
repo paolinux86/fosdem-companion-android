@@ -126,17 +126,18 @@ public class Person implements Serializable
 
 	public String getCompleteName(CompleteNameEnum completeNameEnum)
 	{
-		String format = "{0} {2} {1}";
-
-		if(middleName == null) {
-			format = "{0} {1}";
-		}
-
-		if(completeNameEnum == CompleteNameEnum.NAME_FIRST) {
-			return MessageFormat.format(format, name, surname, middleName);
+		String format;
+		if(completeNameEnum == CompleteNameEnum.SURNAME_FIRST && middleName != null) {
+			format = "{2} {0} {1}";
+		} else if(completeNameEnum == CompleteNameEnum.SURNAME_FIRST) {
+			format = "{2} {0}";
+		} else if(completeNameEnum == CompleteNameEnum.NAME_FIRST && middleName != null) {
+			format = "{0} {1} {2}";
 		} else {
-			return MessageFormat.format(format, surname, name, middleName);
+			format = "{0} {2}";
 		}
+
+		return MessageFormat.format(format, name, middleName, surname);
 	}
 
 	public enum CompleteNameEnum
