@@ -76,7 +76,7 @@ public class TracksFragment extends Fragment
 	public void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		days = new ArrayList<Day>();
+		days = new ArrayList<>();
 		daysAdapter = new DaysAdapter(getChildFragmentManager(), days);
 
 		if(savedInstanceState == null) {

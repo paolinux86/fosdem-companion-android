@@ -70,7 +70,7 @@ public class TracksListFragment extends ListFragment
 	{
 		super.onCreate(savedInstanceState);
 
-		tracks = new ArrayList<Track>();
+		tracks = new ArrayList<>();
 
 		adapter = new TracksAdapter(getActivity(), tracks);
 		day = (Day) getArguments().getSerializable(ARG_DAY);

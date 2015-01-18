@@ -218,7 +218,7 @@ public class BookmarkManagerTest extends AndroidTestCase
 
 	public void testRemoveBookmarksByEventId() throws SQLException
 	{
-		List<Long> eventIds = new ArrayList<Long>();
+		List<Long> eventIds = new ArrayList<>();
 		eventIds.add(401L);
 		eventIds.add(403L);
 

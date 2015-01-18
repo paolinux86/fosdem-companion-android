@@ -187,7 +187,7 @@ public class Event implements Serializable
 	public void addPerson(Person person)
 	{
 		if(people == null) {
-			people = new ArrayList<Person>();
+			people = new ArrayList<>();
 		}
 
 		people.add(person);

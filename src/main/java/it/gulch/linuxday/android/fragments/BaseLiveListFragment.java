@@ -43,7 +43,7 @@ public abstract class BaseLiveListFragment extends ListFragment implements Loade
 	{
 		super.onCreate(savedInstanceState);
 
-		events = new ArrayList<Event>();
+		events = new ArrayList<>();
 
 		adapter = new EventsAdapter(getActivity(), events, false);
 		setListAdapter(adapter);

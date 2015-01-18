@@ -124,17 +124,23 @@ public class AlarmIntentService extends IntentService
 	{
 		String action = intent.getAction();
 
-		if(ACTION_UPDATE_ALARMS.equals(action)) {
-			updateAlarms(intent);
-		} else if(ACTION_DISABLE_ALARMS.equals(action)) {
-			disableAlarms();
-		} else if(ActionConstants.ACTION_ADD_BOOKMARK.equals(action)) {
-			addBookmark(intent);
-		} else if(ActionConstants.ACTION_REMOVE_BOOKMARKS.equals(action)) {
-			removeBookmarks(intent);
-		} else if(AlarmReceiver.ACTION_NOTIFY_EVENT.equals(action)) {
-			notifyEvent(intent);
-			AlarmReceiver.completeWakefulIntent(intent);
+		switch(action) {
+			case ACTION_UPDATE_ALARMS:
+				updateAlarms(intent);
+				break;
+			case ACTION_DISABLE_ALARMS:
+				disableAlarms();
+				break;
+			case ActionConstants.ACTION_ADD_BOOKMARK:
+				addBookmark(intent);
+				break;
+			case ActionConstants.ACTION_REMOVE_BOOKMARKS:
+				removeBookmarks(intent);
+				break;
+			case AlarmReceiver.ACTION_NOTIFY_EVENT:
+				notifyEvent(intent);
+				AlarmReceiver.completeWakefulIntent(intent);
+				break;
 		}
 
 		// TODO: ELSE?
@@ -254,6 +260,7 @@ public class AlarmIntentService extends IntentService
 				spannableBigText = new SpannableString(String.format("%1$s\n%2$s", subTitle, personsSummary));
 			}
 
+			// Set the persons summary in italic
 			spannableBigText
 					.setSpan(new StyleSpan(Typeface.ITALIC), +spannableBigText.length() - personsSummary.length(),
 							 spannableBigText.length(), +Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);

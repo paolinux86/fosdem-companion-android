@@ -87,7 +87,7 @@ public class EventManagerImpl implements EventManager
 		queryBuilder.where().eq("event_id", event.getId());
 		PreparedQuery<PersonPresentsEvent> preparedQuery = queryBuilder.prepare();
 
-		List<Person> people = new ArrayList<Person>();
+		List<Person> people = new ArrayList<>();
 		List<PersonPresentsEvent> result = personPresentsEventDao.query(preparedQuery);
 		for(PersonPresentsEvent personPresentsEvent : result) {
 			people.add(personPresentsEvent.getPerson());

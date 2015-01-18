@@ -107,7 +107,7 @@ public class TrackScheduleListFragment extends ListFragment implements Handler.C
 		day = (Day) getArguments().getSerializable(ARG_DAY);
 		handler = new Handler(this);
 
-		events = new ArrayList<Event>();
+		events = new ArrayList<>();
 
 		adapter = new TrackScheduleAdapter(getActivity(), events);
 		setListAdapter(adapter);

@@ -74,7 +74,7 @@ public class PersonInfoListFragment extends ListFragment
 	{
 		super.onCreate(savedInstanceState);
 
-		events = new ArrayList<Event>();
+		events = new ArrayList<>();
 
 		adapter = new EventsAdapter(getActivity(), events);
 		person = (Person) getArguments().getSerializable(ARG_PERSON);

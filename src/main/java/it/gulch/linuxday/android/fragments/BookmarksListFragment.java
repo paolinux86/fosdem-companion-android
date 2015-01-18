@@ -78,7 +78,7 @@ public class BookmarksListFragment extends ListFragment
 	{
 		super.onCreate(savedInstanceState);
 
-		events = new ArrayList<Event>();
+		events = new ArrayList<>();
 
 		adapter = new EventsAdapter(getActivity(), events);
 		setListAdapter(adapter);

@@ -85,7 +85,7 @@ public class TrackScheduleEventActivity extends ActionBarActivity implements Nfc
 	{
 		super.onCreate(savedInstanceState);
 
-		events = new ArrayList<Event>();
+		events = new ArrayList<>();
 		setupServices();
 
 		setContentView(R.layout.track_schedule_event);

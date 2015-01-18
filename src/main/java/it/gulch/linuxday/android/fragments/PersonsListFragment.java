@@ -56,7 +56,7 @@ public class PersonsListFragment extends ListFragment
 	{
 		super.onCreate(savedInstanceState);
 
-		people = new ArrayList<Person>();
+		people = new ArrayList<>();
 
 		adapter = new PeopleAdapter(getActivity(), people);
 		setListAdapter(adapter);
