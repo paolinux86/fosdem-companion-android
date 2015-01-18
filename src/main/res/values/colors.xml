@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<color name="maincolor">#F4AA25</color>
+	<color name="maincolor_darker">#C2871D</color>
 	<color name="event_detail_textcolor">#5A2CA0</color>
 	<color name="link_textcolor">#0E468E</color>
 
