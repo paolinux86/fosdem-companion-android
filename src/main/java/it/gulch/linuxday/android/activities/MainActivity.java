@@ -103,6 +103,8 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 
 	private MenuItem refreshItem;
 
+	private MenuItem searchMenuItem;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
@@ -258,6 +260,10 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 	@Override
 	protected void onStop()
 	{
+		if(searchMenuItem != null && MenuItemCompat.isActionViewExpanded(searchMenuItem)) {
+			MenuItemCompat.collapseActionView(searchMenuItem);
+		}
+
 		LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
 		lbm.unregisterReceiver(scheduleDownloadProgressReceiver);
 		lbm.unregisterReceiver(scheduleDownloadResultReceiver);
@@ -278,41 +284,18 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 	{
 		getMenuInflater().inflate(R.menu.main, menu);
 
-		final MenuItem searchMenuItem = menu.findItem(R.id.search);
-		// Associate searchable configuration with the SearchView
-		SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-		SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchMenuItem);
-		searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
-		searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener()
-		{
-			@Override
-			public boolean onQueryTextChange(String newText)
-			{
-				return false;
-			}
-
-			@Override
-			public boolean onQueryTextSubmit(String query)
-			{
-				MenuItemCompat.collapseActionView(searchMenuItem);
-				return false;
-			}
-		});
-		searchView.setOnSuggestionListener(new SearchView.OnSuggestionListener()
-		{
-			@Override
-			public boolean onSuggestionSelect(int position)
-			{
-				return false;
-			}
-
-			@Override
-			public boolean onSuggestionClick(int position)
-			{
-				MenuItemCompat.collapseActionView(searchMenuItem);
-				return false;
-			}
-		});
+		MenuItem searchMenuItem = menu.findItem(R.id.search);
+		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
+			this.searchMenuItem = searchMenuItem;
+			// Associate searchable configuration with the SearchView
+			SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+			SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchMenuItem);
+			searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+		} else {
+			// Legacy search mode for Eclair
+			MenuItemCompat.setActionView(searchMenuItem, null);
+			MenuItemCompat.setShowAsAction(searchMenuItem, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
+		}
 
 		return true;
 	}
