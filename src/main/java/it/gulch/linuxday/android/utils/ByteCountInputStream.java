@@ -15,6 +15,8 @@
  */
 package it.gulch.linuxday.android.utils;
 
+import android.support.annotation.NonNull;
+
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,9 +44,6 @@ public class ByteCountInputStream extends FilterInputStream
 	public ByteCountInputStream(InputStream input, ByteCountListener listener, int interval)
 	{
 		super(input);
-		if(input == null) {
-			throw new IllegalArgumentException("input must not be null");
-		}
 		if(listener == null) {
 			throw new IllegalArgumentException("listener must not be null");
 		}
@@ -66,7 +65,7 @@ public class ByteCountInputStream extends FilterInputStream
 	}
 
 	@Override
-	public int read(byte[] buffer, int offset, int max) throws IOException
+	public int read(@NonNull byte[] buffer, int offset, int max) throws IOException
 	{
 		int count = super.read(buffer, offset, max);
 		addBytes(count);
