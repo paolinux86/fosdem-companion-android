@@ -15,6 +15,8 @@
  */
 package it.gulch.linuxday.android.enums;
 
+import android.support.annotation.DrawableRes;
+import android.support.annotation.StringRes;
 import android.support.v4.app.Fragment;
 
 import it.gulch.linuxday.android.R;
@@ -43,7 +45,7 @@ public enum Section
 
 	private final boolean keep;
 
-	private Section(Class<? extends Fragment> fragmentClass, int titleResId, int iconResId, boolean keep)
+	private Section(Class<? extends Fragment> fragmentClass, @StringRes int titleResId, @DrawableRes int iconResId, boolean keep)
 	{
 		this.fragmentClassName = fragmentClass.getName();
 		this.titleResId = titleResId;

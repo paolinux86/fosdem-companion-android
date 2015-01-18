@@ -350,7 +350,13 @@ public class MainActivity extends ActionBarActivity implements ListView.OnItemCl
 
 		switch(item.getItemId()) {
 			case R.id.search:
-				return false;
+				if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
+					return false;
+				} else {
+					// Legacy search mode for Eclair
+					onSearchRequested();
+					return true;
+				}
 			case R.id.refresh:
 				refreshItem = enableRefreshAnimation(item);
 				startDownloadSchedule();
