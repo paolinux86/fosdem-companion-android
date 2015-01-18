@@ -36,7 +36,9 @@ dependencies {
 	//compile "ch.acra:acra:4.5.0"
 	compile 'ch.acra:acra:4.5.0-ART-FIX'
 
-	compile files("libs/photoview-1.2.2.jar")
+	// Version 1.2.3 has a bug and crashes when detecting 2-finger gestures. Use 1.2.2 instead.
+	//compile files("libs/photoview-1.2.2.jar")
+	compile "com.github.chrisbanes.photoview:library:1.2.2"
 }
 
 android {
