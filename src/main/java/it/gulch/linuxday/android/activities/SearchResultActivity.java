@@ -38,6 +38,9 @@ public class SearchResultActivity extends ActionBarActivity
 
 	private static final String STATE_CURRENT_QUERY = "current_query";
 
+	// Search Intent sent by Google Now
+	private static final String GMS_ACTION_SEARCH = "com.google.android.gms.actions.SEARCH_ACTION";
+
 	private String currentQuery;
 
 	private SearchView searchView;
@@ -76,7 +79,7 @@ public class SearchResultActivity extends ActionBarActivity
 	private void handleIntent(Intent intent, boolean isNewIntent)
 	{
 		String intentAction = intent.getAction();
-		if(Intent.ACTION_SEARCH.equals(intentAction)) {
+		if(Intent.ACTION_SEARCH.equals(intentAction) || GMS_ACTION_SEARCH.equals(intentAction)) {
 			// Normal search, results are displayed here
 			String query = intent.getStringExtra(SearchManager.QUERY);
 			if(query != null) {
